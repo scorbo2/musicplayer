@@ -25,6 +25,20 @@ import javax.swing.JButton;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 
+/**
+ * Groups all the media player and playlist actions together into one place
+ * to make it easier to expose them to the user (attaching them to buttons
+ * or menu items or keyboard shortcuts or whatever we need).
+ * <p>
+ * We could augment these built-in actions by allowing extensions
+ * to specify custom actions. The getPlayerActions() and
+ * getPlaylistActions() methods will need to be enhanced
+ * to interrogate our extension manager for that.
+ * </p>
+ *
+ * @author scorbo2
+ * @since 2025-03-23
+ */
 public final class Actions {
 
     public static final MPAction PLAY;
@@ -65,6 +79,11 @@ public final class Actions {
         ADD = new MPAction("Add", "Add to playlist", "icon-add.png", new AddAction());
     }
 
+    /**
+     * Returns all MPActions that relate to the media player.
+     *
+     * @return An array of MPActions, in the desired UI display order.
+     */
     public static MPAction[] getPlayerActions() {
         return new MPAction[]{
                 PLAY,
@@ -79,6 +98,11 @@ public final class Actions {
         };
     }
 
+    /**
+     * Returns all MPActions that relate to the playlist.
+     *
+     * @return An array of MPActions, in the desired UI display order.
+     */
     public static MPAction[] getPlaylistActions() {
         return new MPAction[]{
                 OPEN,
@@ -91,6 +115,16 @@ public final class Actions {
         };
     }
 
+    /**
+     * Given an MPAction, this will build a toolbar button to represent that
+     * action. That means sizing the button appropriately (as per the currently
+     * configured control size in AppConfig), and setting the correct
+     * button icon and tooltip. The button will also be equipped with
+     * the appropriate Action to be triggered when the button is pressed.
+     *
+     * @param action An MPAction instance.
+     * @return A JButton suitable for a toolbar.
+     */
     public static JButton buildButton(Actions.MPAction action) {
         int btnSize = AppConfig.getInstance().getButtonSize().getButtonSize();
         int iconSize = btnSize - 2; // small margin for icon to fit within button
@@ -108,6 +142,10 @@ public final class Actions {
         return button;
     }
 
+    /**
+     * Simple wrapper class to encapsulate the stuff we need to represent
+     * a MusicPlayer action.
+     */
     public static class MPAction {
         public final String iconResource;
         public final String name;

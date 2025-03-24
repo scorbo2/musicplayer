@@ -16,6 +16,23 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Taking advantage of the AppProperties helper class in my own
+ * application-extensions library, as it saves a LOT of work in
+ * managing application properties and exposing them to the user.
+ * <p>
+ * The persistence file for application properties defaults
+ * to "MusicPlayer.props" in the user's home directory.
+ * You can override this by setting the
+ * ca.corbett.musicplayer.props.file system property.
+ * </p>
+ * <p>
+ * <B>Example:</B> java -Dca.corbett.musicplayer.props.file=/tmp/blah.props MusicPlayer.jar
+ * </p>
+ *
+ * @author scorbo2
+ * @since 2025-03-23
+ */
 public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     private static AppConfig instance;
@@ -84,6 +101,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         super(Version.FULL_NAME, PROPS_FILE, MusicPlayerExtensionManager.getInstance());
     }
 
+    /**
+     * Overridden here so we can update our UI elements when the user has made
+     * changes in the preferences dialog.
+     */
     @Override
     public void save() {
         super.save();
