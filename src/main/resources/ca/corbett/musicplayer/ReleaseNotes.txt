@@ -1,0 +1,71 @@
+MusicPlayer Release Notes
+Author: Steve Corbett
+
+Version 2.0 [pending] - UI rewrite
+
+Version 1.5 [2023-04-16] - Maintenance release
+  [MPLAY-53] - Playlist version check needs to chill out
+  [MPLAY-54] - Upgrade to sc-util 1.7
+  [MPLAY-55] - Intermittent NPE in visualization
+
+Version 1.4 [2022-05-10] - Maintenance release
+  [MPLAY-21] - ArrayIndexOutOfBounds when deleting a visualizer
+  [MPLAY-42] - Minor: visualization window has bad title and icon
+  [MPLAY-43] - Upgrade to sc-util 1.6
+  [MPLAY-44] - Update installer script
+  [MPLAY-45] - Update to new code standard
+  [MPLAY-46] - Improve logging throughout the app
+  [MPLAY-47] - Relax LyricsSheetParser's version check
+  [MPLAY-48] - Update release notes for 1.4 release
+  [MPLAY-49] - Add a config option for multi-monitor setups
+  [MPLAY-50] - Switch from Preferences to FileBasedProperties
+  [MPLAY-51] - Ensure default logging.properties logs to file
+  [MPLAY-52] - Intermittent crash in lyrics visualizer
+
+Version 1.3 [2020-09-16] - Maintenance release
+  [MPLAY-34] - Allow per-song override of Visualizer preferences
+  [MPLAY-35] - New Visualizer: per-song lyric sheet
+  [MPLAY-36] - Create parser for lyric sheet files
+  [MPLAY-37] - New prefs tab: Lyric Preferences
+  [MPLAY-38] - Include a logo png in the dist jar
+  [MPLAY-39] - Full screen vis with multiple monitors is broken
+  [MPLAY-40] - Should be a keystroke to toggle text overlay on/off
+  [MPLAY-41] - Bundle a couple of lyrics sheet fonts for convenience
+
+Version 1.2 [2019-11-16] - Bug fix release
+  [MPLAY-31] - Playlist selection window should select on show
+  [MPLAY-32] - Splash screen is missing after recent changes
+  [MPLAY-33] - Allow double-click in playlist selection dialog
+
+Version 1.1 [2019-11-09] - Maintenance release
+  [MPLAY-22] - Really need a "clear all" playlist button
+  [MPLAY-23] - Should be able to add playlist to the current one
+  [MPLAY-24] - Upgrade to sc-util-1.3
+  [MPLAY-25] - Upgrade to Netbeans/Java 11
+  [MPLAY-26] - Better playlist open dialog
+  [MPLAY-27] - Better playlist save dialog
+  [MPLAY-28] - Upgrade to newer version of player library, if any.
+  [MPLAY-29] - Allow Ctrl+Q to close the app
+  [MPLAY-30] - Absorb mp-visualization-core into this project
+
+Version 1.0 [2017-12-22] - Initial version
+  [MPLAY-1] - Initial skeletal project creation
+  [MPLAY-2] - Create skeletal playlist component
+  [MPLAY-3] - Create skeletal visualization window
+  [MPLAY-4] - Skeletal visualization core library
+  [MPLAY-5] - Playlist load and save code
+  [MPLAY-6] - Visualizer: gradients
+  [MPLAY-7] - Visualizer: photo slideshow
+  [MPLAY-8] - Visualizer settings dialog
+  [MPLAY-9] - Add database support
+  [MPLAY-10] - Visualizer settings panel
+  [MPLAY-11] - Add text overlay configuration options
+  [MPLAY-12] - Add text overlay to visualization thread
+  [MPLAY-13] - Need config options for progress bar colours
+  [MPLAY-14] - Implement shuffle and repeat
+  [MPLAY-15] - Global keyboard shortcuts
+  [MPLAY-16] - VisualizerConfigField: add boolean option
+  [MPLAY-17] - Visualizer refactoring
+  [MPLAY-18] - Visualizer config: add new one clones an existing one
+  [MPLAY-19] - When paused, visualizer should show a "paused" symbol
+  [MPLAY-20] - Command line arguments for playlist or file loading
