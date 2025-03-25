@@ -57,7 +57,7 @@ public class AudioData {
     private static BufferedImage generateWaveformImage(int[][] audioData) {
         BufferedImage waveform = null;
         WaveformConfig config = new WaveformConfig();
-        config.setXLimit(1000);
+        config.setXLimit(AppConfig.getInstance().getWaveformResolution().getXLimit());
         config.setXScale(768);
         config.setBgColor(AppConfig.getInstance().getWaveformBgColor());
         config.setFillColor(AppConfig.getInstance().getWaveformFillColor());

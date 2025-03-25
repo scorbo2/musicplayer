@@ -38,7 +38,7 @@ public class ControlPanel extends JPanel {
         GridBagConstraints constraints = new GridBagConstraints();
 
         // This is holdover code from AudioWaveformPanel, on which this is based.
-        AppConfig.ControlAlignment controlAlignment = AppConfig.getInstance().getMediaPlayerControlAlignment();
+        AppConfig.ControlAlignment controlAlignment = AppConfig.getInstance().getControlAlignment();
         boolean biasStart = controlAlignment == AppConfig.ControlAlignment.LEFT;
         boolean biasCenter = controlAlignment == AppConfig.ControlAlignment.CENTER;
         boolean biasEnd = controlAlignment == AppConfig.ControlAlignment.RIGHT;

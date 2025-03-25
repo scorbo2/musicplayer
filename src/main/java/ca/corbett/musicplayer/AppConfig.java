@@ -41,12 +41,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     public static final File PROPS_FILE;
 
     private ComboProperty buttonSize;
-    private ComboProperty mediaPlayerControlAlignment;
-    private ComboProperty playlistControlAlignment;
+    private ComboProperty controlAlignment;
     private ColorProperty waveformBgColor;
     private ColorProperty waveformFillColor;
     private ColorProperty waveformOutlineColor;
     private IntegerProperty waveformOutlineThickness;
+    private ComboProperty waveformResolution;
     private ComboProperty playlistTheme; // TODO playlist theme? or app theme?
 
     public enum ButtonSize {
@@ -89,6 +89,31 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
     }
 
+    public enum WaveformResolution {
+        LOW(512),
+        MEDIUM(1024),
+        HIGH(2048),
+        SUPER_HIGH(4096);
+
+        private final int xLimit;
+
+        WaveformResolution(int xLimit) {
+            this.xLimit = xLimit;
+        }
+
+        public int getXLimit() {
+            return xLimit;
+        }
+
+        public static WaveformResolution fromString(String name) {
+            for (WaveformResolution res : values()) {
+                if (res.name().equals(name)) {
+                    return res;
+                }
+            }
+            return HIGH; // arbitrary default in case of garbage data
+        }
+    }
 
     static {
         File f;
@@ -136,28 +161,16 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return ButtonSize.fromString(buttonSize.getSelectedItem());
     }
 
-    public void setMediaPlayerControlAlignment(ControlAlignment alignment) {
-        mediaPlayerControlAlignment.setSelectedItem(alignment.name());
+    public void setControlAlignment(ControlAlignment alignment) {
+        controlAlignment.setSelectedItem(alignment.name());
     }
 
-    public void setMediaPlayerControlAlignment(String alignment) {
-        mediaPlayerControlAlignment.setSelectedItem(alignment);
+    public void setControlAlignment(String alignment) {
+        controlAlignment.setSelectedItem(alignment);
     }
 
-    public ControlAlignment getMediaPlayerControlAlignment() {
-        return ControlAlignment.fromString(mediaPlayerControlAlignment.getSelectedItem());
-    }
-
-    public void setPlaylistControlAlignment(ControlAlignment alignment) {
-        playlistControlAlignment.setSelectedItem(alignment.name());
-    }
-
-    public void setPlaylistControlAlignment(String alignment) {
-        mediaPlayerControlAlignment.setSelectedItem(alignment);
-    }
-
-    public ControlAlignment getPlaylistControlAlignment() {
-        return ControlAlignment.fromString(playlistControlAlignment.getSelectedItem());
+    public ControlAlignment getControlAlignment() {
+        return ControlAlignment.fromString(controlAlignment.getSelectedItem());
     }
 
     public void setWaveformBgColor(Color color) {
@@ -192,6 +205,18 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return waveformOutlineThickness.getValue();
     }
 
+    public void setWaveformResolution(WaveformResolution resolution) {
+        waveformResolution.setSelectedItem(resolution.name());
+    }
+
+    public void setWaveformResolution(String resolution) {
+        waveformResolution.setSelectedItem(resolution);
+    }
+
+    public WaveformResolution getWaveformResolution() {
+        return WaveformResolution.fromString(waveformResolution.getSelectedItem());
+    }
+
     public PlaylistTheme.Theme getPlaylistTheme() {
         return PlaylistTheme.getTheme(playlistTheme.getSelectedItem());
     }
@@ -208,8 +233,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         for (ControlAlignment alignment : ControlAlignment.values()) {
             options.add(alignment.name());
         }
-        mediaPlayerControlAlignment = new ComboProperty("UI.General.mediaControlAlignment", "Media controls:", options, 1, false);
-        playlistControlAlignment = new ComboProperty("UI.General.playlistControlAlignment", "Playlist controls:", options, 1, false);
+        controlAlignment = new ComboProperty("UI.General.controlAlignment", "Control alignment:", options, 1, false);
 
         WaveformConfig defaultConfig = new WaveformConfig();
         waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor", "Background:", ColorProperty.ColorType.SOLID, defaultConfig.getBgColor());
@@ -218,11 +242,24 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         waveformOutlineThickness = new IntegerProperty("Waveform.Waveform graphics.outlineWidth", "Outline width:", defaultConfig.getOutlineThickness(), 0, 24, 1);
 
         options = new ArrayList<>();
+        for (WaveformResolution res : WaveformResolution.values()) {
+            options.add(res.name());
+        }
+        waveformResolution = new ComboProperty("Waveform.Resolution.resolution", "Resolution:", options, 2, false);
+
+        options = new ArrayList<>();
         for (PlaylistTheme.Theme theme : PlaylistTheme.getAll()) {
             options.add(theme.name);
         }
         playlistTheme = new ComboProperty("UI.Playlist.theme", "Playlist theme:", options, 1, false);
 
-        return List.of(buttonSize, mediaPlayerControlAlignment, playlistControlAlignment, waveformBgColor, waveformFillColor, waveformOutlineColor, waveformOutlineThickness, playlistTheme);
+        return List.of(buttonSize,
+                controlAlignment,
+                waveformBgColor,
+                waveformFillColor,
+                waveformOutlineColor,
+                waveformOutlineThickness,
+                waveformResolution,
+                playlistTheme);
     }
 }

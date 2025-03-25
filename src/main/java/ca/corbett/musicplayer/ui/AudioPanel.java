@@ -10,10 +10,15 @@ import ca.corbett.musicplayer.audio.AudioUtil;
 
 import javax.sound.sampled.LineUnavailableException;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -27,6 +32,7 @@ public class AudioPanel extends JPanel {
     private final static Logger logger = Logger.getLogger(AudioPanel.class.getName());
     private MessageUtil messageUtil;
     private static AudioPanel instance;
+    private final Timer resizeTimer;
 
     public enum PanelState {
         IDLE, PLAYING
@@ -62,6 +68,21 @@ public class AudioPanel extends JPanel {
                 handleImagePanelClick(e);
             }
         });
+        imagePanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                resizeTimer.restart();
+            }
+        });
+
+        resizeTimer = new Timer(100, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                redrawWaveform();
+            }
+        });
+        resizeTimer.setRepeats(false);
+        resizeTimer.setCoalesce(false);
 
         // Misc:
         setPreferredSize(new Dimension(400, 188));
