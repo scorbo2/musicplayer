@@ -3,15 +3,12 @@ package ca.corbett.musicplayer.ui;
 import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.audio.PlaybackListener;
 import ca.corbett.extras.audio.PlaybackThread;
-import ca.corbett.extras.audio.WaveformConfig;
 import ca.corbett.extras.image.ImagePanel;
 import ca.corbett.extras.image.ImagePanelConfig;
-import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.audio.AudioData;
 import ca.corbett.musicplayer.audio.AudioUtil;
 
 import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -132,13 +129,19 @@ public class AudioPanel extends JPanel {
         panelListeners.remove(listener);
     }
 
-    public void setAudioData(AudioData data) throws UnsupportedAudioFileException, IOException {
+    public void setAudioData(AudioData data) {
+        if (data == null) {
+            stop();
+            audioData = null;
+            return;
+        }
+
         AudioPanelIdleAnimation.stop();
         if (panelState != PanelState.IDLE) {
             stop();
         }
-        audioData = data;
         waveformImage = data.getWaveformImage();
+        audioData = data;
         markPosition = 0f;
         playbackPosition = 0f;
         redrawWaveform();
@@ -158,7 +161,13 @@ public class AudioPanel extends JPanel {
             return;
         }
 
-        // Do nothing if no audio is loaded:
+        // If we already have AudioData loaded, just play it.
+        // Otherwise, ask our playlist for whatever is selected:
+        if (audioData == null) {
+            setAudioData(Playlist.getInstance().getSelected());
+        }
+
+        // If it's still null, we got nothing, so there's nothing to play:
         if (audioData == null) {
             return;
         }
@@ -275,18 +284,8 @@ public class AudioPanel extends JPanel {
             return;
         }
 
-        audioData.setWaveformConfig(buildWaveformPreferences()); // forces redraw
-        waveformImage = audioData.getWaveformImage();
+        waveformImage = audioData.regenerateWaveformImage(); // force redraw
         redrawWaveform();
-    }
-
-    private WaveformConfig buildWaveformPreferences() {
-        WaveformConfig config = new WaveformConfig();
-        config.setBgColor(AppConfig.getInstance().getWaveformBgColor());
-        config.setOutlineColor(AppConfig.getInstance().getWaveformOutlineColor());
-        config.setFillColor(AppConfig.getInstance().getWaveformFillColor());
-        config.setOutlineThickness(AppConfig.getInstance().getWaveformOutlineWidth());
-        return config;
     }
 
     /**

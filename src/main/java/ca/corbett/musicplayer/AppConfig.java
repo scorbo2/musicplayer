@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer;
 
 import ca.corbett.extensions.AppProperties;
+import ca.corbett.extras.audio.WaveformConfig;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.ComboProperty;
@@ -10,6 +11,7 @@ import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.AudioPanel;
 import ca.corbett.musicplayer.ui.ControlPanel;
 import ca.corbett.musicplayer.ui.Playlist;
+import ca.corbett.musicplayer.ui.PlaylistTheme;
 
 import java.awt.Color;
 import java.io.File;
@@ -45,6 +47,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ColorProperty waveformFillColor;
     private ColorProperty waveformOutlineColor;
     private IntegerProperty waveformOutlineThickness;
+    private ComboProperty playlistTheme; // TODO playlist theme? or app theme?
 
     public enum ButtonSize {
         XSMALL(16),
@@ -189,6 +192,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return waveformOutlineThickness.getValue();
     }
 
+    public PlaylistTheme.Theme getPlaylistTheme() {
+        return PlaylistTheme.getTheme(playlistTheme.getSelectedItem());
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         List<String> options = new ArrayList<>();
@@ -204,11 +211,18 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         mediaPlayerControlAlignment = new ComboProperty("UI.General.mediaControlAlignment", "Media controls:", options, 1, false);
         playlistControlAlignment = new ComboProperty("UI.General.playlistControlAlignment", "Playlist controls:", options, 1, false);
 
-        waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor", "Background:", ColorProperty.ColorType.SOLID);
-        waveformFillColor = new ColorProperty("Waveform.Waveform graphics.fillColor", "Fill:", ColorProperty.ColorType.SOLID);
-        waveformOutlineColor = new ColorProperty("Waveform.Waveform graphics.outlineColor", "Outline:", ColorProperty.ColorType.SOLID);
-        waveformOutlineThickness = new IntegerProperty("Waveform.Waveform graphics.outlineWidth", "Outline width:", 2, 0, 24, 1);
+        WaveformConfig defaultConfig = new WaveformConfig();
+        waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor", "Background:", ColorProperty.ColorType.SOLID, defaultConfig.getBgColor());
+        waveformFillColor = new ColorProperty("Waveform.Waveform graphics.fillColor", "Fill:", ColorProperty.ColorType.SOLID, defaultConfig.getFillColor());
+        waveformOutlineColor = new ColorProperty("Waveform.Waveform graphics.outlineColor", "Outline:", ColorProperty.ColorType.SOLID, defaultConfig.getOutlineColor());
+        waveformOutlineThickness = new IntegerProperty("Waveform.Waveform graphics.outlineWidth", "Outline width:", defaultConfig.getOutlineThickness(), 0, 24, 1);
 
-        return List.of(buttonSize, mediaPlayerControlAlignment, playlistControlAlignment, waveformBgColor, waveformFillColor, waveformOutlineColor, waveformOutlineThickness);
+        options = new ArrayList<>();
+        for (PlaylistTheme.Theme theme : PlaylistTheme.getAll()) {
+            options.add(theme.name);
+        }
+        playlistTheme = new ComboProperty("UI.Playlist.theme", "Playlist theme:", options, 1, false);
+
+        return List.of(buttonSize, mediaPlayerControlAlignment, playlistControlAlignment, waveformBgColor, waveformFillColor, waveformOutlineColor, waveformOutlineThickness, playlistTheme);
     }
 }

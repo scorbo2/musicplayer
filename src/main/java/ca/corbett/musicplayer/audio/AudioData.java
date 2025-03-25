@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer.audio;
 
 import ca.corbett.extras.audio.WaveformConfig;
+import ca.corbett.musicplayer.AppConfig;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -21,14 +22,10 @@ public class AudioData {
     private final int[][] rawData;
     private final File sourceFile;
     private BufferedImage waveformImage;
-    private WaveformConfig waveformConfig;
 
     public AudioData(int[][] rawData, File sourceFile) {
         this.rawData = rawData;
         this.sourceFile = sourceFile;
-        waveformConfig = new WaveformConfig();
-        waveformConfig.setXLimit(1000);
-        waveformConfig.setXScale(768);
     }
 
     public int[][] getRawData() {
@@ -39,22 +36,33 @@ public class AudioData {
         return sourceFile;
     }
 
-    public void setWaveformConfig(WaveformConfig config) {
-        waveformConfig = config;
-        if (waveformImage != null) {
-            waveformImage = generateWaveformImage(rawData, waveformConfig);
-        }
-    }
-
     public BufferedImage getWaveformImage() {
         if (waveformImage == null) {
-            waveformImage = generateWaveformImage(rawData, waveformConfig);
+            waveformImage = generateWaveformImage(rawData);
         }
         return waveformImage;
     }
 
-    private static BufferedImage generateWaveformImage(int[][] audioData, WaveformConfig config) {
+    /**
+     * Force a regeneration of our waveform image. Useful if app preferences
+     * have changed and the waveform config (colors, background, etc) have changed.
+     *
+     * @return A BufferedImage representing audio data for our clip.
+     */
+    public BufferedImage regenerateWaveformImage() {
+        waveformImage = null;
+        return getWaveformImage();
+    }
+
+    private static BufferedImage generateWaveformImage(int[][] audioData) {
         BufferedImage waveform = null;
+        WaveformConfig config = new WaveformConfig();
+        config.setXLimit(1000);
+        config.setXScale(768);
+        config.setBgColor(AppConfig.getInstance().getWaveformBgColor());
+        config.setFillColor(AppConfig.getInstance().getWaveformFillColor());
+        config.setOutlineColor(AppConfig.getInstance().getWaveformOutlineColor());
+        config.setOutlineThickness(AppConfig.getInstance().getWaveformOutlineWidth());
 
         if (audioData == null) {
             return waveform;

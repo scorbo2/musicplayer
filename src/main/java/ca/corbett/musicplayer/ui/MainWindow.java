@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.image.ImageUtil;
+import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 
 import javax.swing.JFrame;
@@ -67,6 +68,8 @@ public class MainWindow extends JFrame {
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (visible) {
+            AppConfig.getInstance().load();
+            
             Insets insets = this.getInsets();
             compactViewHeight = mediaPanel.getHeight() +
                     mediaPanel.getInsets().top +

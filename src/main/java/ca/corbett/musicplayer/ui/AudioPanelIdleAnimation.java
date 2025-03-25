@@ -12,25 +12,38 @@ import java.awt.image.BufferedImage;
 
 public class AudioPanelIdleAnimation {
 
-    private static AnimationThread thread;
+    private static Animation runningThread;
+
+    // TODO have a few stock ones and allow extensions to supply some just for fun
+    private static final Animation GENERIC_READY_ANIMATION = new GenericReadyAnimation("Matrix");
 
     public static void go() {
-        if (thread != null) {
+        if (runningThread != null) {
             return;
         }
-        thread = new AnimationThread();
-        new Thread(thread).start();
+        runningThread = GENERIC_READY_ANIMATION;
+        new Thread(runningThread).start();
     }
 
     public static void stop() {
-        if (thread == null) {
+        if (runningThread == null) {
             return;
         }
-        thread.stop();
-        thread = null;
+        runningThread.stop();
+        runningThread = null;
     }
 
-    private static class AnimationThread implements Runnable {
+    public static abstract class Animation implements Runnable {
+        public final String name;
+
+        public Animation(String name) {
+            this.name = name;
+        }
+
+        public abstract void stop();
+    }
+
+    private static class GenericReadyAnimation extends Animation {
 
         public static final int WIDTH = 400;
         public static final int HEIGHT = 225;
@@ -39,7 +52,8 @@ public class AudioPanelIdleAnimation {
         private final GradientConfig gradient2;
         int x = 0;
 
-        public AnimationThread() {
+        public GenericReadyAnimation(String name) {
+            super(name);
             gradient1 = new GradientConfig();
             gradient1.setColor1(Color.BLACK);
             gradient1.setColor2(Color.BLUE);
@@ -50,6 +64,7 @@ public class AudioPanelIdleAnimation {
             gradient2.setGradientType(GradientUtil.GradientType.HORIZONTAL_LINEAR);
         }
 
+        @Override
         public void stop() {
             isRunning = false;
         }
