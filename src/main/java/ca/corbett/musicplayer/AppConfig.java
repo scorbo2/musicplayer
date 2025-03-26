@@ -6,6 +6,7 @@ import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.BooleanProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.ComboProperty;
+import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
@@ -40,13 +41,13 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private static AppConfig instance;
     public static final File PROPS_FILE;
 
-    private ComboProperty buttonSize;
-    private ComboProperty controlAlignment;
+    private EnumProperty<ButtonSize> buttonSize;
+    private EnumProperty<ControlAlignment> controlAlignment;
     private ColorProperty waveformBgColor;
     private ColorProperty waveformFillColor;
     private ColorProperty waveformOutlineColor;
     private IntegerProperty waveformOutlineThickness;
-    private ComboProperty waveformResolution;
+    private EnumProperty<WaveformResolution> waveformResolution;
     private ComboProperty playlistTheme;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
@@ -70,28 +71,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         public int getButtonSize() {
             return buttonSize;
         }
-
-        public static ButtonSize fromString(String name) {
-            for (ButtonSize size : values()) {
-                if (size.name().equals(name)) {
-                    return size;
-                }
-            }
-            return LARGE; // arbitrary default in case of garbage data
-        }
     }
 
     public enum ControlAlignment {
         LEFT, CENTER, RIGHT;
-
-        public static ControlAlignment fromString(String name) {
-            for (ControlAlignment alignment : values()) {
-                if (alignment.name().equals(name)) {
-                    return alignment;
-                }
-            }
-            return CENTER; // arbitrary default in case of garbage data
-        }
     }
 
     public enum WaveformResolution {
@@ -108,15 +91,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         public int getXLimit() {
             return xLimit;
-        }
-
-        public static WaveformResolution fromString(String name) {
-            for (WaveformResolution res : values()) {
-                if (res.name().equals(name)) {
-                    return res;
-                }
-            }
-            return HIGH; // arbitrary default in case of garbage data
         }
     }
 
@@ -169,27 +143,19 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     public void setButtonSize(ButtonSize newSize) {
-        buttonSize.setSelectedItem(newSize.name());
-    }
-
-    public void setButtonSize(String newSize) {
         buttonSize.setSelectedItem(newSize);
     }
 
     public ButtonSize getButtonSize() {
-        return ButtonSize.fromString(buttonSize.getSelectedItem());
+        return buttonSize.getSelectedItem();
     }
 
     public void setControlAlignment(ControlAlignment alignment) {
-        controlAlignment.setSelectedItem(alignment.name());
-    }
-
-    public void setControlAlignment(String alignment) {
         controlAlignment.setSelectedItem(alignment);
     }
 
     public ControlAlignment getControlAlignment() {
-        return ControlAlignment.fromString(controlAlignment.getSelectedItem());
+        return controlAlignment.getSelectedItem();
     }
 
     public void setWaveformBgColor(Color color) {
@@ -225,15 +191,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     public void setWaveformResolution(WaveformResolution resolution) {
-        waveformResolution.setSelectedItem(resolution.name());
-    }
-
-    public void setWaveformResolution(String resolution) {
         waveformResolution.setSelectedItem(resolution);
     }
 
     public WaveformResolution getWaveformResolution() {
-        return WaveformResolution.fromString(waveformResolution.getSelectedItem());
+        return waveformResolution.getSelectedItem();
     }
 
     public AppTheme.Theme getAppTheme() {
@@ -282,17 +244,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     @Override
     protected List<AbstractProperty> createInternalProperties() {
-        List<String> options = new ArrayList<>();
-        for (ButtonSize size : ButtonSize.values()) {
-            options.add(size.name());
-        }
-        buttonSize = new ComboProperty("UI.General.buttonSize", "Control size:", options, 3, false);
-
-        options = new ArrayList<>();
-        for (ControlAlignment alignment : ControlAlignment.values()) {
-            options.add(alignment.name());
-        }
-        controlAlignment = new ComboProperty("UI.General.controlAlignment", "Control alignment:", options, 1, false);
+        buttonSize = new EnumProperty<ButtonSize>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
+        controlAlignment = new EnumProperty<ControlAlignment>("UI.General.controlAlignment", "Control alignment:", ControlAlignment.CENTER);
 
         WaveformConfig defaultConfig = new WaveformConfig();
         waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor", "Background:", ColorProperty.ColorType.SOLID, defaultConfig.getBgColor());
@@ -300,11 +253,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         waveformOutlineColor = new ColorProperty("Waveform.Waveform graphics.outlineColor", "Outline:", ColorProperty.ColorType.SOLID, defaultConfig.getOutlineColor());
         waveformOutlineThickness = new IntegerProperty("Waveform.Waveform graphics.outlineWidth", "Outline width:", defaultConfig.getOutlineThickness(), 0, 24, 1);
 
-        options = new ArrayList<>();
+        List<String> options = new ArrayList<>();
         for (WaveformResolution res : WaveformResolution.values()) {
             options.add(res.name());
         }
-        waveformResolution = new ComboProperty("Waveform.Resolution.resolution", "Resolution:", options, 2, false);
+        waveformResolution = new EnumProperty<WaveformResolution>("Waveform.Resolution.resolution", "Resolution:", WaveformResolution.HIGH);
 
         options = new ArrayList<>();
         for (AppTheme.Theme theme : AppTheme.getAll()) {
