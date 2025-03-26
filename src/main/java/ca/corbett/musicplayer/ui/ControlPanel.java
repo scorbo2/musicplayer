@@ -3,16 +3,16 @@ package ca.corbett.musicplayer.ui;
 import ca.corbett.extras.MessageUtil;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.AppConfig;
+import ca.corbett.musicplayer.actions.ReloadUIAction;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.logging.Logger;
 
-public class ControlPanel extends JPanel {
+public class ControlPanel extends JPanel implements UIReloadable {
 
     private final static Logger logger = Logger.getLogger(ControlPanel.class.getName());
 
@@ -21,6 +21,7 @@ public class ControlPanel extends JPanel {
 
     private ControlPanel() {
         rebuildControls();
+        ReloadUIAction.getInstance().registerReloadable(this);
     }
 
     public static ControlPanel getInstance() {
@@ -31,9 +32,14 @@ public class ControlPanel extends JPanel {
         return instance;
     }
 
+    @Override
+    public void reloadUI() {
+        rebuildControls();
+    }
+
     public void rebuildControls() {
         removeAll();
-        setBackground(Color.GRAY);
+        setBackground(AppConfig.getInstance().getAppTheme().dialogBgColor);
         setLayout(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
 

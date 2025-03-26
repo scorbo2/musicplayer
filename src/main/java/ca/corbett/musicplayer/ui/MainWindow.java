@@ -22,17 +22,21 @@ public class MainWindow extends JFrame {
 
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());
 
+    private static final int MIN_WIDTH = 420;
+    private static final int MIN_HEIGHT = 220;
+
     private static MainWindow instance;
     private MessageUtil messageUtil;
     private boolean playlistVisible = false;
     int compactViewHeight = 250;
-    int expandedViewHeight = 450;
-    private JPanel mediaPanel;
+    int expandedViewHeightDelta = 250;
+    private final JPanel mediaPanel;
 
     private MainWindow() {
         super(Version.FULL_NAME);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(new Dimension(420, compactViewHeight));
+        setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         setLayout(new BorderLayout());
 
         mediaPanel = new JPanel();
@@ -48,17 +52,19 @@ public class MainWindow extends JFrame {
             remove(mediaPanel);
             remove(Playlist.getInstance());
             int audioPanelHeight = AudioPanel.getInstance().getHeight();
-            setSize(new Dimension(getWidth(), compactViewHeight));
+            setSize(new Dimension(getWidth(), getHeight() - expandedViewHeightDelta));
             AudioPanel.getInstance().setPreferredSize(new Dimension(1, audioPanelHeight));
+            setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
             add(mediaPanel, BorderLayout.CENTER);
             playlistVisible = false;
         } else {
             remove(mediaPanel);
             int audioPanelHeight = AudioPanel.getInstance().getHeight();
-            setSize(new Dimension(getWidth(), expandedViewHeight));
+            setSize(new Dimension(getWidth(), getHeight() + expandedViewHeightDelta));
             AudioPanel.getInstance().setPreferredSize(new Dimension(1, audioPanelHeight));
             add(mediaPanel, BorderLayout.NORTH);
             add(Playlist.getInstance(), BorderLayout.CENTER);
+            setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT + expandedViewHeightDelta));
             playlistVisible = true;
         }
         rejigger(this);

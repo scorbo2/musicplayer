@@ -5,6 +5,7 @@ import ca.corbett.extras.audio.PlaybackListener;
 import ca.corbett.extras.audio.PlaybackThread;
 import ca.corbett.extras.image.ImagePanel;
 import ca.corbett.extras.image.ImagePanelConfig;
+import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
 import ca.corbett.musicplayer.audio.AudioUtil;
 
@@ -27,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class AudioPanel extends JPanel {
+public class AudioPanel extends JPanel implements UIReloadable {
 
     private final static Logger logger = Logger.getLogger(AudioPanel.class.getName());
     private MessageUtil messageUtil;
@@ -113,6 +114,9 @@ public class AudioPanel extends JPanel {
 
         // Lay out the UI:
         initComponents();
+
+        // Register to receive reloadUI events:
+        ReloadUIAction.getInstance().registerReloadable(this);
     }
 
     public static AudioPanel getInstance() {
@@ -166,6 +170,7 @@ public class AudioPanel extends JPanel {
         markPosition = 0f;
         playbackPosition = 0f;
         redrawWaveform();
+        NowPlayingPanel.getInstance().setNowPlaying(data);
         fireAudioLoadedEvent();
     }
 
@@ -263,6 +268,7 @@ public class AudioPanel extends JPanel {
     private void initComponents() {
         setLayout(new BorderLayout());
         add(imagePanel, BorderLayout.CENTER);
+        add(NowPlayingPanel.getInstance(), BorderLayout.NORTH);
     }
 
     /**
@@ -295,6 +301,11 @@ public class AudioPanel extends JPanel {
         audioData = null;
         waveformImage = null;
         redrawWaveform();
+    }
+
+    @Override
+    public void reloadUI() {
+        regenerateWaveformImage();
     }
 
     public void regenerateWaveformImage() {

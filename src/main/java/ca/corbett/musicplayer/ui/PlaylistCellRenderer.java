@@ -12,12 +12,12 @@ public class PlaylistCellRenderer extends JLabel implements ListCellRenderer<Fil
     @Override
     public Component getListCellRendererComponent(JList<? extends File> list, File value, int index, boolean isSelected, boolean cellHasFocus) {
         if (isSelected) {
-            setBackground(AppConfig.getInstance().getPlaylistTheme().selectedBgColor);
-            setForeground(AppConfig.getInstance().getPlaylistTheme().selectedFgColor);
+            setBackground(AppConfig.getInstance().getAppTheme().selectedBgColor);
+            setForeground(AppConfig.getInstance().getAppTheme().selectedFgColor);
         }
         else {
-            setBackground(AppConfig.getInstance().getPlaylistTheme().bgColor);
-            setForeground(AppConfig.getInstance().getPlaylistTheme().fgColor);
+            setBackground(AppConfig.getInstance().getAppTheme().normalBgColor);
+            setForeground(AppConfig.getInstance().getAppTheme().normalFgColor);
         }
         setOpaque(true);
         setText(value.getName());

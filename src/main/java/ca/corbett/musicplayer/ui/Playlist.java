@@ -3,12 +3,11 @@ package ca.corbett.musicplayer.ui;
 import ca.corbett.extras.MessageUtil;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.AppConfig;
+import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
 import ca.corbett.musicplayer.audio.AudioUtil;
 
 import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -16,16 +15,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.logging.Logger;
 
-public class Playlist extends JPanel {
+public class Playlist extends JPanel implements UIReloadable {
 
     private static final Logger logger = Logger.getLogger(Playlist.class.getName());
     private static Playlist instance;
@@ -37,7 +33,6 @@ public class Playlist extends JPanel {
     protected Playlist() {
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridBagLayout());
-        buttonPanel.setBackground(Color.GRAY);
 
         fileListModel = new DefaultListModel<>();
         fileList = new JList<>(fileListModel);
@@ -45,6 +40,7 @@ public class Playlist extends JPanel {
         fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         initComponents();
+        ReloadUIAction.getInstance().registerReloadable(this);
     }
 
     public static Playlist getInstance() {
@@ -88,8 +84,14 @@ public class Playlist extends JPanel {
         add(buildListPanel(), BorderLayout.CENTER);
     }
 
+    @Override
+    public void reloadUI() {
+        rebuildControls();
+    }
+
     public void rebuildControls() {
-        fileList.setBackground(AppConfig.getInstance().getPlaylistTheme().bgColor);
+        buttonPanel.setBackground(AppConfig.getInstance().getAppTheme().dialogBgColor);
+        fileList.setBackground(AppConfig.getInstance().getAppTheme().normalBgColor);
 
         buttonPanel.removeAll();
         GridBagConstraints constraints = new GridBagConstraints();
@@ -126,7 +128,7 @@ public class Playlist extends JPanel {
         constraints.insets = new Insets(0, 0, 0, 0);
         buttonPanel.add(spacer, constraints);
 
-        MainWindow.rejigger(buttonPanel);
+        MainWindow.rejigger(this);
     }
 
     protected JComponent buildListPanel() {
@@ -137,23 +139,6 @@ public class Playlist extends JPanel {
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
-    }
-
-    private JButton buildButton(Actions.MPAction action) {
-        int btnSize = AppConfig.getInstance().getButtonSize().getButtonSize();
-        int iconSize = btnSize - 2; // small margin for icon to fit within button
-        JButton button = new JButton(action.action);
-        button.setText("");
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.setPreferredSize(new Dimension(btnSize, btnSize));
-        BufferedImage iconImage = MainWindow.getInstance().loadIconResource(action.iconResource, iconSize, iconSize);
-        ImageIcon icon = new ImageIcon(iconImage, action.description);
-        button.setIcon(icon);
-        button.setToolTipText(action.description);
-
-        return button;
     }
 
     private MessageUtil getMessageUtil() {

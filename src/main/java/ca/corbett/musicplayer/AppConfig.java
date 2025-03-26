@@ -6,12 +6,10 @@ import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.ComboProperty;
 import ca.corbett.extras.properties.IntegerProperty;
+import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
-import ca.corbett.musicplayer.ui.AudioPanel;
-import ca.corbett.musicplayer.ui.ControlPanel;
-import ca.corbett.musicplayer.ui.Playlist;
-import ca.corbett.musicplayer.ui.PlaylistTheme;
+import ca.corbett.musicplayer.ui.AppTheme;
 
 import java.awt.Color;
 import java.io.File;
@@ -129,6 +127,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         super(Version.FULL_NAME, PROPS_FILE, MusicPlayerExtensionManager.getInstance());
     }
 
+    @Override
+    public void load() {
+        super.load();
+        ReloadUIAction.getInstance().actionPerformed(null);
+    }
+
     /**
      * Overridden here so we can update our UI elements when the user has made
      * changes in the preferences dialog.
@@ -136,9 +140,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     @Override
     public void save() {
         super.save();
-        ControlPanel.getInstance().rebuildControls();
-        Playlist.getInstance().rebuildControls();
-        AudioPanel.getInstance().regenerateWaveformImage();
+        ReloadUIAction.getInstance().actionPerformed(null);
     }
 
     public static AppConfig getInstance() {
@@ -217,8 +219,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return WaveformResolution.fromString(waveformResolution.getSelectedItem());
     }
 
-    public PlaylistTheme.Theme getPlaylistTheme() {
-        return PlaylistTheme.getTheme(playlistTheme.getSelectedItem());
+    public AppTheme.Theme getAppTheme() {
+        return AppTheme.getTheme(playlistTheme.getSelectedItem());
     }
 
     @Override
@@ -248,7 +250,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         waveformResolution = new ComboProperty("Waveform.Resolution.resolution", "Resolution:", options, 2, false);
 
         options = new ArrayList<>();
-        for (PlaylistTheme.Theme theme : PlaylistTheme.getAll()) {
+        for (AppTheme.Theme theme : AppTheme.getAll()) {
             options.add(theme.name);
         }
         playlistTheme = new ComboProperty("UI.Playlist.theme", "Playlist theme:", options, 1, false);

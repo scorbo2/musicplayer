@@ -18,6 +18,9 @@ import java.util.logging.Logger;
  * TODO this is a copy+paste from swing-extras so I can muck with it.
  * If these changes prove useful, backport them to swing-extras.
  * But if it diverges too much and gets too specific, maybe just keep it here.
+ *
+ * @author scorbo2
+ * @since 2025-03-23 (copy+paste+modified from AudioUtil)
  */
 public class AudioUtil {
 
@@ -26,20 +29,39 @@ public class AudioUtil {
     private AudioUtil() {
     }
 
+    /**
+     * Load an AudioData object from the given source file. This implementation is a bit goofy
+     * and I'm not happy with it, but it goes like this:
+     * <ol>
+     *     <li>If the file is a wav file, just load the audio data and we're done.</li>
+     *     <li>If it's an mp3, convert it to wav and write the wav to the system temp dir.</li>
+     *     <li>Then, load the audio data from that temp file and delete the temp file.</li>
+     * </ol>
+     * The end result is an AudioData object containing the raw audio data. This is horribly
+     * inefficient memory-wise but it allows waveform generation and the ability to click
+     * in the waveform panel to start playing from whatever location, which I can't seem to
+     * figure out how to do with mp3spi and/or jlayer. But I'm sure it's possible,
+     * so TODO revisit this and smarten this up.
+     * Also, I'm making assumptions about input wave format that probably need checking.
+     *
+     * @param sourceFile The File containing the audio data. Must be in a supported format.
+     * @return An instance of AudioData which will be partially populated (lazy loading on some stuff).
+     * @throws UnsupportedAudioFileException Officially we support wav and mp3 but there's probably others not tested.
+     * @throws IOException                   In case of i/o error.
+     */
     public static AudioData load(File sourceFile) throws UnsupportedAudioFileException, IOException {
-        boolean wasConverted = false;
+        File convertedFile = null;
         if (sourceFile.getName().toLowerCase().endsWith(".mp3")) {
             AudioInputStream sourceStream = AudioSystem.getAudioInputStream(sourceFile);
-            sourceFile = convert(sourceStream);
-            if (sourceFile == null) {
+            convertedFile = convert(sourceStream);
+            if (convertedFile == null) {
                 throw new IOException("Decode mp3 failed!");
             }
-            wasConverted = true;
         }
-        AudioInputStream inputStream = AudioSystem.getAudioInputStream(sourceFile);
+        AudioInputStream inputStream = AudioSystem.getAudioInputStream(convertedFile == null ? sourceFile : convertedFile);
 
         int frameLength = (int) inputStream.getFrameLength();
-        int frameSize = (int) inputStream.getFormat().getFrameSize();
+        int frameSize = inputStream.getFormat().getFrameSize();
 
         // Odd NegativeArraySize exception can be thrown below, see AREC-10:
         if (frameLength < 0 || frameSize < 0 || (frameLength * frameSize) < 0) {
@@ -47,10 +69,10 @@ public class AudioUtil {
         }
 
         byte[] byteArray = new byte[frameLength * frameSize];
-        int result = inputStream.read(byteArray);
+        inputStream.read(byteArray);
 
-        if (wasConverted) {
-            sourceFile.delete();
+        if (convertedFile != null) {
+            convertedFile.delete();
         }
 
         // Now split that byte array into channels and proper samples (assuming 16 bit samples here):
@@ -59,8 +81,8 @@ public class AudioUtil {
         int sampleIndex = 0;
         for (int t = 0; t < byteArray.length; ) {
             for (int channel = 0; channel < numChannels; channel++) {
-                int lowByte = (int) byteArray[t++];
-                int highByte = (int) byteArray[t++];
+                int lowByte = byteArray[t++];
+                int highByte = byteArray[t++];
                 int sample = (highByte << 8) | (lowByte & 0x00ff);
                 audioData[channel][sampleIndex] = sample;
             }
