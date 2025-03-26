@@ -9,6 +9,9 @@ import java.awt.event.ActionEvent;
 public class SettingsAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
-        AppConfig.getInstance().showPropertiesDialog(MainWindow.getInstance());
+        if (AppConfig.getInstance().showPropertiesDialog(MainWindow.getInstance())) {
+            // User OK'd the dialog, reload the UI:
+            ReloadUIAction.getInstance().actionPerformed(null);
+        }
     }
 }

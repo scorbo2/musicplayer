@@ -114,26 +114,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         ReloadUIAction.getInstance().actionPerformed(null);
     }
 
-    /**
-     * Overridden here so we can update our UI elements when the user has made
-     * changes in the preferences dialog.
-     */
-    @Override
-    public void save() {
-        save(true);
-    }
-
-    public void saveWithoutUIReload() {
-        save(false);
-    }
-
-    protected void save(boolean reloadUI) {
-        super.save();
-        if (reloadUI) {
-            ReloadUIAction.getInstance().actionPerformed(null);
-        }
-    }
-
     public static AppConfig getInstance() {
         if (instance == null) {
             instance = new AppConfig();

@@ -86,7 +86,7 @@ public class MainWindow extends JFrame {
 
         if (saveNewState) {
             AppConfig.getInstance().setPlaylistVisible(playlistVisible);
-            AppConfig.getInstance().saveWithoutUIReload();
+            AppConfig.getInstance().save();
         }
     }
 
@@ -153,7 +153,7 @@ public class MainWindow extends JFrame {
         AppConfig.getInstance().setWindowWidth(getWidth());
         AppConfig.getInstance().setWindowHeight(getHeight());
         AppConfig.getInstance().setPlaylistVisible(playlistVisible);
-        AppConfig.getInstance().saveWithoutUIReload();
+        AppConfig.getInstance().save();
     }
 
     private void loadWindowState() {
