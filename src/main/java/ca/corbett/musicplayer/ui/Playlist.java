@@ -8,6 +8,7 @@ import ca.corbett.musicplayer.audio.AudioData;
 import ca.corbett.musicplayer.audio.AudioUtil;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -15,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -55,8 +57,24 @@ public class Playlist extends JPanel implements UIReloadable {
         fileListModel.addElement(file);
     }
 
+    public void removeSelected() {
+        if (fileList.getSelectedIndex() != -1) {
+            fileListModel.removeElementAt(fileList.getSelectedIndex());
+        }
+    }
+
     public void clear() {
         fileListModel.clear();
+    }
+
+    public void toggleShuffle() {
+        AppConfig.getInstance().setShuffleEnabled(!AppConfig.getInstance().isShuffleEnabled());
+        AppConfig.getInstance().save();
+    }
+
+    public void toggleRepeat() {
+        AppConfig.getInstance().setRepeatEnabled(!AppConfig.getInstance().isRepeatEnabled());
+        AppConfig.getInstance().save();
     }
 
     public AudioData getSelected() {
@@ -84,6 +102,10 @@ public class Playlist extends JPanel implements UIReloadable {
         add(buildListPanel(), BorderLayout.CENTER);
     }
 
+    /**
+     * Rebuild our controls and repaint everything in the event that extensions have been
+     * enabled/disabled or app preferences have changed.
+     */
     @Override
     public void reloadUI() {
         rebuildControls();
@@ -116,7 +138,23 @@ public class Playlist extends JPanel implements UIReloadable {
         constraints.weighty = 0;
 
         for (Actions.MPAction action : Actions.getPlaylistActions()) {
-            buttonPanel.add(Actions.buildButton(action), constraints);
+            JButton button = Actions.buildButton(action);
+            buttonPanel.add(button, constraints);
+
+            // Special case our toggle buttons:
+            if (button.getName().equalsIgnoreCase("shuffle")) {
+                if (AppConfig.getInstance().isShuffleEnabled()) {
+                    button.setContentAreaFilled(true);
+                    button.setBackground(getDarkerColor(AppConfig.getInstance().getAppTheme().dialogBgColor));
+                }
+            }
+            if (button.getName().equalsIgnoreCase("repeat")) {
+                if (AppConfig.getInstance().isRepeatEnabled()) {
+                    button.setContentAreaFilled(true);
+                    button.setBackground(getDarkerColor(AppConfig.getInstance().getAppTheme().dialogBgColor));
+                }
+            }
+
             constraints.gridx++;
         }
 
@@ -129,6 +167,22 @@ public class Playlist extends JPanel implements UIReloadable {
         buttonPanel.add(spacer, constraints);
 
         MainWindow.rejigger(this);
+    }
+
+    /**
+     * Returns a slightly darker shade of whatever color you supply.
+     * I'm trying to make toggle buttons look like toggle buttons, but this
+     * is a bit wonky. Yeah, I know JToggleButton is a thing but I don't
+     * want to have borders on these toolbar buttons.
+     *
+     * @param input Any color.
+     * @return A slightly darker shade of that color.
+     */
+    private Color getDarkerColor(Color input) {
+        int red = Math.max(input.getRed() - 35, 0);
+        int green = Math.max(input.getGreen() - 35, 0);
+        int blue = Math.max(input.getBlue() - 35, 0);
+        return new Color(red, green, blue);
     }
 
     protected JComponent buildListPanel() {

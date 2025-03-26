@@ -32,6 +32,10 @@ public class ControlPanel extends JPanel implements UIReloadable {
         return instance;
     }
 
+    /**
+     * Rebuild our controls and repaint everything in the event that extensions have been
+     * enabled/disabled or app preferences have changed.
+     */
     @Override
     public void reloadUI() {
         rebuildControls();

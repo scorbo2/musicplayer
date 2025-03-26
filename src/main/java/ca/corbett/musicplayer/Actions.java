@@ -129,6 +129,7 @@ public final class Actions {
         int btnSize = AppConfig.getInstance().getButtonSize().getButtonSize();
         int iconSize = btnSize - 2; // small margin for icon to fit within button
         JButton button = new JButton(action.action);
+        button.setName(action.name);
         button.setText("");
         button.setFocusPainted(false);
         button.setBorderPainted(false);

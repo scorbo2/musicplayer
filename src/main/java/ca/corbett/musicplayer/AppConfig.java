@@ -3,6 +3,7 @@ package ca.corbett.musicplayer;
 import ca.corbett.extensions.AppProperties;
 import ca.corbett.extras.audio.WaveformConfig;
 import ca.corbett.extras.properties.AbstractProperty;
+import ca.corbett.extras.properties.BooleanProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.ComboProperty;
 import ca.corbett.extras.properties.IntegerProperty;
@@ -45,7 +46,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ColorProperty waveformOutlineColor;
     private IntegerProperty waveformOutlineThickness;
     private ComboProperty waveformResolution;
-    private ComboProperty playlistTheme; // TODO playlist theme? or app theme?
+    private ComboProperty playlistTheme;
+    private BooleanProperty shuffleEnabled;
+    private BooleanProperty repeatEnabled;
 
     public enum ButtonSize {
         XSMALL(16),
@@ -223,6 +226,22 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return AppTheme.getTheme(playlistTheme.getSelectedItem());
     }
 
+    public boolean isShuffleEnabled() {
+        return shuffleEnabled.getValue();
+    }
+
+    public void setShuffleEnabled(boolean enabled) {
+        shuffleEnabled.setValue(enabled);
+    }
+
+    public boolean isRepeatEnabled() {
+        return repeatEnabled.getValue();
+    }
+
+    public void setRepeatEnabled(boolean enabled) {
+        repeatEnabled.setValue(enabled);
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         List<String> options = new ArrayList<>();
@@ -255,6 +274,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
         playlistTheme = new ComboProperty("UI.Playlist.theme", "Playlist theme:", options, 1, false);
 
+        shuffleEnabled = new BooleanProperty("hidden.props.shuffleEnabled", "shuffleEnabled", false);
+        repeatEnabled = new BooleanProperty("hidden.props.repeatEnabled", "repeatEnabled", false);
+        shuffleEnabled.setExposed(false);
+        repeatEnabled.setExposed(false);
+
         return List.of(buttonSize,
                 controlAlignment,
                 waveformBgColor,
@@ -262,6 +286,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 waveformOutlineColor,
                 waveformOutlineThickness,
                 waveformResolution,
-                playlistTheme);
+                playlistTheme,
+                shuffleEnabled,
+                repeatEnabled);
     }
 }
