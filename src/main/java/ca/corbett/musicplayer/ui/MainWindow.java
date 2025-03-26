@@ -8,10 +8,12 @@ import ca.corbett.musicplayer.Version;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -22,22 +24,35 @@ public class MainWindow extends JFrame {
 
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());
 
+    public static final int DEFAULT_WIDTH = 420;
+    public static final int DEFAULT_HEIGHT = 250;
+    public static final int DEFAULT_PLAYLIST_HEIGHT = 250;
+
     private static final int MIN_WIDTH = 420;
     private static final int MIN_HEIGHT = 220;
 
     private static MainWindow instance;
     private MessageUtil messageUtil;
     private boolean playlistVisible = false;
-    int compactViewHeight = 250;
-    int expandedViewHeightDelta = 250;
+    final int expandedViewHeightDelta = DEFAULT_PLAYLIST_HEIGHT;
     private final JPanel mediaPanel;
+    private final Timer resizeTimer;
 
     private MainWindow() {
         super(Version.FULL_NAME);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(new Dimension(420, compactViewHeight));
+        setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         setLayout(new BorderLayout());
+        resizeTimer = new Timer(250, e -> saveWindowState());
+        resizeTimer.setRepeats(false);
+        resizeTimer.setCoalesce(false);
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                resizeTimer.restart();
+            }
+        });
 
         mediaPanel = new JPanel();
         mediaPanel.setLayout(new BorderLayout());
@@ -47,41 +62,46 @@ public class MainWindow extends JFrame {
         //add(Playlist.getInstance(), BorderLayout.CENTER);
     }
 
-    public void togglePlaylistVisible() {
+    public void togglePlaylistVisible(boolean saveNewState) {
+        int oldHeight = getHeight();
+        int audioPanelHeight = AudioPanel.getInstance().getHeight();
         if (playlistVisible) {
             remove(mediaPanel);
             remove(Playlist.getInstance());
-            int audioPanelHeight = AudioPanel.getInstance().getHeight();
-            setSize(new Dimension(getWidth(), getHeight() - expandedViewHeightDelta));
+            //setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
+            setSize(new Dimension(getWidth(), oldHeight - expandedViewHeightDelta));
             AudioPanel.getInstance().setPreferredSize(new Dimension(1, audioPanelHeight));
-            setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
             add(mediaPanel, BorderLayout.CENTER);
             playlistVisible = false;
         } else {
             remove(mediaPanel);
-            int audioPanelHeight = AudioPanel.getInstance().getHeight();
-            setSize(new Dimension(getWidth(), getHeight() + expandedViewHeightDelta));
+            setSize(new Dimension(getWidth(), oldHeight + expandedViewHeightDelta));
             AudioPanel.getInstance().setPreferredSize(new Dimension(1, audioPanelHeight));
             add(mediaPanel, BorderLayout.NORTH);
             add(Playlist.getInstance(), BorderLayout.CENTER);
-            setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT + expandedViewHeightDelta));
+            //setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT + expandedViewHeightDelta));
             playlistVisible = true;
         }
         rejigger(this);
+
+        if (saveNewState) {
+            AppConfig.getInstance().setPlaylistVisible(playlistVisible);
+            AppConfig.getInstance().saveWithoutUIReload();
+        }
     }
 
+    /**
+     * Overridden here so we can load our app config settings and
+     * start the "idle" animation.
+     *
+     * @param visible If true, the MainWindow will be shown and the app will begin.
+     */
     @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (visible) {
             AppConfig.getInstance().load();
-            
-            Insets insets = this.getInsets();
-            compactViewHeight = mediaPanel.getHeight() +
-                    mediaPanel.getInsets().top +
-                    mediaPanel.getInsets().bottom +
-                    insets.top +
-                    insets.bottom;
+            loadWindowState();
             AudioPanelIdleAnimation.go();
         }
     }
@@ -127,6 +147,20 @@ public class MainWindow extends JFrame {
                 jiggy.repaint();
             }
         });
+    }
+
+    private void saveWindowState() {
+        AppConfig.getInstance().setWindowWidth(getWidth());
+        AppConfig.getInstance().setWindowHeight(getHeight());
+        AppConfig.getInstance().setPlaylistVisible(playlistVisible);
+        AppConfig.getInstance().saveWithoutUIReload();
+    }
+
+    private void loadWindowState() {
+        setSize(new Dimension(AppConfig.getInstance().getWindowWidth(), AppConfig.getInstance().getWindowHeight()));
+        if (playlistVisible != AppConfig.getInstance().isPlaylistVisible()) {
+            togglePlaylistVisible(false);
+        }
     }
 
     public static MainWindow getInstance() {

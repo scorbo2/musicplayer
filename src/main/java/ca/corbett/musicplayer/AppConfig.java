@@ -11,6 +11,7 @@ import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.AppTheme;
+import ca.corbett.musicplayer.ui.MainWindow;
 
 import java.awt.Color;
 import java.io.File;
@@ -49,6 +50,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ComboProperty playlistTheme;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
+    private IntegerProperty windowWidth;
+    private IntegerProperty windowHeight;
+    private BooleanProperty playlistVisible;
 
     public enum ButtonSize {
         XSMALL(16),
@@ -142,8 +146,18 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
      */
     @Override
     public void save() {
+        save(true);
+    }
+
+    public void saveWithoutUIReload() {
+        save(false);
+    }
+
+    protected void save(boolean reloadUI) {
         super.save();
-        ReloadUIAction.getInstance().actionPerformed(null);
+        if (reloadUI) {
+            ReloadUIAction.getInstance().actionPerformed(null);
+        }
     }
 
     public static AppConfig getInstance() {
@@ -242,6 +256,30 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         repeatEnabled.setValue(enabled);
     }
 
+    public void setWindowWidth(int width) {
+        windowWidth.setValue(width);
+    }
+
+    public int getWindowWidth() {
+        return windowWidth.getValue();
+    }
+
+    public void setWindowHeight(int height) {
+        windowHeight.setValue(height);
+    }
+
+    public int getWindowHeight() {
+        return windowHeight.getValue();
+    }
+
+    public void setPlaylistVisible(boolean visible) {
+        playlistVisible.setValue(visible);
+    }
+
+    public boolean isPlaylistVisible() {
+        return playlistVisible.getValue();
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         List<String> options = new ArrayList<>();
@@ -279,6 +317,13 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         shuffleEnabled.setExposed(false);
         repeatEnabled.setExposed(false);
 
+        windowWidth = new IntegerProperty("hidden.props.windowWidth", "windowWidth", MainWindow.DEFAULT_WIDTH);
+        windowHeight = new IntegerProperty("hidden.props.windowHeight", "windowHeight", MainWindow.DEFAULT_HEIGHT);
+        playlistVisible = new BooleanProperty("hidden.props.playlistVisible", "playlistVisible", false);
+        windowWidth.setExposed(false);
+        windowHeight.setExposed(false);
+        playlistVisible.setExposed(false);
+
         return List.of(buttonSize,
                 controlAlignment,
                 waveformBgColor,
@@ -288,6 +333,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 waveformResolution,
                 playlistTheme,
                 shuffleEnabled,
-                repeatEnabled);
+                repeatEnabled,
+                windowWidth,
+                windowHeight,
+                playlistVisible);
     }
 }
