@@ -66,7 +66,7 @@ public class ControlPanel extends JPanel implements UIReloadable {
         constraints.weightx = 0;
         constraints.weighty = 0;
 
-        for (Actions.MPAction action : Actions.getPlayerActions()) {
+        for (Actions.MPAction action : Actions.getMediaPlayerActions()) {
             add(Actions.buildButton(action), constraints);
             constraints.gridx++;
         }
