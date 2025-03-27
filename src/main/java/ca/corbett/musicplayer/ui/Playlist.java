@@ -21,8 +21,20 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.util.Random;
 import java.util.logging.Logger;
 
+/**
+ * Represents a list of zero or more files containing audio data.
+ * The user can select a specific file in the list to play, and
+ * the media player actions "next" and "previous" will move forward
+ * or backwards through the list. Shuffle and Repeat are also
+ * available as options. The currently showing list of files can be
+ * saved for easy retrieval later.
+ *
+ * @author scorbo
+ * @since 2025-03-23
+ */
 public class Playlist extends JPanel implements UIReloadable {
 
     private static final Logger logger = Logger.getLogger(Playlist.class.getName());
@@ -53,38 +65,181 @@ public class Playlist extends JPanel implements UIReloadable {
         return instance;
     }
 
+    /**
+     * Adds a single item to the list. Uniqueness checks are not done here,
+     * so it's possible to add the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     *
+     * @param file Any File.
+     */
     public void addItem(File file) {
         fileListModel.addElement(file);
     }
 
+    /**
+     * Removes the selected file from the list. The list is single-select,
+     * so you can't selectively remove a bunch of files at once.
+     * You do however have the clear() option to remove everything.
+     * Note that it's possible to remove the file that's currently
+     * playing - that's not an error. The file is loaded into the
+     * audio panel and will keep playing even if it's no longer in
+     * the playlist. As soon as you hit next, the file will unload
+     * from the audio panel automatically.
+     */
     public void removeSelected() {
         if (fileList.getSelectedIndex() != -1) {
             fileListModel.removeElementAt(fileList.getSelectedIndex());
         }
     }
 
+    /**
+     * Remove all files from the list. Note that you can do this even
+     * if something is currently playing - that's not an error.
+     * Whatever audio was loaded into the audio panel will continue
+     * playing until the end of the track, at which point it will
+     * be unloaded from the audio panel automatically.
+     */
     public void clear() {
         fileListModel.clear();
     }
 
-    public void toggleShuffle() {
-        AppConfig.getInstance().setShuffleEnabled(!AppConfig.getInstance().isShuffleEnabled());
-        AppConfig.getInstance().save();
-    }
-
-    public void toggleRepeat() {
-        AppConfig.getInstance().setRepeatEnabled(!AppConfig.getInstance().isRepeatEnabled());
-        AppConfig.getInstance().save();
-    }
-
-    public AudioData getSelected() {
+    /**
+     * Returns the "next" item in the playlist. The word "next" is in
+     * quotes because it may not be what you expect. Normally, this will
+     * simply be the next item after whatever is currently selected. But,
+     * if the "shuffle" option is enabled, you may receive a random item
+     * instead. If the current file is the last one in the list and
+     * you hit this method, you will either get null, indicating the
+     * end of the list, or it will wrap back to the beginning of the
+     * list, depending on the value of the "repeat" option.
+     * <p>
+     * An attempt will be made to actually parse the audio data
+     * from the file - if this fails, an error will be raised
+     * and you get null.
+     * </p>
+     *
+     * @return A populated AudioData instance, or null.
+     */
+    public AudioData getNext() {
         if (fileListModel.isEmpty()) {
             return null;
         }
 
+        // Make note of whatever is currently selected:
+        int index = fileList.getSelectedIndex();
+
+        // If "shuffle" is enabled, pick something at random:
+        if (AppConfig.getInstance().isShuffleEnabled()) {
+            index = getRandomSelectionIndex();
+        }
+
+        // Otherwise, go sequentially:
+        else {
+            index++;
+            boolean isRepeat = AppConfig.getInstance().isRepeatEnabled();
+
+            // Did we hit the end of the list?
+            if (index >= fileListModel.size()) {
+                if (!isRepeat) {
+                    return null; // we're done here.
+                }
+                index = 0;
+            }
+        }
+
+        // Select whatever we landed on and return it:
+        fileList.setSelectedIndex(index);
+        return getSelected();
+    }
+
+    /**
+     * Returns the "previous" item in the playlist. The word "previous" is in
+     * quotes because it may not be what you expect. Normally, this will
+     * simply be the item before whatever is currently selected. But,
+     * if the "shuffle" option is enabled, you may receive a random item
+     * instead. If the current file is the first one in the list and
+     * you hit this method, you will either get null, indicating the
+     * end of the list, or it will wrap around to the end of the
+     * list, depending on the value of the "repeat" option.
+     * <p>
+     * An attempt will be made to actually parse the audio data
+     * from the file - if this fails, an error will be raised
+     * and you get null.
+     * </p>
+     *
+     * @return A populated AudioData instance, or null.
+     */
+    public AudioData getPrev() {
+        if (fileListModel.isEmpty()) {
+            return null;
+        }
+
+        // Make note of whatever is currently selected:
+        int index = fileList.getSelectedIndex();
+
+        // If "shuffle" is enabled, pick something at random:
+        if (AppConfig.getInstance().isShuffleEnabled()) {
+            index = getRandomSelectionIndex();
+        }
+
+        // Otherwise, go sequentially:
+        else {
+            index--;
+            boolean isRepeat = AppConfig.getInstance().isRepeatEnabled();
+
+            // Did we hit the start of the list?
+            if (index < 0) {
+                if (!isRepeat) {
+                    return null; // we're done here.
+                }
+                index = fileListModel.size() - 1;
+            }
+        }
+
+        // Select whatever we landed on and return it:
+        fileList.setSelectedIndex(index);
+        return getSelected();
+    }
+
+    /**
+     * Changes the state of the "shuffle" option between off or on.
+     * If it's on, calling getNext() will return a random (or mostly random)
+     * item from the list, instead of picking the next one sequentially.
+     * If it's off, calling getNext() will give you the next item in the
+     * list as you would expect, until you get to the end. Calling getNext()
+     * at that point will either give you nothing, or wrap back to the
+     * start of the list, depending on the value of the "repeat" option.
+     */
+    public void toggleShuffle() {
+        AppConfig.getInstance().setShuffleEnabled(!AppConfig.getInstance().isShuffleEnabled());
+        AppConfig.getInstance().saveAndReloadUI();
+    }
+
+    /**
+     * Changes the state of the "repeat" option between off or on.
+     * If it's on, the playlist will wrap back to the start of the list
+     * if you call getNext() at the end of the list.
+     * If it's off, calling getNext() at the end of the list will give
+     * you nothing.
+     */
+    public void toggleRepeat() {
+        AppConfig.getInstance().setRepeatEnabled(!AppConfig.getInstance().isRepeatEnabled());
+        AppConfig.getInstance().saveAndReloadUI();
+    }
+
+    /**
+     * Parses the selected file's audio data and returns it in an AudioData instance.
+     * If nothing is selected, you get null. If the audio data cannot be parsed
+     * for whatever reason, an error will be raised and you will get null.
+     *
+     * @return Either a populated AudioData instance, or null.
+     */
+    public AudioData getSelected() {
         File selected = fileList.getSelectedValue();
-        if (selected == null) {
-            selected = fileListModel.get(0); // grab 1st in list if nothing selected
+        if (fileListModel.isEmpty() || selected == null) {
+            return null;
         }
 
         try {
@@ -167,6 +322,25 @@ public class Playlist extends JPanel implements UIReloadable {
         buttonPanel.add(spacer, constraints);
 
         MainWindow.rejigger(this);
+    }
+
+    private int getRandomSelectionIndex() {
+        if (fileListModel.isEmpty()) {
+            return -1;
+        }
+        int index = fileList.getSelectedIndex();
+        Random rand = new Random(System.currentTimeMillis());
+        int newIndex = rand.nextInt(fileListModel.size());
+
+        // Try to avoid returning the same thing that was already selected:
+        if (fileListModel.size() > 1) {
+            while (newIndex == index) {
+                // According to math theory, this might loop infinitely.
+                // But in practice, it'll eventually stop.
+                newIndex = rand.nextInt(fileListModel.size());
+            }
+        }
+        return newIndex;
     }
 
     /**

@@ -175,10 +175,9 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     /**
-     * Plays the current audio clip, if any, or does nothing if there isn't one.
-     * Does nothing if audio is currently playing or recording.
-     * This can be invoked programmatically, and is also invoked by the user from the play button,
-     * if the control panel is visible and the user clicks it.
+     * If an audio clip is already loaded into the AudioPanel, this method will play it.
+     * If the audio panel has nothing, we'll ask the Playlist for whatever is selected,
+     * and then load and play that. If the playlist is empty, then this does nothing.
      */
     public void play() {
 
@@ -213,6 +212,20 @@ public class AudioPanel extends JPanel implements UIReloadable {
             playbackThread = null;
             panelState = PanelState.IDLE;
             fireStateChangedEvent();
+        }
+    }
+
+    public void next() {
+        setAudioData(Playlist.getInstance().getNext());
+        if (audioData != null) {
+            play();
+        }
+    }
+
+    public void prev() {
+        setAudioData(Playlist.getInstance().getPrev());
+        if (audioData != null) {
+            play();
         }
     }
 

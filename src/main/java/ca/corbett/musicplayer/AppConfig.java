@@ -108,6 +108,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         super(Version.FULL_NAME, PROPS_FILE, MusicPlayerExtensionManager.getInstance());
     }
 
+    public void saveAndReloadUI() {
+        save();
+        ReloadUIAction.getInstance().actionPerformed(null);
+    }
+
     @Override
     public void load() {
         super.load();
