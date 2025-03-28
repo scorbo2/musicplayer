@@ -6,6 +6,7 @@ import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.BooleanProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.ComboProperty;
+import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
@@ -54,6 +55,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty windowWidth;
     private IntegerProperty windowHeight;
     private BooleanProperty playlistVisible;
+    private DirectoryProperty lastBrowseDir;
 
     public enum ButtonSize {
         XSMALL(16),
@@ -227,6 +229,26 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return playlistVisible.getValue();
     }
 
+    /**
+     * Note: null is allowed here.
+     *
+     * @param dir A directory, or null.
+     */
+    public void setLastBrowseDir(File dir) {
+        lastBrowseDir.setDirectory(dir);
+    }
+
+    /**
+     * Note: could be null, meaning no saved dir.
+     * We also check that the given directory still exists, and if not, you get null.
+     * Last browse dir has not yet been set? Believe it or not, null. Straight away.
+     *
+     * @return A directory, or null.
+     */
+    public File getLastBrowseDir() {
+        return (lastBrowseDir.getDirectory() != null && lastBrowseDir.getDirectory().exists()) ? lastBrowseDir.getDirectory() : null;
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         buttonSize = new EnumProperty<ButtonSize>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
@@ -262,6 +284,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         windowHeight.setExposed(false);
         playlistVisible.setExposed(false);
 
+        lastBrowseDir = new DirectoryProperty("hidden.props.browseDir", "browseDir", true);
+        lastBrowseDir.setExposed(false);
+
         return List.of(buttonSize,
                 controlAlignment,
                 waveformBgColor,
@@ -274,6 +299,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 repeatEnabled,
                 windowWidth,
                 windowHeight,
-                playlistVisible);
+                playlistVisible,
+                lastBrowseDir);
     }
 }

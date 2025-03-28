@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer.actions;
 
 import ca.corbett.extras.io.FileSystemUtil;
+import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.ui.MainWindow;
 import ca.corbett.musicplayer.ui.Playlist;
 
@@ -19,11 +20,11 @@ import java.util.List;
  * @author scorbo2
  * @since 2025-03-23
  */
-public class AddAction extends AbstractAction {
+public class PlaylistAddAction extends AbstractAction {
 
     private final JFileChooser fileChooser;
 
-    public AddAction() {
+    public PlaylistAddAction() {
         fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         fileChooser.setMultiSelectionEnabled(true);
@@ -44,6 +45,7 @@ public class AddAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        fileChooser.setCurrentDirectory(AppConfig.getInstance().getLastBrowseDir());
         if (fileChooser.showDialog(MainWindow.getInstance(), "Open") == JFileChooser.APPROVE_OPTION) {
             for (File file : fileChooser.getSelectedFiles()) {
                 if (file.isDirectory()) {
@@ -58,6 +60,12 @@ public class AddAction extends AbstractAction {
                     Playlist.getInstance().addItem(file);
                 }
             }
+
+            // Make a note of the directory that we ended up in,
+            // so other file choosers across the app can
+            // start there:
+            AppConfig.getInstance().setLastBrowseDir(fileChooser.getCurrentDirectory());
+            AppConfig.getInstance().save();
         }
     }
 }

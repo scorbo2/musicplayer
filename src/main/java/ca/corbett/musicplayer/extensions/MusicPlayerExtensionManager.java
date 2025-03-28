@@ -2,7 +2,10 @@ package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.ExtensionManager;
 import ca.corbett.musicplayer.Actions;
+import ca.corbett.musicplayer.audio.PlaylistUtil;
 
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,5 +66,42 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
             }
         }
         return allActions;
+    }
+
+    /**
+     * Returns a list of supported playlist file extensions - this represents
+     * the file formats that we can save/load playlists to/from.
+     */
+    public List<FileNameExtensionFilter> getPlaylistFileExtensionFilters() {
+        List<FileNameExtensionFilter> list = new ArrayList<>();
+
+        // Add the built-in one first:
+        list.add(PlaylistUtil.MPLIST);
+
+        // Now gather any additional ones from extensions:
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            FileNameExtensionFilter filter = extension.getCustomPlaylistExtensionFilter();
+            if (filter != null) {
+                list.add(filter);
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * Returns the first extension that claims it can load/save playlists of the given
+     * file type, or null if no such extension makes that claim. If more than one extension
+     * can support the given file format, we return the first one based on extension
+     * load order.
+     */
+    public MusicPlayerExtension findExtensionForPlaylistFormat(File targetFile) {
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            FileNameExtensionFilter filter = extension.getCustomPlaylistExtensionFilter();
+            if (filter != null && filter.accept(targetFile)) {
+                return extension;
+            }
+        }
+        return null;
     }
 }

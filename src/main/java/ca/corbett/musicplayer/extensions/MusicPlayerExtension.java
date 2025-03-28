@@ -3,6 +3,9 @@ package ca.corbett.musicplayer.extensions;
 import ca.corbett.extensions.AppExtension;
 import ca.corbett.musicplayer.Actions;
 
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,4 +55,42 @@ public abstract class MusicPlayerExtension implements AppExtension {
         return new ArrayList<>();
     }
 
+    /**
+     * If your extension supports playlist loading and saving in a custom
+     * format, you can return the FileNameExtensionFilter here. A value
+     * of null means your extension does not support this. If you register
+     * an extension here, your extension will be invoked to perform
+     * the load and/or save as needed, based on the file extension of
+     * the file to be read or written.
+     */
+    public FileNameExtensionFilter getCustomPlaylistExtensionFilter() {
+        return null;
+    }
+
+    /**
+     * If your extension reported that it could handle saving playlists
+     * with a specific file extension via getCustomPlaylistExtensionFilter(), then
+     * you may be called upon here to handle the saving of a given playlist
+     * to a file of that type.
+     *
+     * @param outputFile The destination file for the playlist.
+     * @param playlist   The list of files to save.
+     * @throws IOException If something goes wrong during the save.
+     */
+    public void savePlaylist(File outputFile, List<File> playlist) throws IOException {
+    }
+
+    /**
+     * If your extension reported that it could handle loading playlists
+     * with a specific file extension via getCustomPlaylistExtensionFilter(), then
+     * you may be called upon here to handle the loading of a playlist
+     * from a file of that type.
+     *
+     * @param inputFile The playlist file on disk.
+     * @return A list of files that you loaded from the input file.
+     * @throws IOException If something goes wrong during the load
+     */
+    public List<File> loadPlaylist(File inputFile) throws IOException {
+        return new ArrayList<>();
+    }
 }

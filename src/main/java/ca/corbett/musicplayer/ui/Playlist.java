@@ -6,6 +6,7 @@ import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
 import ca.corbett.musicplayer.audio.AudioUtil;
+import ca.corbett.musicplayer.audio.PlaylistUtil;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -21,6 +22,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -201,6 +204,44 @@ public class Playlist extends JPanel implements UIReloadable {
         // Select whatever we landed on and return it:
         fileList.setSelectedIndex(index);
         return getSelected();
+    }
+
+    /**
+     * Given a list of playlist files, attempt to load all tracks from all of them
+     * and set the current content based on them. The current playlist is cleared
+     * before loading the new stuff. If an error occurs on load, the current
+     * playlist is left intact.
+     *
+     * @param playlistFiles a list of playlist files in any supported playlist format.
+     */
+    public void loadPlaylists(List<File> playlistFiles) {
+        List<File> newTracks = PlaylistUtil.loadPlaylists(playlistFiles);
+        if (newTracks.isEmpty()) {
+            return;
+        }
+
+        fileListModel.clear();
+        fileListModel.addAll(newTracks);
+        // TODO stop playing if playing? Auto play first track?
+    }
+
+    /**
+     * Saves the contents of the current playlist to the target file.
+     *
+     * @param targetFile a destination save file. Will be overwritten if exists.
+     */
+    public void savePlaylist(File targetFile) {
+        List<File> list = new ArrayList<>();
+        for (int i = 0; i < fileListModel.size(); i++) {
+            list.add(fileListModel.get(i));
+        }
+
+        // If there's nothing here, don't bother:
+        if (list.isEmpty()) {
+            return;
+        }
+
+        PlaylistUtil.savePlaylist(list, targetFile);
     }
 
     /**

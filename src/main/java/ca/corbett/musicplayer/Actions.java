@@ -1,18 +1,18 @@
 package ca.corbett.musicplayer;
 
 import ca.corbett.musicplayer.actions.AboutAction;
-import ca.corbett.musicplayer.actions.AddAction;
 import ca.corbett.musicplayer.actions.FullScreenAction;
 import ca.corbett.musicplayer.actions.NextAction;
-import ca.corbett.musicplayer.actions.OpenAction;
 import ca.corbett.musicplayer.actions.PauseAction;
 import ca.corbett.musicplayer.actions.PlayAction;
 import ca.corbett.musicplayer.actions.PlaylistAction;
+import ca.corbett.musicplayer.actions.PlaylistAddAction;
+import ca.corbett.musicplayer.actions.PlaylistOpenAction;
+import ca.corbett.musicplayer.actions.PlaylistRemoveAllAction;
+import ca.corbett.musicplayer.actions.PlaylistRemoveOneAction;
+import ca.corbett.musicplayer.actions.PlaylistSaveAction;
 import ca.corbett.musicplayer.actions.PrevAction;
-import ca.corbett.musicplayer.actions.RemoveAllAction;
-import ca.corbett.musicplayer.actions.RemoveOneAction;
 import ca.corbett.musicplayer.actions.RepeatAction;
-import ca.corbett.musicplayer.actions.SaveAction;
 import ca.corbett.musicplayer.actions.SettingsAction;
 import ca.corbett.musicplayer.actions.ShuffleAction;
 import ca.corbett.musicplayer.actions.StopAction;
@@ -54,11 +54,11 @@ public final class Actions {
     };
 
     public static final MPAction[] playlistActions = {
-            new MPAction("Open", "Open (o)", "icon-open.png", new OpenAction()),
-            new MPAction("Save", "Save (s)", "icon-save.png", new SaveAction()),
-            new MPAction("Add", "Add to playlist", "icon-add.png", new AddAction()),
-            new MPAction("Remove selected", "Remove selected", "icon-remove-single.png", new RemoveOneAction()),
-            new MPAction("Clear", "Clear playlist", "icon-remove-all.png", new RemoveAllAction()),
+            new MPAction("Open", "Open (o)", "icon-open.png", new PlaylistOpenAction()),
+            new MPAction("Save", "Save (s)", "icon-save.png", new PlaylistSaveAction()),
+            new MPAction("Add", "Add to playlist", "icon-add.png", new PlaylistAddAction()),
+            new MPAction("Remove selected", "Remove selected", "icon-remove-single.png", new PlaylistRemoveOneAction()),
+            new MPAction("Clear", "Clear playlist", "icon-remove-all.png", new PlaylistRemoveAllAction()),
             new MPAction("Shuffle", "Shuffle", "media-playlist-shuffle.png", new ShuffleAction()),
             new MPAction("Repeat", "Repeat", "media-playlist-repeat.png", new RepeatAction())
     };
