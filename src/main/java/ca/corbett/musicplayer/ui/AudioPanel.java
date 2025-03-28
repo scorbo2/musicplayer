@@ -31,6 +31,9 @@ import java.util.logging.Logger;
 public class AudioPanel extends JPanel implements UIReloadable {
 
     private final static Logger logger = Logger.getLogger(AudioPanel.class.getName());
+
+    public static final int WAVEFORM_HEIGHT = 140;
+
     private MessageUtil messageUtil;
     private static AudioPanel instance;
     private final Timer resizeTimer;
@@ -86,7 +89,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         resizeTimer.setCoalesce(false);
 
         // Misc:
-        setPreferredSize(new Dimension(400, 188));
+        setPreferredSize(new Dimension(400, WAVEFORM_HEIGHT));
         panelState = PanelState.IDLE;
         playbackPosition = 0f;
         markPosition = 0f;

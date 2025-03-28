@@ -5,7 +5,6 @@ import ca.corbett.musicplayer.actions.FullScreenAction;
 import ca.corbett.musicplayer.actions.NextAction;
 import ca.corbett.musicplayer.actions.PauseAction;
 import ca.corbett.musicplayer.actions.PlayAction;
-import ca.corbett.musicplayer.actions.PlaylistAction;
 import ca.corbett.musicplayer.actions.PlaylistAddAction;
 import ca.corbett.musicplayer.actions.PlaylistOpenAction;
 import ca.corbett.musicplayer.actions.PlaylistRemoveAllAction;
@@ -47,7 +46,6 @@ public final class Actions {
             new MPAction("Stop", "Stop (esc)", "media-playback-stop.png", new StopAction()),
             new MPAction("Previous", "Previous (left/up)", "media-skip-backward.png", new PrevAction()),
             new MPAction("Next", "Next (right/down)", "media-skip-forward.png", new NextAction()),
-            new MPAction("Playlist", "Show/hide playlist (L)", "media-eject.png", new PlaylistAction()),
             new MPAction("Fullscreen", "Fullscreen (v)", "icon-fullscreen.png", new FullScreenAction()),
             new MPAction("Settings", "Preferences (ctrl+p)", "icon-preferences.png", new SettingsAction()),
             new MPAction("About", "About (ctrl+a)", "logo.png", new AboutAction())

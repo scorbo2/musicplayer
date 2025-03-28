@@ -25,17 +25,13 @@ public class MainWindow extends JFrame {
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());
 
     public static final int DEFAULT_WIDTH = 420;
-    public static final int DEFAULT_HEIGHT = 250;
-    public static final int DEFAULT_PLAYLIST_HEIGHT = 250;
+    public static final int DEFAULT_HEIGHT = 350;
 
     private static final int MIN_WIDTH = 420;
-    private static final int MIN_HEIGHT = 220;
+    private static final int MIN_HEIGHT = 320;
 
     private static MainWindow instance;
     private MessageUtil messageUtil;
-    private boolean playlistVisible = false;
-    final int expandedViewHeightDelta = DEFAULT_PLAYLIST_HEIGHT;
-    private final JPanel mediaPanel;
     private final Timer resizeTimer;
 
     private MainWindow() {
@@ -54,40 +50,12 @@ public class MainWindow extends JFrame {
             }
         });
 
-        mediaPanel = new JPanel();
+        JPanel mediaPanel = new JPanel();
         mediaPanel.setLayout(new BorderLayout());
         mediaPanel.add(AudioPanel.getInstance(), BorderLayout.CENTER);
         mediaPanel.add(ControlPanel.getInstance(), BorderLayout.SOUTH);
-        add(mediaPanel, BorderLayout.CENTER);
-        //add(Playlist.getInstance(), BorderLayout.CENTER);
-    }
-
-    public void togglePlaylistVisible(boolean saveNewState) {
-        int oldHeight = getHeight();
-        int audioPanelHeight = AudioPanel.getInstance().getHeight();
-        if (playlistVisible) {
-            remove(mediaPanel);
-            remove(Playlist.getInstance());
-            //setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
-            setSize(new Dimension(getWidth(), oldHeight - expandedViewHeightDelta));
-            AudioPanel.getInstance().setPreferredSize(new Dimension(1, audioPanelHeight));
-            add(mediaPanel, BorderLayout.CENTER);
-            playlistVisible = false;
-        } else {
-            remove(mediaPanel);
-            setSize(new Dimension(getWidth(), oldHeight + expandedViewHeightDelta));
-            AudioPanel.getInstance().setPreferredSize(new Dimension(1, audioPanelHeight));
-            add(mediaPanel, BorderLayout.NORTH);
-            add(Playlist.getInstance(), BorderLayout.CENTER);
-            //setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT + expandedViewHeightDelta));
-            playlistVisible = true;
-        }
-        rejigger(this);
-
-        if (saveNewState) {
-            AppConfig.getInstance().setPlaylistVisible(playlistVisible);
-            AppConfig.getInstance().save();
-        }
+        add(mediaPanel, BorderLayout.NORTH);
+        add(Playlist.getInstance(), BorderLayout.CENTER);
     }
 
     /**
@@ -152,15 +120,11 @@ public class MainWindow extends JFrame {
     private void saveWindowState() {
         AppConfig.getInstance().setWindowWidth(getWidth());
         AppConfig.getInstance().setWindowHeight(getHeight());
-        AppConfig.getInstance().setPlaylistVisible(playlistVisible);
         AppConfig.getInstance().save();
     }
 
     private void loadWindowState() {
         setSize(new Dimension(AppConfig.getInstance().getWindowWidth(), AppConfig.getInstance().getWindowHeight()));
-        if (playlistVisible != AppConfig.getInstance().isPlaylistVisible()) {
-            togglePlaylistVisible(false);
-        }
     }
 
     public static MainWindow getInstance() {

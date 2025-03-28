@@ -46,7 +46,7 @@ public class AudioPanelIdleAnimation {
     private static class GenericReadyAnimation extends Animation {
 
         public static final int WIDTH = 400;
-        public static final int HEIGHT = 225;
+        public static final int HEIGHT = AudioPanel.WAVEFORM_HEIGHT;
         private boolean isRunning;
         private final GradientConfig gradient1;
         private final GradientConfig gradient2;
@@ -77,11 +77,11 @@ public class AudioPanelIdleAnimation {
                 Graphics2D graphics = image.createGraphics();
                 graphics.setColor(Color.BLACK);
                 graphics.fillRect(0, 0, WIDTH, HEIGHT);
-                GradientUtil.fill(gradient1, graphics, 0, 180, x, 8);
-                GradientUtil.fill(gradient2, graphics, x, 180, WIDTH - x, 8);
+                GradientUtil.fill(gradient1, graphics, 0, 0, x, AudioPanel.WAVEFORM_HEIGHT);
+                GradientUtil.fill(gradient2, graphics, x, 0, WIDTH - x, AudioPanel.WAVEFORM_HEIGHT);
                 graphics.dispose();
 
-                ImageTextUtil.drawText(image, "R E A D Y", 100, new Font(Font.MONOSPACED, Font.PLAIN, 12), ImageTextUtil.TextAlign.CENTER, Color.BLUE, 0f, Color.BLUE, null, new Rectangle(60, 50, WIDTH - 120, 80));
+                ImageTextUtil.drawText(image, "R E A D Y", 100, new Font(Font.MONOSPACED, Font.PLAIN, 12), ImageTextUtil.TextAlign.CENTER, Color.BLUE, 0f, Color.BLUE, null, new Rectangle(60, 20, WIDTH - 120, 100));
                 AudioPanel.getInstance().setIdleImage(image);
 
                 x++;

@@ -54,7 +54,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private BooleanProperty repeatEnabled;
     private IntegerProperty windowWidth;
     private IntegerProperty windowHeight;
-    private BooleanProperty playlistVisible;
     private DirectoryProperty lastBrowseDir;
 
     public enum ButtonSize {
@@ -221,14 +220,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return windowHeight.getValue();
     }
 
-    public void setPlaylistVisible(boolean visible) {
-        playlistVisible.setValue(visible);
-    }
-
-    public boolean isPlaylistVisible() {
-        return playlistVisible.getValue();
-    }
-
     /**
      * Note: null is allowed here.
      *
@@ -270,7 +261,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         for (AppTheme.Theme theme : AppTheme.getAll()) {
             options.add(theme.name);
         }
-        playlistTheme = new ComboProperty("UI.Playlist.theme", "Playlist theme:", options, 1, false);
+        playlistTheme = new ComboProperty("UI.Theme.theme", "Theme:", options, 1, false);
 
         shuffleEnabled = new BooleanProperty("hidden.props.shuffleEnabled", "shuffleEnabled", false);
         repeatEnabled = new BooleanProperty("hidden.props.repeatEnabled", "repeatEnabled", false);
@@ -279,10 +270,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         windowWidth = new IntegerProperty("hidden.props.windowWidth", "windowWidth", MainWindow.DEFAULT_WIDTH);
         windowHeight = new IntegerProperty("hidden.props.windowHeight", "windowHeight", MainWindow.DEFAULT_HEIGHT);
-        playlistVisible = new BooleanProperty("hidden.props.playlistVisible", "playlistVisible", false);
         windowWidth.setExposed(false);
         windowHeight.setExposed(false);
-        playlistVisible.setExposed(false);
 
         lastBrowseDir = new DirectoryProperty("hidden.props.browseDir", "browseDir", true);
         lastBrowseDir.setExposed(false);
@@ -299,7 +288,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 repeatEnabled,
                 windowWidth,
                 windowHeight,
-                playlistVisible,
                 lastBrowseDir);
     }
 }
