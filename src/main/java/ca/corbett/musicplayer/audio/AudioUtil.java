@@ -136,8 +136,14 @@ public class AudioUtil {
     private static File convert(AudioInputStream inStream) throws IOException {
         AudioFormat targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100f, 16, 2, 4, 1f, false);
         if (!AudioSystem.isConversionSupported(targetFormat, inStream.getFormat())) {
-            System.out.println("nope");
-            return null;
+            logger.warning("Unable to convert audio in stereo; will try fallback to mono...");
+
+            // Try again as mono:
+            targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100f, 16, 1, 4, 1f, false);
+            if (!AudioSystem.isConversionSupported(targetFormat, inStream.getFormat())) {
+                logger.warning("Unable to convert audio in mono; giving up!");
+                return null;
+            }
         }
         AudioInputStream convertedStream = AudioSystem.getAudioInputStream(targetFormat, inStream);
         File tmpFile = File.createTempFile("mp_", ".wav");
