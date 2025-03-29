@@ -19,6 +19,9 @@ import java.util.logging.Logger;
  * done), the audio data associated with the clip, and metadata that we
  * managed to extract from the clip.
  *
+ * TODO I'm not happy with the wonky "convert from mp3 to wav and then play the wav" approach
+ *      It's slow and monstrously memory unfriendly.
+ *
  * @author scorbo2
  * @since 2025-03-23
  */
@@ -93,6 +96,8 @@ public class AudioData {
                 String author = "";
 
                 // TODO can we get duration from audioData if present?
+                // TODO yes, we can, if we know the bitrate, we can do the math against the length of the
+                //      audioData array. The question is, do we for sure know the bitrate of loaded data?
                 String duration = "";
 
                 metadata = new Metadata(title, album, author, duration);

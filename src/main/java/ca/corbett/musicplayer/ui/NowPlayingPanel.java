@@ -15,6 +15,9 @@ import java.awt.Insets;
 /**
  * Shows the currently loaded song info (title, length).
  *
+ * TODO would be nice to show current time and total time in this panel
+ *      currently we show the duration only, but we could live-update the current playback position.
+ *
  * @author scorbo2
  * @since 2025-03-25
  */

@@ -15,6 +15,7 @@ public class AudioPanelIdleAnimation {
     private static Animation runningThread;
 
     // TODO have a few stock ones and allow extensions to supply some just for fun
+    //      This should be doable by allowing extensions to return a derived Animation instance
     private static final Animation GENERIC_READY_ANIMATION = new GenericReadyAnimation("Matrix");
 
     public static void go() {

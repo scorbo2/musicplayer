@@ -40,6 +40,13 @@ import java.util.List;
  */
 public final class Actions {
 
+    // TODO crazy idea... allow extensions to overwrite a built-in action?
+    //      like, if an extension registers an action named "play", it
+    //      replaces the built-in one? Is that possible?
+    //      My specific thought is I want to be able to customize how
+    //      playlists are loaded and saved, to offer an option
+    //      similar to MusicPlayer 1.5 as opposed to a file chooser.
+
     public static final MPAction[] mediaPlayerActions = {
             new MPAction("Play", "Play (space)", "media-playback-start.png", new PlayAction()),
             new MPAction("Pause", "Pause (space)", "media-playback-pause.png", new PauseAction()),

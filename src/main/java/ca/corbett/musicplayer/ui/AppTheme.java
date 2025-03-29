@@ -19,6 +19,8 @@ public class AppTheme {
 
     /**
      * TODO also interrogate extensions
+     * TODO include waveform config in theme as an option (if not specified, you get default waveform)
+     * TODO add an app property to allow override of waveform set in theme
      *
      * @return An array of all supported themes.
      */

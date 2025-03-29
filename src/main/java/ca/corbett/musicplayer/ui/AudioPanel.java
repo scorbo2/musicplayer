@@ -28,6 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * TODO saw an intermittent issue where if you set a manual mark position towards the
+ *      very end of the clip and hit play, it won't play right to the end.
+ *      Not sure, but seems like the playback thread might be miscalculating offset position.
+ */
 public class AudioPanel extends JPanel implements UIReloadable {
 
     private final static Logger logger = Logger.getLogger(AudioPanel.class.getName());
