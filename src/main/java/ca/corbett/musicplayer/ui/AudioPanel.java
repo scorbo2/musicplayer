@@ -39,7 +39,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
     private final Timer resizeTimer;
 
     public enum PanelState {
-        IDLE, PLAYING
+        IDLE, PLAYING, PAUSED
     }
 
     private AudioData audioData;
@@ -51,8 +51,6 @@ public class AudioPanel extends JPanel implements UIReloadable {
 
     private final ImagePanel imagePanel;
     private BufferedImage waveformImage;
-
-    private JPanel controlPanelMain;
 
     private final List<AudioPanelListener> panelListeners;
     private PanelState panelState;
@@ -100,14 +98,16 @@ public class AudioPanel extends JPanel implements UIReloadable {
 
             @Override
             public void stopped() {
-                setPlaybackPosition(0);
-                panelState = PanelState.IDLE;
+                // If we stopped because we ran out of audio data, return to IDLE state.
+                // Otherwise, our state has already been explicitly updated by one of our own actions.
+                if (panelState == PanelState.PLAYING) {
+                    panelState = PanelState.IDLE;
+                }
                 fireStateChangedEvent();
             }
 
             @Override
             public boolean updateProgress(long curMillis, long totalMillis) {
-                //System.out.println("progress("+curMillis+","+totalMillis+") = "+((float)curMillis/(float)totalMillis));
                 setPlaybackPosition((float) curMillis / (float) totalMillis);
                 return true;
             }
@@ -184,15 +184,25 @@ public class AudioPanel extends JPanel implements UIReloadable {
      */
     public void play() {
 
-        // Ignore this call if our state is anything other than IDLE:
-        if (panelState != PanelState.IDLE) {
+        // If we're already playing, just ignore this:
+        if (panelState == PanelState.PLAYING) {
             return;
         }
 
-        // If we already have AudioData loaded, just play it.
-        // Otherwise, ask our playlist for whatever is selected:
+        // If we're paused, we can resume:
+        if (panelState == PanelState.PAUSED) {
+            pause(); // hitting pause() again while paused is treated as a "resume"
+            return;
+        }
+
+        // If we don't already have audio data loaded, ask our playlist
+        // for whatever is currently selected:
         if (audioData == null) {
-            setAudioData(Playlist.getInstance().getSelected());
+            AudioData data = Playlist.getInstance().getSelected();
+            if (data == null) {
+                data = Playlist.getInstance().getNext();
+            }
+            setAudioData(data);
         }
 
         // If it's still null, we got nothing, so there's nothing to play:
@@ -206,16 +216,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
             startOffset = (long) (markPosition * (audioData.getRawData()[0].length / 44.1f)); // WARNING assuming bit rate
         }
 
-        try {
-            panelState = PanelState.PLAYING;
-            fireStateChangedEvent();
-            playbackThread = AudioUtil.play(audioData, startOffset, playbackListener);
-        } catch (IOException | LineUnavailableException exc) {
-            getMessageUtil().error("Playback error", "Problem playing audio: " + exc.getMessage(), exc);
-            playbackThread = null;
-            panelState = PanelState.IDLE;
-            fireStateChangedEvent();
-        }
+        internalPlay(startOffset);
     }
 
     public void next() {
@@ -233,17 +234,55 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     /**
+     * Pauses playing, if playback was in progress, or unpauses it if it was paused.
+     * In the paused state, you can also resume by calling play().
+     * <p>
+     * Implementation note: if we're playing, all this method really does is update
+     * the markPosition to the latest play position of the playback thread. Then
+     * we stop and delete the playback thread. When we "resume" later, we're really
+     * creating a new playback thread and giving it the markPosition from the last one.
+     * But while the panel is in the paused state, the user can left click anywhere
+     * on our waveform to move the mark position somewhere else. In that case, we
+     * will "resume" from that mark position and not from the last play position
+     * of the previous thread. This is a deliberate choice on my part as I find
+     * it to be the least surprising behaviour. Basically we always want to "resume"
+     * from the mark position, whether it was explicitly set by the user or
+     * calculated by us when the pause button was hit.
+     * </p>
+     */
+    public void pause() {
+        // If we were already paused, treat this as "resume":
+        if (panelState == PanelState.PAUSED) {
+            long startOffset = (long) (markPosition * (audioData.getRawData()[0].length / 44.1f)); // WARNING assuming bit rate
+            internalPlay(startOffset);
+            return;
+        }
+
+        // If we were playing, treat this as a "pause":
+        if (panelState == PanelState.PLAYING) {
+            panelState = PanelState.PAUSED;
+            playbackThread.stop();
+            markPosition = (float) playbackThread.getCurrentOffset() / (audioData.getRawData()[0].length / 44.1f); // TODO assuming bitrate
+            playbackThread = null;
+            redrawWaveform();
+        }
+    }
+
+    /**
      * Stops playing, if playback was in progress, or does nothing if it wasn't.
      * This can be invoked programmatically, and is also invoked from the stop button,
      * if the control panel is visible and the user clicks it.
      */
     public void stop() {
-        if (panelState == PanelState.PLAYING) {
+        if (playbackThread != null) {
             playbackThread.stop();
             playbackThread = null;
         }
 
         panelState = PanelState.IDLE;
+        setPlaybackPosition(0);
+        markPosition = 0f; // arbitrary decision - "stop" should clear any current mark position
+        redrawWaveform();
         fireStateChangedEvent();
     }
 
@@ -297,7 +336,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
     private void setPlaybackPosition(float pos) {
         // If we have no waveform or audio data, reset to 0 and we're done:
         if (waveformImage == null || audioData == null) {
-            playbackPosition = pos;
+            playbackPosition = 0f;
             return;
         }
 
@@ -375,13 +414,17 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     private void handleImagePanelClick(MouseEvent e) {
-        // Ignore this click if we're not idle or if we have no audio data:
-        if (panelState != PanelState.IDLE || audioData == null) {
+        // Ignore this click if we're currently playing or if we have no audio data:
+        if (panelState == PanelState.PLAYING || audioData == null) {
             return;
         }
 
-        // Clear previous mark point or selection:
-        markPosition = 0f;
+        // If we're not paused, you can right click to clear the current marker:
+        // (if we are paused, we want to resume play from that marker)
+        if (panelState != PanelState.PAUSED) {
+            // Clear previous mark point or selection:
+            markPosition = 0f;
+        }
 
         // If it was a left click, set the new mark point:
         if (e.getButton() == MouseEvent.BUTTON1) {
@@ -407,6 +450,24 @@ public class AudioPanel extends JPanel implements UIReloadable {
     private void fireStateChangedEvent() {
         for (AudioPanelListener listener : panelListeners) {
             listener.stateChanged(this, panelState);
+        }
+    }
+
+    /**
+     * Invoked internally when playing or resuming play from a paused state.
+     *
+     * @param startOffset The offset from which to begin playing.
+     */
+    private void internalPlay(long startOffset) {
+        try {
+            panelState = PanelState.PLAYING;
+            playbackThread = AudioUtil.play(audioData, startOffset, playbackListener);
+            fireStateChangedEvent();
+        } catch (IOException | LineUnavailableException exc) {
+            getMessageUtil().error("Playback error", "Problem playing audio: " + exc.getMessage(), exc);
+            playbackThread = null;
+            panelState = PanelState.IDLE;
+            fireStateChangedEvent();
         }
     }
 
