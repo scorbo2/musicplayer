@@ -21,6 +21,8 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +57,7 @@ public class Playlist extends JPanel implements UIReloadable {
         fileList = new JList<>(fileListModel);
         fileList.setCellRenderer(new PlaylistCellRenderer());
         fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        fileList.addMouseListener(new DoubleClickListener());
 
         initComponents();
         ReloadUIAction.getInstance().registerReloadable(this);
@@ -423,6 +426,18 @@ public class Playlist extends JPanel implements UIReloadable {
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    protected static class DoubleClickListener extends MouseAdapter {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            // If it's a double click and something is selected, force a load and play:
+            // (this is a bit wonky if you double-click whatever's currently playing, but okay):
+            if (e.getClickCount() == 2 && Playlist.getInstance().fileList.getSelectedIndex() != -1) {
+                AudioPanel.getInstance().setAudioData(null);
+                AudioPanel.getInstance().play();
+            }
+        }
     }
 
     private MessageUtil getMessageUtil() {
