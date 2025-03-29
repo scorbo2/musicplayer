@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.AppExtension;
 import ca.corbett.musicplayer.Actions;
+import ca.corbett.musicplayer.ui.AppTheme;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
@@ -91,6 +92,17 @@ public abstract class MusicPlayerExtension implements AppExtension {
      * @throws IOException If something goes wrong during the load
      */
     public List<File> loadPlaylist(File inputFile) throws IOException {
+        return new ArrayList<>();
+    }
+
+    /**
+     * Allows the extension to supply a list of custom application themes
+     * that the user can choose from in AppConfig. An empty list is
+     * returned by default, indicating no custom themes.
+     *
+     * @return a List of application themes supplied by this extension
+     */
+    public List<AppTheme.Theme> getCustomThemes() {
         return new ArrayList<>();
     }
 }

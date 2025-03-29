@@ -9,16 +9,25 @@ import ca.corbett.extras.properties.ComboProperty;
 import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.IntegerProperty;
+import ca.corbett.extras.properties.PropertiesDialog;
+import ca.corbett.forms.FormPanel;
+import ca.corbett.forms.fields.ComboField;
+import ca.corbett.forms.fields.FormField;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.MainWindow;
 
+import javax.swing.AbstractAction;
+import javax.swing.JTabbedPane;
 import java.awt.Color;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Taking advantage of the AppProperties helper class in my own
@@ -39,17 +48,20 @@ import java.util.List;
  */
 public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
+    private static final Logger logger = Logger.getLogger(AppConfig.class.getName());
+
     private static AppConfig instance;
     public static final File PROPS_FILE;
 
     private EnumProperty<ButtonSize> buttonSize;
     private EnumProperty<ControlAlignment> controlAlignment;
+    private ComboProperty overrideAppThemeWaveform;
     private ColorProperty waveformBgColor;
     private ColorProperty waveformFillColor;
     private ColorProperty waveformOutlineColor;
     private IntegerProperty waveformOutlineThickness;
     private EnumProperty<WaveformResolution> waveformResolution;
-    private ComboProperty playlistTheme;
+    private ComboProperty applicationTheme;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
     private IntegerProperty windowWidth;
@@ -185,7 +197,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     public AppTheme.Theme getAppTheme() {
-        return AppTheme.getTheme(playlistTheme.getSelectedItem());
+        return AppTheme.getTheme(applicationTheme.getSelectedItem());
     }
 
     public boolean isShuffleEnabled() {
@@ -220,6 +232,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return windowHeight.getValue();
     }
 
+    public boolean useWaveformFromAppTheme() {
+        return overrideAppThemeWaveform.getSelectedIndex() == 0;
+    }
+
     /**
      * Note: null is allowed here.
      *
@@ -245,13 +261,18 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         buttonSize = new EnumProperty<ButtonSize>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
         controlAlignment = new EnumProperty<ControlAlignment>("UI.General.controlAlignment", "Control alignment:", ControlAlignment.CENTER);
 
+        List<String> options = new ArrayList<>();
+        options.add("Use waveform settings from application theme");
+        options.add("Override application theme with custom settings");
+        overrideAppThemeWaveform = new ComboProperty("Waveform.Waveform graphics.override", "Waveform:", options, 0, false);
+
         WaveformConfig defaultConfig = new WaveformConfig();
         waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor", "Background:", ColorProperty.ColorType.SOLID, defaultConfig.getBgColor());
         waveformFillColor = new ColorProperty("Waveform.Waveform graphics.fillColor", "Fill:", ColorProperty.ColorType.SOLID, defaultConfig.getFillColor());
         waveformOutlineColor = new ColorProperty("Waveform.Waveform graphics.outlineColor", "Outline:", ColorProperty.ColorType.SOLID, defaultConfig.getOutlineColor());
         waveformOutlineThickness = new IntegerProperty("Waveform.Waveform graphics.outlineWidth", "Outline width:", defaultConfig.getOutlineThickness(), 0, 24, 1);
 
-        List<String> options = new ArrayList<>();
+        options = new ArrayList<>();
         for (WaveformResolution res : WaveformResolution.values()) {
             options.add(res.name());
         }
@@ -259,9 +280,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         options = new ArrayList<>();
         for (AppTheme.Theme theme : AppTheme.getAll()) {
-            options.add(theme.name);
+            options.add(theme.getName());
         }
-        playlistTheme = new ComboProperty("UI.Theme.theme", "Theme:", options, 1, false);
+        applicationTheme = new ComboProperty("UI.Theme.theme", "Theme:", options, 1, false);
 
         shuffleEnabled = new BooleanProperty("hidden.props.shuffleEnabled", "shuffleEnabled", false);
         repeatEnabled = new BooleanProperty("hidden.props.repeatEnabled", "repeatEnabled", false);
@@ -278,16 +299,109 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         return List.of(buttonSize,
                 controlAlignment,
+                overrideAppThemeWaveform,
                 waveformBgColor,
                 waveformFillColor,
                 waveformOutlineColor,
                 waveformOutlineThickness,
                 waveformResolution,
-                playlistTheme,
+                applicationTheme,
                 shuffleEnabled,
                 repeatEnabled,
                 windowWidth,
                 windowHeight,
                 lastBrowseDir);
+    }
+
+    /**
+     * HACK HACK HACK Kludge alert! In order to add custom logic to the generated
+     * properties dialog, we have to override this and add a bunch of hacky code.
+     * I've created a ticket to deal with this in the upstream swing-extras
+     * and app-extensions libraries, but until I get to those tickets, this
+     * code exists here in the downstream application.
+     *
+     * @param owner The owning Frame (so we can make the dialog modal to that Frame).
+     * @return true if the user OK'd the dialog with changes.
+     */
+    @Override
+    public boolean showPropertiesDialog(Frame owner) {
+        List<String> categories = propsManager.getCategories();
+        if (categories.isEmpty()) {
+            return false; // won't happen in our case but whatever
+        }
+        List<FormPanel> formPanels = new ArrayList<>();
+        for (String category : categories) {
+            formPanels.add(propsManager.generateUnrenderedFormPanel(category, true, 24));
+        }
+        addCustomFormBehaviour(formPanels);
+
+        // If there's only one category, just wrap it in a single form panel:
+        PropertiesDialog dialog;
+        if (formPanels.size() == 1) {
+            formPanels.get(0).render();
+            dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", formPanels.get(0));
+        }
+
+        // If there's more than one category, wrap it all in a tab pane:
+        else {
+            JTabbedPane tabPane = new JTabbedPane();
+            int index = 0;
+            for (String category : categories) {
+                FormPanel formPanel = formPanels.get(index++);
+                formPanel.render();
+                tabPane.addTab(category, formPanel);
+            }
+            dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", tabPane);
+        }
+
+        dialog.setVisible(true);
+        if (dialog.wasOkayed()) {
+            save();
+        }
+
+        return dialog.wasOkayed();
+    }
+
+    private void addCustomFormBehaviour(List<FormPanel> formPanels) {
+        final ComboField combo = (ComboField) findFormField(formPanels, "Waveform.Waveform graphics.override");
+        final FormField bgColorField = findFormField(formPanels, "Waveform.Waveform graphics.bgColor");
+        final FormField fillColorField = findFormField(formPanels, "Waveform.Waveform graphics.fillColor");
+        final FormField outlineColorField = findFormField(formPanels, "Waveform.Waveform graphics.outlineColor");
+        final FormField outlineWidthField = findFormField(formPanels, "Waveform.Waveform graphics.outlineWidth");
+        if (combo != null && bgColorField != null && fillColorField != null && outlineColorField != null && outlineWidthField != null) {
+
+            // Set initial state for these fields:
+            bgColorField.setEnabled(combo.getSelectedIndex() == 1);
+            fillColorField.setEnabled(combo.getSelectedIndex() == 1);
+            outlineColorField.setEnabled(combo.getSelectedIndex() == 1);
+            outlineWidthField.setEnabled(combo.getSelectedIndex() == 1);
+
+            // Now allow it to change based on the override combo box value:
+            combo.addValueChangedAction(new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    boolean shouldEnable = combo.getSelectedIndex() == 1;
+                    bgColorField.setEnabled(shouldEnable);
+                    fillColorField.setEnabled(shouldEnable);
+                    outlineColorField.setEnabled(shouldEnable);
+                    outlineWidthField.setEnabled(shouldEnable);
+                }
+            });
+        } else {
+            logger.warning("addCustomFormBehaviour: unable to locate required form fields.");
+        }
+    }
+
+    private FormField findFormField(List<FormPanel> formPanels, String fieldIdentifier) {
+        for (FormPanel formPanel : formPanels) {
+            List<FormField> fields = formPanel.getFormFields();
+            for (FormField field : fields) {
+                String id = field.getIdentifier();
+                if (id != null && id.equals(fieldIdentifier)) {
+                    return field;
+                }
+            }
+        }
+        return null;
     }
 }

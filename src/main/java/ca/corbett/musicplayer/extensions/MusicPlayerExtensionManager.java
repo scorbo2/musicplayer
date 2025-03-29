@@ -3,6 +3,7 @@ package ca.corbett.musicplayer.extensions;
 import ca.corbett.extensions.ExtensionManager;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
+import ca.corbett.musicplayer.ui.AppTheme;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
@@ -103,5 +104,26 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
             }
         }
         return null;
+    }
+
+
+    /**
+     * Allows the extension to supply a list of custom application themes
+     * that the user can choose from in AppConfig. An empty list is
+     * returned by default, indicating no custom themes.
+     *
+     * @return a List of application themes supplied by this extension
+     */
+    public List<AppTheme.Theme> getCustomThemes() {
+        List<AppTheme.Theme> themes = new ArrayList<>();
+
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            List<AppTheme.Theme> list = extension.getCustomThemes();
+            if (list != null && !list.isEmpty()) {
+                themes.addAll(list);
+            }
+        }
+
+        return themes;
     }
 }

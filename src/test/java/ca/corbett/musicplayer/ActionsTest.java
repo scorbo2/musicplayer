@@ -67,7 +67,7 @@ class ActionsTest {
 
         @Override
         public AppExtensionInfo getInfo() {
-            return null;
+            return new AppExtensionInfo.Builder("someextension").build();
         }
 
         @Override

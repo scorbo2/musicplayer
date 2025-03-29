@@ -56,7 +56,7 @@ class MusicPlayerExtensionManagerTest {
 
         @Override
         public AppExtensionInfo getInfo() {
-            return null;
+            return new AppExtensionInfo.Builder("XmlPlay").build();
         }
 
         @Override

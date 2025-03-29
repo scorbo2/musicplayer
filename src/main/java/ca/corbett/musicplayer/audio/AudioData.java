@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.audio;
 
 import ca.corbett.extras.audio.WaveformConfig;
 import ca.corbett.musicplayer.AppConfig;
+import ca.corbett.musicplayer.ui.AppTheme;
 import org.tritonus.share.sampled.file.TAudioFileFormat;
 
 import javax.sound.sampled.AudioFileFormat;
@@ -250,14 +251,26 @@ public class AudioData {
      * @return A WaveformConfig driven by user preferences in AppConfig.
      */
     private WaveformConfig getWaveformConfig() {
-        WaveformConfig config = new WaveformConfig();
-        config.setXLimit(AppConfig.getInstance().getWaveformResolution().getXLimit());
-        config.setXScale(768);
-        config.setBgColor(AppConfig.getInstance().getWaveformBgColor());
-        config.setFillColor(AppConfig.getInstance().getWaveformFillColor());
-        config.setOutlineColor(AppConfig.getInstance().getWaveformOutlineColor());
-        config.setOutlineThickness(AppConfig.getInstance().getWaveformOutlineWidth());
-        config.setBaselineEnabled(false);
+        WaveformConfig config = null;
+
+        // User wants to use the config from the current app theme:
+        if (AppConfig.getInstance().useWaveformFromAppTheme()) {
+            AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
+            config = theme.getWaveformConfig() == null ? new WaveformConfig() : theme.getWaveformConfig();
+            config.setXLimit(AppConfig.getInstance().getWaveformResolution().getXLimit());
+        }
+
+        // User wants to override the current app theme with custom settings:
+        else {
+            config = new WaveformConfig();
+            config.setXLimit(AppConfig.getInstance().getWaveformResolution().getXLimit());
+            config.setBgColor(AppConfig.getInstance().getWaveformBgColor());
+            config.setFillColor(AppConfig.getInstance().getWaveformFillColor());
+            config.setOutlineColor(AppConfig.getInstance().getWaveformOutlineColor());
+            config.setOutlineThickness(AppConfig.getInstance().getWaveformOutlineWidth());
+            config.setBaselineEnabled(false);
+        }
+
         return config;
     }
 
