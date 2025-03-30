@@ -106,13 +106,10 @@ public class AudioPanel extends JPanel implements UIReloadable {
 
             @Override
             public void stopped() {
-                // If we stopped because we ran out of audio data, return to IDLE state.
-                // Otherwise, our state has already been explicitly updated by one of our own actions.
+                // If we stopped because we ran out of audio data, hit next()
                 if (panelState == PanelState.PLAYING) {
-                    panelState = PanelState.IDLE;
+                    next();
                 }
-                VisualizationWindow.getInstance().setTrackInfo(null, null);
-                fireStateChangedEvent();
             }
 
             @Override
@@ -301,6 +298,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
             playbackThread = null;
         }
 
+        VisualizationWindow.getInstance().setTrackInfo(null, null);
         panelState = PanelState.IDLE;
         setPlaybackPosition(0);
         markPosition = 0f; // arbitrary decision - "stop" should clear any current mark position
