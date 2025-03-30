@@ -96,6 +96,16 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public void removeSelected() {
         if (fileList.getSelectedIndex() != -1) {
+
+            // Arbitrary decision: if you remove the track that's currently
+            // loaded in the audio panel, stop and unload it.
+            File selected = fileList.getSelectedValue();
+            AudioData currentlyLoaded = AudioPanel.getInstance().getAudioData();
+            if (currentlyLoaded != null && currentlyLoaded.getSourceFile().equals(selected)) {
+                AudioPanel.getInstance().stop();
+                AudioPanel.getInstance().setAudioData(null);
+            }
+
             fileListModel.removeElementAt(fileList.getSelectedIndex());
         }
     }
@@ -109,6 +119,10 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public void clear() {
         fileListModel.clear();
+
+        // Arbitrary decision: stop and unload any loaded track:
+        AudioPanel.getInstance().stop();
+        AudioPanel.getInstance().setAudioData(null);
     }
 
     /**

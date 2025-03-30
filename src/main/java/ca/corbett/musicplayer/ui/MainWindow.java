@@ -70,7 +70,7 @@ public class MainWindow extends JFrame {
         if (visible) {
             AppConfig.getInstance().load();
             loadWindowState();
-            AudioPanelIdleAnimation.go();
+            AudioPanelIdleAnimation.getInstance().go();
         }
     }
 

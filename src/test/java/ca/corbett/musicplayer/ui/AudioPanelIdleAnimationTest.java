@@ -1,0 +1,86 @@
+package ca.corbett.musicplayer.ui;
+
+import ca.corbett.extensions.AppExtensionInfo;
+import ca.corbett.extras.properties.AbstractProperty;
+import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
+import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class AudioPanelIdleAnimationTest {
+
+    @Test
+    public void getAll_withNoExtensions_shouldReturnBuiltInAnimations() {
+        // GIVEN a stock setup with no extensions:
+        AudioPanelIdleAnimation anim = AudioPanelIdleAnimation.getInstance();
+
+        // WHEN we ask it for its animation list:
+        AudioPanelIdleAnimation.Animation[] animations = anim.getAll();
+
+        // THEN we should only see the built-in ones:
+        assertEquals(2, animations.length);
+        assertEquals("Plain solid color", animations[0].getName());
+        assertEquals("Rolling color wave", animations[1].getName());
+    }
+
+    @Test
+    public void getAll_withExtensions_shouldReturnCustomAnimations() {
+        // GIVEN an extension that supplies custom animations:
+        AudioPanelIdleAnimation anim = AudioPanelIdleAnimation.getInstance();
+        MusicPlayerExtensionManager.getInstance().addExtension(new CustomAnimation(), true);
+
+        // WHEN we ask it for its animation list:
+        AudioPanelIdleAnimation.Animation[] animations = anim.getAll();
+
+        // THEN we should find our custom animation:
+        assertEquals(3, animations.length);
+        assertEquals("CustomAnimation", animations[2].getName());
+
+        // AND when we disable the extension, the custom animation should go away:
+        MusicPlayerExtensionManager.getInstance().setExtensionEnabled(CustomAnimation.class.getName(), false);
+        animations = anim.getAll();
+        assertEquals(2, animations.length);
+    }
+
+    private static class CustomAnimation extends MusicPlayerExtension {
+
+        @Override
+        public AppExtensionInfo getInfo() {
+            return new AppExtensionInfo.Builder("CustomAnimations").build();
+        }
+
+        @Override
+        public List<AbstractProperty> getConfigProperties() {
+            return List.of();
+        }
+
+        @Override
+        public void onActivate() {
+        }
+
+        @Override
+        public void onDeactivate() {
+        }
+
+        @Override
+        public List<AudioPanelIdleAnimation.Animation> getCustomIdleAnimations() {
+            List<AudioPanelIdleAnimation.Animation> list = new ArrayList<>();
+
+            list.add(new AudioPanelIdleAnimation.Animation("CustomAnimation") {
+                @Override
+                public void stop() {
+                }
+
+                @Override
+                public void run() {
+                }
+            });
+
+            return list;
+        }
+    }
+}

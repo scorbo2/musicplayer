@@ -17,6 +17,7 @@ import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.AppTheme;
+import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 import ca.corbett.musicplayer.ui.MainWindow;
 
 import javax.swing.AbstractAction;
@@ -53,6 +54,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private static AppConfig instance;
     public static final File PROPS_FILE;
 
+    private ComboProperty idleAnimation;
     private EnumProperty<ButtonSize> buttonSize;
     private EnumProperty<ControlAlignment> controlAlignment;
     private ComboProperty overrideAppThemeWaveform;
@@ -236,6 +238,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return overrideAppThemeWaveform.getSelectedIndex() == 0;
     }
 
+    public AudioPanelIdleAnimation.Animation getIdleAnimation() {
+        return AudioPanelIdleAnimation.getInstance().get(idleAnimation.getSelectedItem());
+    }
+
     /**
      * Note: null is allowed here.
      *
@@ -262,6 +268,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         controlAlignment = new EnumProperty<ControlAlignment>("UI.General.controlAlignment", "Control alignment:", ControlAlignment.CENTER);
 
         List<String> options = new ArrayList<>();
+        for (AudioPanelIdleAnimation.Animation animation : AudioPanelIdleAnimation.getInstance().getAll()) {
+            options.add(animation.getName());
+        }
+        idleAnimation = new ComboProperty("UI.General.idleAnimation", "Idle animation:", options, 0, false);
+
+        options = new ArrayList<>();
         options.add("Use waveform settings from application theme");
         options.add("Override application theme with custom settings");
         overrideAppThemeWaveform = new ComboProperty("Waveform.Waveform graphics.override", "Waveform:", options, 0, false);
@@ -299,6 +311,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         return List.of(buttonSize,
                 controlAlignment,
+                idleAnimation,
                 overrideAppThemeWaveform,
                 waveformBgColor,
                 waveformFillColor,

@@ -4,6 +4,7 @@ import ca.corbett.extensions.ExtensionManager;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 import ca.corbett.musicplayer.ui.AppTheme;
+import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
@@ -106,7 +107,6 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         return null;
     }
 
-
     /**
      * Allows the extension to supply a list of custom application themes
      * that the user can choose from in AppConfig. An empty list is
@@ -125,5 +125,25 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         }
 
         return themes;
+    }
+
+    /**
+     * Allows the extension to supply a list of custom idle animations
+     * that the user can choose from in AppConfig. An empty list is
+     * returned by default, indicating no idle animations.
+     *
+     * @return a List of idle animations supplied by this extension
+     */
+    public List<AudioPanelIdleAnimation.Animation> getCustomIdleAnimations() {
+        List<AudioPanelIdleAnimation.Animation> animations = new ArrayList<>();
+
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            List<AudioPanelIdleAnimation.Animation> list = extension.getCustomIdleAnimations();
+            if (list != null && !list.isEmpty()) {
+                animations.addAll(list);
+            }
+        }
+
+        return animations;
     }
 }

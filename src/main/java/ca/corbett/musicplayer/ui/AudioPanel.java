@@ -162,14 +162,19 @@ public class AudioPanel extends JPanel implements UIReloadable {
         panelListeners.remove(listener);
     }
 
+    public AudioData getAudioData() {
+        return audioData;
+    }
+
     public void setAudioData(AudioData data) {
         if (data == null) {
             stop();
             audioData = null;
+            AudioPanelIdleAnimation.getInstance().go();
             return;
         }
 
-        AudioPanelIdleAnimation.stop();
+        AudioPanelIdleAnimation.getInstance().stop();
         if (panelState != PanelState.IDLE) {
             stop();
         }
