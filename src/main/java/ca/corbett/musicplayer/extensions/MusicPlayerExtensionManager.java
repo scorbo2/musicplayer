@@ -7,6 +7,7 @@ import ca.corbett.musicplayer.extensions.builtin.ExtraAnimations;
 import ca.corbett.musicplayer.extensions.builtin.ExtraThemes;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
+import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
@@ -111,11 +112,10 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     }
 
     /**
-     * Allows the extension to supply a list of custom application themes
-     * that the user can choose from in AppConfig. An empty list is
-     * returned by default, indicating no custom themes.
+     * Returns a list of custom themes from all registered and enabled extensions that
+     * supply at least one.
      *
-     * @return a List of application themes supplied by this extension
+     * @return a List of application themes supplied by extensions
      */
     public List<AppTheme.Theme> getCustomThemes() {
         List<AppTheme.Theme> themes = new ArrayList<>();
@@ -131,11 +131,10 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     }
 
     /**
-     * Allows the extension to supply a list of custom idle animations
-     * that the user can choose from in AppConfig. An empty list is
-     * returned by default, indicating no idle animations.
+     * Returns a combined list of all idle animations supplied by all extensions that
+     * supply at least one.
      *
-     * @return a List of idle animations supplied by this extension
+     * @return a List of idle animations supplied by all extensions.
      */
     public List<AudioPanelIdleAnimation.Animation> getCustomIdleAnimations() {
         List<AudioPanelIdleAnimation.Animation> animations = new ArrayList<>();
@@ -148,5 +147,23 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         }
 
         return animations;
+    }
+
+    /**
+     * Returns a list of all Visualizer instances from all extensions that supply at least one.
+     *
+     * @return a List of all Visualizers supplied by all extensions.
+     */
+    public List<VisualizationManager.Visualizer> getCustomVisualiers() {
+        List<VisualizationManager.Visualizer> visualizers = new ArrayList<>();
+
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            List<VisualizationManager.Visualizer> list = extension.getCustomVisualizers();
+            if (list != null && !list.isEmpty()) {
+                visualizers.addAll(list);
+            }
+        }
+
+        return visualizers;
     }
 }

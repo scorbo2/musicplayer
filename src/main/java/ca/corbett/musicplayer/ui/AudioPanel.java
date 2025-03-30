@@ -51,6 +51,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
     private PlaybackThread playbackThread;
     private float playbackPosition; // 0f==start, 1f==end
     private final PlaybackListener playbackListener;
+    private final VisualizationTrackInfo trackInfo;
 
     private float markPosition;
 
@@ -96,6 +97,8 @@ public class AudioPanel extends JPanel implements UIReloadable {
         panelState = PanelState.IDLE;
         playbackPosition = 0f;
         markPosition = 0f;
+        trackInfo = new VisualizationTrackInfo();
+        trackInfo.reset();
         playbackListener = new PlaybackListener() {
             @Override
             public void started() {
@@ -108,12 +111,15 @@ public class AudioPanel extends JPanel implements UIReloadable {
                 if (panelState == PanelState.PLAYING) {
                     panelState = PanelState.IDLE;
                 }
+                VisualizationWindow.getInstance().setTrackInfo(null, null);
                 fireStateChangedEvent();
             }
 
             @Override
             public boolean updateProgress(long curMillis, long totalMillis) {
                 setPlaybackPosition((float) curMillis / (float) totalMillis);
+                trackInfo.currentTime = (int) (curMillis / 1000);
+                VisualizationWindow.getInstance().setTrackInfo(trackInfo, audioData.getSourceFile());
                 return true;
             }
 
@@ -170,6 +176,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         if (data == null) {
             stop();
             audioData = null;
+            trackInfo.reset();
             AudioPanelIdleAnimation.getInstance().go();
             return;
         }
@@ -184,6 +191,11 @@ public class AudioPanel extends JPanel implements UIReloadable {
         playbackPosition = 0f;
         redrawWaveform();
         NowPlayingPanel.getInstance().setNowPlaying(data);
+        trackInfo.artist = data.getMetadata().author;
+        trackInfo.title = data.getMetadata().title;
+        trackInfo.album = data.getMetadata().album;
+        trackInfo.currentTime = 0;
+        trackInfo.totalTime = 0; // TODO sort out duration -> data.getMetadata().durationStr;
         fireAudioLoadedEvent();
     }
 

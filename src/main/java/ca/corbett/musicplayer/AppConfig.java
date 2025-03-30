@@ -6,6 +6,7 @@ import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.BooleanProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.ComboProperty;
+import ca.corbett.extras.properties.DecimalProperty;
 import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.IntegerProperty;
@@ -19,10 +20,15 @@ import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 import ca.corbett.musicplayer.ui.MainWindow;
+import ca.corbett.musicplayer.ui.VisualizationManager;
+import ca.corbett.musicplayer.ui.VisualizationOverlay;
+import ca.corbett.musicplayer.ui.VisualizationThread;
+import ca.corbett.musicplayer.ui.VisualizationWindow;
 
 import javax.swing.AbstractAction;
 import javax.swing.JTabbedPane;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -43,6 +49,10 @@ import java.util.logging.Logger;
  * <p>
  * <B>Example:</B> java -Dca.corbett.musicplayer.props.file=/tmp/blah.props MusicPlayer.jar
  * </p>
+ *
+ * TODO add a property for extension load dir (requires restart)
+ *      but if extension manager is created before appconfig is loaded, how does it know where to go? hmm...
+ *      it might have to be a system property, and we just display it read-only on the properties dialog
  *
  * @author scorbo2
  * @since 2025-03-23
@@ -69,6 +79,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty windowWidth;
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
+    private ComboProperty visualizerType;
+    private EnumProperty<VisualizationWindow.DISPLAY> visualizerDisplay;
+    private EnumProperty<VisualizationThread.AnimationSpeed> visualizerSpeed;
+    private BooleanProperty visualizerOverlayEnabled;
+    private EnumProperty<FontFamily> visualizerOverlayFont;
+    private IntegerProperty visualizerOverlayFontSize;
+    private EnumProperty<VisualizationOverlay.OverlaySize> visualizerOverlaySize;
+    private DecimalProperty visualizerOverlayOpacity;
 
     public enum ButtonSize {
         XSMALL(16),
@@ -106,6 +124,23 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         public int getXLimit() {
             return xLimit;
+        }
+    }
+
+    public enum FontFamily {
+        SANS_SERIF(Font.SANS_SERIF),
+        SERIF(Font.SERIF),
+        MONOSPACED(Font.MONOSPACED);
+
+        public final String familyName;
+
+        FontFamily(String label) {
+            this.familyName = label;
+        }
+
+        @Override
+        public String toString() {
+            return familyName;
         }
     }
 
@@ -262,6 +297,38 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return (lastBrowseDir.getDirectory() != null && lastBrowseDir.getDirectory().exists()) ? lastBrowseDir.getDirectory() : null;
     }
 
+    public VisualizationManager.Visualizer getVisualizer() {
+        return VisualizationManager.getVisualizer(visualizerType.getSelectedItem());
+    }
+
+    public VisualizationWindow.DISPLAY getPreferredVisualizationDisplay() {
+        return visualizerDisplay.getSelectedItem();
+    }
+
+    public VisualizationThread.AnimationSpeed getVisualizationAnimationSpeed() {
+        return visualizerSpeed.getSelectedItem();
+    }
+
+    public FontFamily getVisualizerOverlayFont() {
+        return visualizerOverlayFont.getSelectedItem();
+    }
+
+    public int getVisualizerOverlayFontSize() {
+        return visualizerOverlayFontSize.getValue();
+    }
+
+    public VisualizationOverlay.OverlaySize getVisualizationOverlaySize() {
+        return visualizerOverlaySize.getSelectedItem();
+    }
+
+    public float getVisualizationOverlayOpacity() {
+        return (float) visualizerOverlayOpacity.getValue();
+    }
+
+    public boolean isVisualizerOverlayEnabled() {
+        return visualizerOverlayEnabled.getValue();
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         buttonSize = new EnumProperty<ButtonSize>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
@@ -311,6 +378,20 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         lastBrowseDir = new DirectoryProperty("hidden.props.browseDir", "browseDir", true);
         lastBrowseDir.setExposed(false);
 
+        options = new ArrayList<>();
+        for (VisualizationManager.Visualizer visualizer : VisualizationManager.getAll()) {
+            options.add(visualizer.getName());
+        }
+        selectedIndex = (options.size() == 1) ? 0 : 1; // pick the first non-standard one if there is one
+        visualizerType = new ComboProperty("Visualization.General.visualizer", "Visualizer:", options, selectedIndex, false);
+        visualizerDisplay = new EnumProperty<>("Visualization.General.preferredDisplay", "Preferred display:", VisualizationWindow.DISPLAY.PRIMARY);
+        visualizerSpeed = new EnumProperty<>("Visualization.General.animationSpeed", "Animation speed:", VisualizationThread.AnimationSpeed.HIGH);
+        visualizerOverlayEnabled = new BooleanProperty("Visualization.Overlay.enabled", "Enable visualizer overlay for current track info", true);
+        visualizerOverlayFont = new EnumProperty<>("Visualization.Overlay.fontFamily", "Overlay font:", FontFamily.SANS_SERIF);
+        visualizerOverlayFontSize = new IntegerProperty("Visualization.Overlay.fontSize", "Font point size:", 12, 8, 99, 2);
+        visualizerOverlaySize = new EnumProperty<>("Visualization.Overlay.size", "Overlay size:", VisualizationOverlay.OverlaySize.SMALL);
+        visualizerOverlayOpacity = new DecimalProperty("Visualization.Overlay.opacity", "Overlay opacity:", 1.0, 0.0, 1.0, 0.1);
+
         return List.of(buttonSize,
                 controlAlignment,
                 idleAnimation,
@@ -325,7 +406,15 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 repeatEnabled,
                 windowWidth,
                 windowHeight,
-                lastBrowseDir);
+                lastBrowseDir,
+                visualizerType,
+                visualizerDisplay,
+                visualizerSpeed,
+                visualizerOverlayEnabled,
+                visualizerOverlayFont,
+                visualizerOverlayFontSize,
+                visualizerOverlaySize,
+                visualizerOverlayOpacity);
     }
 
     /**

@@ -4,6 +4,7 @@ import ca.corbett.extensions.AppExtension;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
+import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
@@ -115,6 +116,16 @@ public abstract class MusicPlayerExtension implements AppExtension {
      * @return A List of idle animations supplied by this extension
      */
     public List<AudioPanelIdleAnimation.Animation> getCustomIdleAnimations() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * Allows the extension to supply a custom Visualizer for full-screen
+     * visualization of tracks.
+     *
+     * @return A List of Visualizer instances. Might be empty.
+     */
+    public List<VisualizationManager.Visualizer> getCustomVisualizers() {
         return new ArrayList<>();
     }
 }
