@@ -209,8 +209,6 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
         graphicsDevice.setFullScreenWindow(instance);
         DisplayMode displayMode = graphicsDevice.getDisplayMode();
         setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
-        System.out.println("Setting size to " + displayMode.getWidth() + " by " + displayMode.getHeight());
-        System.out.println("size is " + getWidth() + " by " + getHeight());
         if (getBufferStrategy() == null) {
             createBufferStrategy(2);
         }
