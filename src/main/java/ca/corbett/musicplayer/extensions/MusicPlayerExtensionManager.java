@@ -3,6 +3,8 @@ package ca.corbett.musicplayer.extensions;
 import ca.corbett.extensions.ExtensionManager;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
+import ca.corbett.musicplayer.extensions.builtin.ExtraAnimations;
+import ca.corbett.musicplayer.extensions.builtin.ExtraThemes;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 
@@ -23,7 +25,8 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     private static MusicPlayerExtensionManager instance;
 
     protected MusicPlayerExtensionManager() {
-
+        addExtension(new ExtraThemes(), true);
+        addExtension(new ExtraAnimations(), true);
     }
 
     public static MusicPlayerExtensionManager getInstance() {

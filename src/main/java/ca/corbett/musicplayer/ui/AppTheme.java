@@ -5,6 +5,7 @@ import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 
 import java.awt.Color;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a way to change the appearance of UI elements that are
@@ -26,13 +27,20 @@ import java.util.List;
  */
 public class AppTheme {
 
-    public static final Theme MATRIX = new MatrixTheme();
+    private static final Logger logger = Logger.getLogger(AppTheme.class.getName());
+
+    /**
+     * Out of the box, we support one very boring theme.
+     * But, our built-in ExtraThemes extension will bring
+     * in a few extra ones on initial startup, and will
+     * show off what we can do with application extensions.
+     */
     public static final Theme STANDARD = new StandardTheme();
 
     /**
      * Returns a list of all available application themes - this is both the built-in
-     * themes that we support out of the box, along with any custom themes supplied
-     * by any registered extensions. The built-in themes will always appear first
+     * theme that we support out of the box, along with any custom themes supplied
+     * by any registered extensions. The built-in theme will always appear first
      * in the returned array. The user can choose between these themes in the
      * application settings dialog.
      *
@@ -40,10 +48,9 @@ public class AppTheme {
      */
     public static Theme[] getAll() {
         List<Theme> extensionThemes = MusicPlayerExtensionManager.getInstance().getCustomThemes();
-        Theme[] allThemes = new Theme[2 + extensionThemes.size()];
-        allThemes[0] = MATRIX;
-        allThemes[1] = STANDARD;
-        int index = 2;
+        Theme[] allThemes = new Theme[1 + extensionThemes.size()];
+        allThemes[0] = STANDARD;
+        int index = 1;
         for (Theme theme : extensionThemes) {
             allThemes[index++] = theme;
         }
@@ -57,7 +64,8 @@ public class AppTheme {
             }
         }
 
-        return MATRIX; // arbitrary default in case of garbage data
+        logger.warning("Requested theme \"" + name + "\" not found; using STANDARD as default.");
+        return STANDARD; // arbitrary default in case of garbage data
     }
 
     /**
@@ -179,24 +187,10 @@ public class AppTheme {
         }
     }
 
-    public static class MatrixTheme extends Theme {
-        public MatrixTheme() {
-            super("Matrix");
-            dialogBgColor = Color.GRAY;
-            normalBgColor = Color.BLACK;
-            normalFgColor = Color.GREEN;
-            selectedBgColor = Color.GREEN;
-            selectedFgColor = Color.BLACK;
-            headerBgColor = Color.GRAY;
-            headerFgColor = Color.LIGHT_GRAY;
-            waveformConfig.setFillColor(new Color(0, 128, 0));
-            waveformConfig.setOutlineColor(Color.GREEN);
-            waveformConfig.setOutlineThickness(1);
-            waveformConfig.setBgColor(Color.BLACK);
-            waveformConfig.setBaselineEnabled(false);
-        }
-    }
-
+    /**
+     * Our very boring built-in hard-coded theme.
+     * Refer also to the ExtraThemes extension for more interesting options.
+     */
     public static class StandardTheme extends Theme {
         public StandardTheme() {
             super("Standard");

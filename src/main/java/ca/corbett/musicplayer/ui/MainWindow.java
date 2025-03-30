@@ -20,6 +20,10 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * TODO global keyboard shortcuts
+ * TODO keyboard shortcuts should also be extensible
+ */
 public class MainWindow extends JFrame {
 
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());

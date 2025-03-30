@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer;
 
 import ca.corbett.musicplayer.actions.AboutAction;
+import ca.corbett.musicplayer.actions.ExtensionsManagerAction;
 import ca.corbett.musicplayer.actions.FullScreenAction;
 import ca.corbett.musicplayer.actions.NextAction;
 import ca.corbett.musicplayer.actions.PauseAction;
@@ -55,6 +56,7 @@ public final class Actions {
             new MPAction("Next", "Next (right/down)", "media-skip-forward.png", new NextAction()),
             new MPAction("Fullscreen", "Fullscreen (v)", "icon-fullscreen.png", new FullScreenAction()),
             new MPAction("Settings", "Preferences (ctrl+p)", "icon-preferences.png", new SettingsAction()),
+            new MPAction("Extensions", "Extension Manager", "icon-extensions2.png", new ExtensionsManagerAction()),
             new MPAction("About", "About (ctrl+a)", "logo.png", new AboutAction())
     };
 

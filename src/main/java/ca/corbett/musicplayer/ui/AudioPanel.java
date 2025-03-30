@@ -138,9 +138,9 @@ public class AudioPanel extends JPanel implements UIReloadable {
     /**
      * Invoked from AudioPanelIdleAnimation
      *
-     * @param image
+     * @param image An image to set in this panel.
      */
-    void setIdleImage(BufferedImage image) {
+    public void setIdleImage(BufferedImage image) {
         imagePanel.setImage(image);
     }
 

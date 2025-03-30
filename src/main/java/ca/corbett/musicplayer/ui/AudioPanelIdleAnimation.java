@@ -1,7 +1,5 @@
 package ca.corbett.musicplayer.ui;
 
-import ca.corbett.extras.gradient.GradientConfig;
-import ca.corbett.extras.gradient.GradientUtil;
 import ca.corbett.extras.image.ImageTextUtil;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
@@ -13,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Whenever the application is idle (not playing or in a paused state), we
@@ -28,6 +27,8 @@ import java.util.List;
  * @since 2025-03-23
  */
 public class AudioPanelIdleAnimation implements UIReloadable {
+
+    private static final Logger logger = Logger.getLogger(AudioPanelIdleAnimation.class.getName());
 
     protected static AudioPanelIdleAnimation instance;
     protected Animation runningThread;
@@ -60,15 +61,15 @@ public class AudioPanelIdleAnimation implements UIReloadable {
         }
 
         // Fallback default in case of garbage input:
-        return new RollingColorWaves();
+        logger.warning("Requested animation \"" + name + "\" not found; using built-in default.");
+        return new PlainBackground();
     }
 
     public Animation[] getAll() {
         List<AudioPanelIdleAnimation.Animation> extensionAnimations = MusicPlayerExtensionManager.getInstance().getCustomIdleAnimations();
-        Animation[] animations = new Animation[2 + extensionAnimations.size()];
-        animations[0] = new RollingColorWaves();
-        animations[1] = new PlainBackground();
-        int index = 2;
+        Animation[] animations = new Animation[1 + extensionAnimations.size()];
+        animations[0] = new PlainBackground();
+        int index = 1;
         for (Animation animation : extensionAnimations) {
             animations[index++] = animation;
         }
@@ -138,7 +139,7 @@ public class AudioPanelIdleAnimation implements UIReloadable {
         private volatile boolean isRunning;
 
         public PlainBackground() {
-            super("Plain solid color");
+            super("Standard");
         }
 
         @Override
@@ -150,81 +151,19 @@ public class AudioPanelIdleAnimation implements UIReloadable {
         public void run() {
             final int WIDTH = 400;
             final int HEIGHT = 200;
+            BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = image.createGraphics();
+            graphics.setColor(AppConfig.getInstance().getAppTheme().getNormalBgColor());
+            graphics.fillRect(0, 0, WIDTH, HEIGHT);
+            graphics.dispose();
+
+            ImageTextUtil.drawText(image, "R E A D Y", 100, new Font(Font.MONOSPACED, Font.PLAIN, 12), ImageTextUtil.TextAlign.CENTER, Color.BLUE, 0f, AppConfig.getInstance().getAppTheme().getNormalFgColor(), null, new Rectangle(60, 50, WIDTH - 120, 100));
             isRunning = true;
             while (isRunning) {
-                BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-                Graphics2D graphics = image.createGraphics();
-                graphics.setColor(AppConfig.getInstance().getAppTheme().getNormalBgColor());
-                graphics.fillRect(0, 0, WIDTH, HEIGHT);
-                graphics.dispose();
-
-                ImageTextUtil.drawText(image, "R E A D Y", 100, new Font(Font.MONOSPACED, Font.PLAIN, 12), ImageTextUtil.TextAlign.CENTER, Color.BLUE, 0f, AppConfig.getInstance().getAppTheme().getNormalFgColor(), null, new Rectangle(60, 20, WIDTH - 120, 100));
                 AudioPanel.getInstance().setIdleImage(image);
 
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ignored) {
-                }
-            }
-        }
-    }
-
-    /**
-     * An example Animation implementation that shows a slowly rolling color gradient
-     * with the word "ready" printed on it. The colors to use are taken from the
-     * current app theme.
-     */
-    protected static class RollingColorWaves extends Animation {
-
-        public static final int WIDTH = 400;
-        public static final int HEIGHT = AudioPanel.WAVEFORM_HEIGHT;
-        private volatile boolean isRunning;
-        int x = 0;
-
-        public RollingColorWaves() {
-            super("Rolling color wave");
-        }
-
-        @Override
-        public void stop() {
-            isRunning = false;
-        }
-
-        @Override
-        public void run() {
-            isRunning = true;
-            AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
-            GradientConfig gradient1 = new GradientConfig();
-            gradient1.setColor1(theme.getNormalBgColor());
-            gradient1.setColor2(theme.getNormalFgColor());
-            gradient1.setGradientType(GradientUtil.GradientType.HORIZONTAL_LINEAR);
-            GradientConfig gradient2 = new GradientConfig();
-            gradient2.setColor1(theme.getNormalFgColor());
-            gradient2.setColor2(theme.getNormalBgColor());
-            gradient2.setGradientType(GradientUtil.GradientType.HORIZONTAL_LINEAR);
-            while (isRunning) {
-                BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D graphics = image.createGraphics();
-                graphics.setColor(theme.getNormalBgColor());
-                graphics.fillRect(0, 0, WIDTH, HEIGHT);
-                GradientUtil.fill(gradient1, graphics, 0, 0, x, AudioPanel.WAVEFORM_HEIGHT);
-                GradientUtil.fill(gradient2, graphics, x, 0, WIDTH - x, AudioPanel.WAVEFORM_HEIGHT);
-                graphics.dispose();
-
-                ImageTextUtil.drawText(image, "R E A D Y", 100,
-                        new Font(Font.MONOSPACED, Font.PLAIN, 12),
-                        ImageTextUtil.TextAlign.CENTER,
-                        theme.getNormalFgColor(),
-                        0f,
-                        theme.getNormalFgColor(),
-                        null,
-                        new Rectangle(60, 20, WIDTH - 120, 100));
-                AudioPanel.getInstance().setIdleImage(image);
-
-                x++;
-
-                try {
-                    Thread.sleep(80);
+                    Thread.sleep(250);
                 } catch (InterruptedException ignored) {
                 }
             }

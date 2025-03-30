@@ -21,6 +21,7 @@ public class PlaylistOpenAction extends AbstractAction {
         fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
+        fileChooser.setAcceptAllFileFilterUsed(false);
     }
 
     @Override

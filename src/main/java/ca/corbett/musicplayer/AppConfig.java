@@ -271,7 +271,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         for (AudioPanelIdleAnimation.Animation animation : AudioPanelIdleAnimation.getInstance().getAll()) {
             options.add(animation.getName());
         }
-        idleAnimation = new ComboProperty("UI.General.idleAnimation", "Idle animation:", options, 0, false);
+        int selectedIndex = (options.size() == 1) ? 0 : 1; // pick the first non-standard animation if there is one.
+        idleAnimation = new ComboProperty("UI.General.idleAnimation", "Idle animation:", options, selectedIndex, false);
 
         options = new ArrayList<>();
         options.add("Use waveform settings from application theme");
@@ -294,7 +295,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         for (AppTheme.Theme theme : AppTheme.getAll()) {
             options.add(theme.getName());
         }
-        applicationTheme = new ComboProperty("UI.Theme.theme", "Theme:", options, 1, false);
+        selectedIndex = (options.size() == 1) ? 0 : 1; // pick the first non-standard theme if there is one.
+        applicationTheme = new ComboProperty("UI.Theme.theme", "Theme:", options, selectedIndex, false);
 
         shuffleEnabled = new BooleanProperty("hidden.props.shuffleEnabled", "shuffleEnabled", false);
         repeatEnabled = new BooleanProperty("hidden.props.repeatEnabled", "repeatEnabled", false);
