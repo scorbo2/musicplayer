@@ -7,7 +7,6 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
-import java.awt.Toolkit;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -238,8 +237,9 @@ public class VisualizationThread implements Runnable, UIReloadable {
                 }
 
                 if (strategy.contentsLost()) {
-                    logger.severe("Buffer strategry contents lost!");
+                    logger.severe("Buffer strategy contents lost!");
                 }
+                g.dispose();
                 strategy.show();
 
                 // There's a weird bug either in the JRE or possibly in the OS where lack of regular
@@ -252,7 +252,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
             }
 
             try {
-                // If we've exceed our animationDelay time then there's no need to sleep:
+                // If we've exceeded our animationDelay time then there's no need to sleep:
                 // Otherwise, sleep for the remainder of our animationDelay time between frames:
                 long remainingTime = (frameStartTime + animationSpeed.delayMs) - System.currentTimeMillis();
                 if (remainingTime > 0) {

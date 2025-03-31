@@ -28,7 +28,7 @@ public class VisualizationManager {
      * @return An array of all Visualizer instances that are available.
      */
     public static Visualizer[] getAll() {
-        List<Visualizer> extensionVisualizers = MusicPlayerExtensionManager.getInstance().getCustomVisualiers();
+        List<Visualizer> extensionVisualizers = MusicPlayerExtensionManager.getInstance().getCustomVisualizers();
         Visualizer[] all = new Visualizer[1 + extensionVisualizers.size()];
         all[0] = new StandardVisualizer();
         int index = 1;

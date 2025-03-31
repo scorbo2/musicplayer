@@ -11,6 +11,7 @@ import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.PropertiesDialog;
+import ca.corbett.extras.properties.PropertiesManager;
 import ca.corbett.forms.FormPanel;
 import ca.corbett.forms.fields.ComboField;
 import ca.corbett.forms.fields.FormField;
@@ -161,6 +162,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     public void saveAndReloadUI() {
         save();
         ReloadUIAction.getInstance().actionPerformed(null);
+    }
+
+    // TODO remove me if not needed
+    public PropertiesManager getPropertiesManager() {
+        return propsManager;
     }
 
     @Override

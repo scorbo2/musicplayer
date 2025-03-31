@@ -5,6 +5,7 @@ import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 import ca.corbett.musicplayer.extensions.builtin.ExtraAnimations;
 import ca.corbett.musicplayer.extensions.builtin.ExtraThemes;
+import ca.corbett.musicplayer.extensions.builtin.ExtraVisualizers;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 import ca.corbett.musicplayer.ui.VisualizationManager;
@@ -28,6 +29,7 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     protected MusicPlayerExtensionManager() {
         addExtension(new ExtraThemes(), true);
         addExtension(new ExtraAnimations(), true);
+        addExtension(new ExtraVisualizers(), true);
     }
 
     public static MusicPlayerExtensionManager getInstance() {
@@ -154,7 +156,7 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
      *
      * @return a List of all Visualizers supplied by all extensions.
      */
-    public List<VisualizationManager.Visualizer> getCustomVisualiers() {
+    public List<VisualizationManager.Visualizer> getCustomVisualizers() {
         List<VisualizationManager.Visualizer> visualizers = new ArrayList<>();
 
         for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
