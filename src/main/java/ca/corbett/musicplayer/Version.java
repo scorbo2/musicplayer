@@ -20,6 +20,7 @@ public final class Version {
         aboutInfo.copyright = COPYRIGHT;
         aboutInfo.license = LICENSE;
         aboutInfo.projectUrl = PROJECT_URL;
+        aboutInfo.showLogConsole = true;
         aboutInfo.releaseNotesLocation = "/ca/corbett/musicplayer/ReleaseNotes.txt";
         aboutInfo.logoImageLocation = "/ca/corbett/musicplayer/images/logo_wide.jpg";
         aboutInfo.shortDescription = "Extensible music player with cool visualizations!";
