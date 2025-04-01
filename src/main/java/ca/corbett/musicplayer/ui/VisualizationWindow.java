@@ -6,15 +6,19 @@ import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 
+import javax.swing.AbstractAction;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.DisplayMode;
 import java.awt.Graphics;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.Robot;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -63,6 +67,8 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
     private static VisualizationWindow instance;
     private final VisualizationThread thread;
     private int monitorCount;
+    private Robot robot;
+    private InactivityListener inactivityListener;
 
     private VisualizationWindow() {
         super(Version.NAME + " visualizer");
@@ -80,6 +86,12 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
             imagePanel = new ImagePanel(ImagePanelConfig.createSimpleReadOnlyProperties());
             add(imagePanel, BorderLayout.CENTER);
             thread.setImagePanel(imagePanel);
+        }
+
+        try {
+            robot = new Robot();
+        } catch (AWTException ignored) {
+            logger.warning("Visualizer: Robot is unsupported. Can't disable screensaver during visualization :(");
         }
     }
 
@@ -209,9 +221,26 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
     }
 
     public void goFullScreen() {
+        if (inactivityListener != null) {
+            inactivityListener.stop();
+            inactivityListener = null;
+        }
+
         if (!thread.isRunning()) {
             thread.setFullScreen(isFullscreenSupported);
             if (isFullscreenSupported) {
+                inactivityListener = new InactivityListener(this, new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        // jiggle mouse, mash keyboard, whatever, just stop the screensaver from clicking on:
+                        robot.keyPress(KeyEvent.VK_SHIFT);
+                        robot.keyRelease(KeyEvent.VK_SHIFT);
+                        robot.mouseMove(1, 1);
+
+                    }
+                });
+                inactivityListener.setRepeats(true);
+                inactivityListener.start();
                 GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
                 graphicsDevice = env.getScreenDevices()[AppConfig.getInstance().getPreferredVisualizationDisplay().monitorIndex];
                 DisplayMode displayMode = graphicsDevice.getDisplayMode();
