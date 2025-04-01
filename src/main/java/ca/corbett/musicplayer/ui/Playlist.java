@@ -239,7 +239,7 @@ public class Playlist extends JPanel implements UIReloadable {
 
         fileListModel.clear();
         fileListModel.addAll(newTracks);
-        // TODO stop playing if playing? Auto play first track?
+        AudioPanel.getInstance().next();
     }
 
     /**

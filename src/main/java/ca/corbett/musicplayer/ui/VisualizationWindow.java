@@ -225,12 +225,6 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
                 setVisible(true);
             }
             new Thread(thread).start();
-            //Thread runner = new Thread(thread);
-            //runner.setPriority(7); // TODO why is it so choppy compared to MP1.5 if it's the same animation code?
-            // Update: it's only on my external monitor that it seems choppy... it's fine on the laptop
-            // Might just be a wonky hdmi port or just an old clunky monitor (though it's not THAT old...)
-            // Also, I checked MP1.5 on this laptop and I see the same thing. Fine on the laptop, choppy on the monitor.
-            //runner.start();
             logger.log(Level.INFO, "Starting animation thread, window is {0}x{1}.", new Object[]{getContentPane().getWidth(), getContentPane().getHeight()});
         } else {
             stopFullScreen();

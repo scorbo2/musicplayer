@@ -15,9 +15,9 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
- * TODO this is a copy+paste from swing-extras so I can muck with it.
- * If these changes prove useful, backport them to swing-extras.
- * But if it diverges too much and gets too specific, maybe just keep it here.
+ * Provides utility methods for loading and handling AudioData.
+ * This was based heavily on AudioUtil in swing-extras but modified
+ * for this application.
  *
  * @author scorbo2
  * @since 2025-03-23 (copy+paste+modified from AudioUtil)
