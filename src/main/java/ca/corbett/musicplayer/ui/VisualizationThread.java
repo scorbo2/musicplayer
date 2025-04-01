@@ -1,5 +1,6 @@
 package ca.corbett.musicplayer.ui;
 
+import ca.corbett.extras.image.ImagePanel;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 
@@ -52,6 +53,8 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private int width;
     private int height;
     private boolean textOverlayEnabled;
+    private boolean isFullScreen;
+    private ImagePanel imagePanel;
 
     /**
      * Creates a new VisualizationThread with values taken from AppConfig.
@@ -100,6 +103,14 @@ public class VisualizationThread implements Runnable, UIReloadable {
             // TODO allow extensions to scan the current song for any triggers that would activate their visualizer
             //      example: a lyrics sheet exists in this directory
         }
+    }
+
+    public void setFullScreen(boolean full) {
+        isFullScreen = full;
+    }
+
+    public void setImagePanel(ImagePanel panel) {
+        imagePanel = panel;
     }
 
     @Override
@@ -171,6 +182,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
         int overlayDeltaY = rand.nextInt(10) > 5 ? 1 : -1;
         BufferedImage textOverlay = null;
         VisualizationOverlay overlay = VisualizationOverlay.getInstance();
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
         // Animation loop:
         while (running) {
@@ -178,79 +190,84 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
             // MPLAY-55: there's a very intermittent and hard to reproduce NPE here where
             //           the strategy can sometimes be null.
-            if (strategy != null) {
-                // Animate something
-                Graphics2D g = (Graphics2D) strategy.getDrawGraphics();
-                visualizer.renderFrame(g, trackInfo);
-
-                // Draw a "paused" symbol in the center if the media player is paused:
-                if (AudioPanel.getInstance().getPanelState() == AudioPanel.PanelState.PAUSED) {
-                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
-                    g.setColor(Color.LIGHT_GRAY);
-                    int centerX = (int) (width / 2d);
-                    int centerY = (int) (height / 2d);
-                    g.fillRect(centerX - 75, centerY - 80, 50, 160);
-                    g.fillRect(centerX + 25, centerY - 80, 50, 160);
-                    g.setComposite(AlphaComposite.Clear);
-                }
-
-                // Render the text overlay if needed:
-                if (textOverlayEnabled) {
-                    overlayRenderCountdown -= animationSpeed.delayMs;
-                    if (overlayRenderCountdown <= 0) {
-                        overlayRenderCountdown = 1000; // 1s
-                        overlay.setTrackInfo(trackInfo);
-                        textOverlay = overlay.render();
-                    }
-
-                    if (textOverlay != null) {
-                        int overlayBottom = height;
-                        if (visualizer.reserveBottomGutter()) {
-                            overlayBottom = textBoxY;
-                        }
-                        overlayX += overlayDeltaX;
-                        if (overlayX > (width - textOverlay.getWidth())) {
-                            overlayX = width - textOverlay.getWidth();
-                            overlayDeltaX = -overlayDeltaX;
-                        }
-                        if (overlayX < 0) {
-                            overlayX = 0;
-                            overlayDeltaX = -overlayDeltaX;
-                        }
-                        overlayY += overlayDeltaY;
-                        if (overlayY > (overlayBottom - textOverlay.getHeight())) {
-                            overlayY = overlayBottom - textOverlay.getHeight();
-                            overlayDeltaY = -overlayDeltaY;
-                        }
-                        if (overlayY < 0) {
-                            overlayY = 0;
-                            overlayDeltaY = -overlayDeltaY;
-                        }
-
-                        // Display transparently if needed:
-                        float opacity = overlay.getOpacity();
-                        if (opacity < 1.0f) {
-                            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity));
-                        }
-
-                        g.drawImage(textOverlay, overlayX, overlayY, null);
-                    }
-                }
-
-                if (strategy.contentsLost()) {
-                    logger.severe("Buffer strategy contents lost!");
-                }
-                g.dispose();
-                strategy.show();
-
-                // There's a weird bug either in the JRE or possibly in the OS where lack of regular
-                // mouse movement over the window will cause the priority of the thread to get ramped
-                // down quite noticeably. This call to sync() magically stops that from happening.
-                Toolkit.getDefaultToolkit().sync();
-            } else {
+            if (isFullScreen && strategy == null) {
                 logger.log(Level.INFO, "MPLAY-55 NPE avoidance code triggered! No cause for alarm unless this message repeats.");
                 strategy = VisualizationWindow.getInstance().getBufferStrategy(); // try again, no idea why sometimes 1st time fails
             }
+
+            // Animate something
+            Graphics2D g = isFullScreen ? (Graphics2D) strategy.getDrawGraphics() : image.createGraphics();
+            visualizer.renderFrame(g, trackInfo);
+
+            // Draw a "paused" symbol in the center if the media player is paused:
+            if (AudioPanel.getInstance().getPanelState() == AudioPanel.PanelState.PAUSED) {
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
+                g.setColor(Color.LIGHT_GRAY);
+                int centerX = (int) (width / 2d);
+                int centerY = (int) (height / 2d);
+                g.fillRect(centerX - 75, centerY - 80, 50, 160);
+                g.fillRect(centerX + 25, centerY - 80, 50, 160);
+                g.setComposite(AlphaComposite.Clear);
+            }
+
+            // Render the text overlay if needed:
+            if (textOverlayEnabled) {
+                overlayRenderCountdown -= animationSpeed.delayMs;
+                if (overlayRenderCountdown <= 0) {
+                    overlayRenderCountdown = 1000; // 1s
+                    overlay.setTrackInfo(trackInfo);
+                    textOverlay = overlay.render();
+                }
+
+                if (textOverlay != null) {
+                    int overlayBottom = height;
+                    if (visualizer.reserveBottomGutter()) {
+                        overlayBottom = textBoxY;
+                    }
+                    overlayX += overlayDeltaX;
+                    if (overlayX > (width - textOverlay.getWidth())) {
+                        overlayX = width - textOverlay.getWidth();
+                        overlayDeltaX = -overlayDeltaX;
+                    }
+                    if (overlayX < 0) {
+                        overlayX = 0;
+                        overlayDeltaX = -overlayDeltaX;
+                    }
+                    overlayY += overlayDeltaY;
+                    if (overlayY > (overlayBottom - textOverlay.getHeight())) {
+                        overlayY = overlayBottom - textOverlay.getHeight();
+                        overlayDeltaY = -overlayDeltaY;
+                    }
+                    if (overlayY < 0) {
+                        overlayY = 0;
+                        overlayDeltaY = -overlayDeltaY;
+                    }
+
+                    // Display transparently if needed:
+                    float opacity = overlay.getOpacity();
+                    if (opacity < 1.0f) {
+                        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity));
+                    }
+
+                    g.drawImage(textOverlay, overlayX, overlayY, null);
+                }
+            }
+
+            if (isFullScreen && strategy.contentsLost()) {
+                logger.severe("Buffer strategy contents lost!");
+            }
+            g.dispose();
+
+            if (isFullScreen) {
+                strategy.show();
+            } else {
+                imagePanel.setImage(image);
+            }
+
+            // There's a weird bug either in the JRE or possibly in the OS where lack of regular
+            // mouse movement over the window will cause the priority of the thread to get ramped
+            // down quite noticeably. This call to sync() magically stops that from happening.
+            Toolkit.getDefaultToolkit().sync();
 
             try {
                 // If we've exceeded our animationDelay time then there's no need to sleep:

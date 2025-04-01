@@ -1,11 +1,14 @@
 package ca.corbett.musicplayer.ui;
 
+import ca.corbett.extras.image.ImagePanel;
+import ca.corbett.extras.image.ImagePanelConfig;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
+import java.awt.BorderLayout;
 import java.awt.DisplayMode;
 import java.awt.Graphics;
 import java.awt.GraphicsDevice;
@@ -35,6 +38,8 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
 
     private static final Logger logger = Logger.getLogger(VisualizationWindow.class.getName());
 
+    private ImagePanel imagePanel;
+
     public enum DISPLAY {
         PRIMARY("Primary", 0),
         SECONDARY("Secondary", 1);
@@ -54,7 +59,7 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
     }
 
     private GraphicsDevice graphicsDevice;
-    private final boolean isFullscreenSupported;
+    private boolean isFullscreenSupported;
     private static VisualizationWindow instance;
     private final VisualizationThread thread;
     private int monitorCount;
@@ -62,11 +67,28 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
     private VisualizationWindow() {
         super(Version.NAME + " visualizer");
 
-        // Turn off decorations on this window (otherwise you get an ugly title bar/window controls):
-        setUndecorated(true);
-        getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+        thread = new VisualizationThread();
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        initializeDisplay();
 
+        // Turn off decorations on this window (otherwise you get an ugly title bar/window controls):
+        setUndecorated(isFullscreenSupported);
+        if (isFullscreenSupported) {
+            getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+        } else {
+            setLayout(new BorderLayout());
+            imagePanel = new ImagePanel(ImagePanelConfig.createSimpleReadOnlyProperties());
+            add(imagePanel, BorderLayout.CENTER);
+            thread.setImagePanel(imagePanel);
+        }
+    }
+
+    @Override
+    public void reloadUI() {
+        initializeDisplay();
+    }
+
+    public void initializeDisplay() {
         DISPLAY preferredDisplay = AppConfig.getInstance().getPreferredVisualizationDisplay();
         setIconImage(MainWindow.getInstance().getIconImage());
         monitorCount = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length;
@@ -82,33 +104,19 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
         setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
         isFullscreenSupported = graphicsDevice.isFullScreenSupported();
         logger.log(Level.INFO, "isFullscreenSupported: {0}", isFullscreenSupported);
+        if (!isFullscreenSupported) {
+            logger.warning("Full screen mode is not supported! Visualization will unfortunately not work very well :(");
+        }
 
         // We don't need or want AWT paint messages as we will handle our own display:
         setIgnoreRepaint(isFullscreenSupported);
         getContentPane().setIgnoreRepaint(isFullscreenSupported);
 
         // Also hide the mouse pointer:
-        getContentPane().setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
-                new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "null"));
-
-        thread = new VisualizationThread();
-    }
-
-    @Override
-    public void reloadUI() {
-        setPreferredDisplayIndex(AppConfig.getInstance().getPreferredVisualizationDisplay().monitorIndex);
-    }
-
-    public void setPreferredDisplayIndex(int index) {
-        monitorCount = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length;
-        if (index >= monitorCount) {
-            logger.warning("Visualizer: preferred display is not available; reverting to primary display.");
-            index = 0;
+        if (isFullscreenSupported) {
+            getContentPane().setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
+                    new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "null"));
         }
-        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        graphicsDevice = env.getScreenDevices()[index];
-        DisplayMode displayMode = graphicsDevice.getDisplayMode();
-        setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
     }
 
     public static VisualizationWindow getInstance() {
@@ -154,7 +162,6 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
                             break;
                     }
                 }
-
             });
 
             // Add the focus listener once:
@@ -172,10 +179,7 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
                     // and so we'll just kill it.
                     // If there's more than one monitor, ignore this event as it's possible
                     // to leave the visualizer up on monitor 2 while doing stuff on monitor 1.
-                    if (deviceCount == 1) {
-                        instance.thread.stop();
-                        instance.setAlwaysOnTop(false);
-                        //instance.setVisible(false);
+                    if (instance.isFullscreenSupported && deviceCount == 1) {
                         instance.stopFullScreen();
                     }
                 }
@@ -188,7 +192,6 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
                 public void windowStateChanged(WindowEvent e) {
                     logger.log(Level.INFO, "window state changed: {0} to {1}", new Object[]{e.getOldState(), e.getNewState()});
                 }
-
             });
         }
 
@@ -206,14 +209,27 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
     }
 
     public void goFullScreen() {
-        graphicsDevice.setFullScreenWindow(instance);
-        DisplayMode displayMode = graphicsDevice.getDisplayMode();
-        setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
-        if (getBufferStrategy() == null) {
-            createBufferStrategy(2);
-        }
         if (!thread.isRunning()) {
+            thread.setFullScreen(isFullscreenSupported);
+            if (isFullscreenSupported) {
+                GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                graphicsDevice = env.getScreenDevices()[AppConfig.getInstance().getPreferredVisualizationDisplay().monitorIndex];
+                DisplayMode displayMode = graphicsDevice.getDisplayMode();
+                setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
+                graphicsDevice.setFullScreenWindow(instance);
+                if (getBufferStrategy() == null) {
+                    createBufferStrategy(2);
+                }
+            } else {
+                setVisible(true);
+            }
             new Thread(thread).start();
+            //Thread runner = new Thread(thread);
+            //runner.setPriority(7); // TODO why is it so choppy compared to MP1.5 if it's the same animation code?
+            // Update: it's only on my external monitor that it seems choppy... it's fine on the laptop
+            // Might just be a wonky hdmi port or just an old clunky monitor (though it's not THAT old...)
+            // Also, I checked MP1.5 on this laptop and I see the same thing. Fine on the laptop, choppy on the monitor.
+            //runner.start();
             logger.log(Level.INFO, "Starting animation thread, window is {0}x{1}.", new Object[]{getContentPane().getWidth(), getContentPane().getHeight()});
         } else {
             stopFullScreen();
@@ -223,10 +239,12 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
     public void stopFullScreen() {
         logger.info("Stopping animation thread.");
         thread.stop();
-        graphicsDevice.setFullScreenWindow(null);
-        instance.setAlwaysOnTop(false);
-        if (getBufferStrategy() != null) {
-            getBufferStrategy().dispose();
+        if (isFullscreenSupported) {
+            graphicsDevice.setFullScreenWindow(null);
+            instance.setAlwaysOnTop(false);
+            if (getBufferStrategy() != null) {
+                getBufferStrategy().dispose();
+            }
         }
         setVisible(false);
     }
@@ -240,5 +258,8 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
      */
     @Override
     public void paint(Graphics g) {
+        if (!isFullscreenSupported) {
+            super.paint(g);
+        }
     }
 }
