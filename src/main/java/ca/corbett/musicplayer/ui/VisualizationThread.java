@@ -7,7 +7,6 @@ import ca.corbett.musicplayer.actions.ReloadUIAction;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -64,6 +63,8 @@ public class VisualizationThread implements Runnable, UIReloadable {
         running = false;
         textOverlayEnabled = AppConfig.getInstance().isVisualizerOverlayEnabled();
         ReloadUIAction.getInstance().registerReloadable(this);
+        width = 1920; // completely arbitrary default
+        height = 1080; // caller will override this with actual values
     }
 
     /**
@@ -135,6 +136,11 @@ public class VisualizationThread implements Runnable, UIReloadable {
         running = false;
     }
 
+    public void setSize(int w, int h) {
+        width = w;
+        height = h;
+    }
+
     /**
      * Handles the animation loop until this thread is interrupted or terminated.
      */
@@ -145,21 +151,16 @@ public class VisualizationThread implements Runnable, UIReloadable {
         // Get a handle on the buffer strategy (created by VisualizationWindow):
         BufferStrategy strategy = VisualizationWindow.getInstance().getBufferStrategy();
 
-        // These are inaccurate on linux due to wonky behaviour from some desktop environments.
-        //int width = VisualizationWindow.getInstance().getWidth();
-        //int height = VisualizationWindow.getInstance().getHeight();
-        // Get a handle on the current graphics environment:
-        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-
         // Kludge alert: multi-monitor support is wonky. Seems the last entry contains the actual resolution.
         //   (the first entry contains width*2 x height instead of width x height)
         // This is made worse if your two monitors have different resolutions.
         // For example 1680x1050 and 1920x1080. The "default device" will claim to have 1680+1920 = 3600 width.
         // This might just be the case on my ancient dell laptop running linux version who knows what
-        // TODO verify that this is still true on modern distros/hardware - can we remove this kludge?
-        int deviceCount = env.getScreenDevices().length;
-        width = env.getScreenDevices()[deviceCount - 1].getDisplayMode().getWidth();
-        height = env.getScreenDevices()[deviceCount - 1].getDisplayMode().getHeight();
+        //
+        // UPDATE: it doesn't do this on my newer laptop. I think we can pass in the width and height.
+        //int deviceCount = env.getScreenDevices().length;
+        //width = env.getScreenDevices()[deviceCount - 1].getDisplayMode().getWidth();
+        //height = env.getScreenDevices()[deviceCount - 1].getDisplayMode().getHeight();
         int textBoxY = height - ((int) (height / 3));
 
         // Create a double buffer for this GraphicsConfiguration:
@@ -169,13 +170,10 @@ public class VisualizationThread implements Runnable, UIReloadable {
         // Get a handle on the selected Visualizer:
         VisualizationManager.Visualizer visualizer = AppConfig.getInstance().getVisualizer();
         visualizer.initialize(width, height);
-        int visualizerIndex = 0;
-        long visualizerRuntime = 0L;
 
         // we want to re-render the text overlay every 1s or so (if it's enabled):
         Random rand = new Random();
         int overlayRenderCountdown = 0;
-        //int overlayMovementCountdown = 1000; // Only move it every thousandth frame
         int overlayX = rand.nextInt(width);
         int overlayY = rand.nextInt(height);
         int overlayDeltaX = rand.nextInt(10) > 5 ? 1 : -1;

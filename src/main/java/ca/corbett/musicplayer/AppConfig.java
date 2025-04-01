@@ -164,7 +164,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         ReloadUIAction.getInstance().actionPerformed(null);
     }
 
-    // TODO remove me if not needed
+    /**
+     * We need to expose the properties manager so that extensions can get access
+     * to the underlying properties instance for manual property lookups.
+     * This is to deal with the bug described here:
+     * https://github.com/scorbo2/app-extensions/issues/5
+     *
+     * @return Our PropertiesManager instance
+     */
     public PropertiesManager getPropertiesManager() {
         return propsManager;
     }
