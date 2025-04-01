@@ -1,6 +1,9 @@
 package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.ExtensionManager;
+import ca.corbett.extras.properties.AbstractProperty;
+import ca.corbett.extras.properties.LabelProperty;
+import ca.corbett.extras.properties.Properties;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 import ca.corbett.musicplayer.extensions.builtin.ExtraAnimations;
@@ -11,6 +14,7 @@ import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +28,7 @@ import java.util.List;
  */
 public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExtension> {
 
+    public static final String SCAN_DIR_PROP = "ca.corbett.musicplayer.extensions.dir";
     private static MusicPlayerExtensionManager instance;
 
     protected MusicPlayerExtensionManager() {
@@ -38,6 +43,36 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         }
 
         return instance;
+    }
+
+    /**
+     * Overridden here so we can add a read-only view of the extension scan dir
+     * and some instructions for how to change the value. I want to add these instructions
+     * dead last so that they show up at the end of the properties dialog
+     * no matter how many extensions are loaded.
+     *
+     * @return A List of all properties exposed by all enabled extensions.
+     */
+    @Override
+    public List<AbstractProperty> getAllEnabledExtensionProperties() {
+        List<AbstractProperty> props = super.getAllEnabledExtensionProperties();
+
+        Font labelFont = new Font(Font.DIALOG, Font.PLAIN, 12);
+        StaticLabelProperty label1 = new StaticLabelProperty("Extensions.Configuration.label1", "The following directory will be scanned for extension jars:");
+        label1.setFont(labelFont);
+        StaticLabelProperty label2 = new StaticLabelProperty("Extensions.Configuration.scanDir", System.getProperty(SCAN_DIR_PROP) == null ? "(not set)" : System.getProperty(SCAN_DIR_PROP));
+        label2.setFont(new Font(Font.MONOSPACED, Font.BOLD, 12));
+        StaticLabelProperty label3 = new StaticLabelProperty("Extensions.Configuration.label2",
+                "<html>If the directory exists and is readable, it is scanned at startup<br>" +
+                        "automatically. You can set it using the system property:<br><br>" +
+                        "<pre>" + SCAN_DIR_PROP + "</pre><br>" +
+                        "But this requires an application restart!</html>");
+        label3.setFont(labelFont);
+
+        props.add(label1);
+        props.add(label2);
+        props.add(label3);
+        return props;
     }
 
     /**
@@ -168,4 +203,25 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
 
         return visualizers;
     }
+
+    /**
+     * KLUDGE KLUDGE KLUDGE - HACK ALERT.
+     * This is just to prevent our static labels from saving themselves to our
+     * property file, which is really goofy. I will fix it in swing-extras:
+     * https://github.com/scorbo2/swing-extras/issues/8
+     */
+    public static class StaticLabelProperty extends LabelProperty {
+        StaticLabelProperty(String name, String label) {
+            super(name, label);
+        }
+
+        @Override
+        public void saveToProps(Properties props) {
+        }
+
+        @Override
+        public void loadFromProps(Properties props) {
+        }
+    }
 }
+

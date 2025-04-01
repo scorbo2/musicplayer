@@ -51,10 +51,6 @@ import java.util.logging.Logger;
  * <B>Example:</B> java -Dca.corbett.musicplayer.props.file=/tmp/blah.props MusicPlayer.jar
  * </p>
  *
- * TODO add a property for extension load dir (requires restart)
- *      but if extension manager is created before appconfig is loaded, how does it know where to go? hmm...
- *      it might have to be a system property, and we just display it read-only on the properties dialog
- *
  * @author scorbo2
  * @since 2025-03-23
  */
@@ -64,7 +60,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     private static AppConfig instance;
     public static final File PROPS_FILE;
-
+    
     private ComboProperty idleAnimation;
     private EnumProperty<ButtonSize> buttonSize;
     private EnumProperty<ControlAlignment> controlAlignment;
