@@ -23,8 +23,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowStateListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.logging.Level;
@@ -38,11 +36,9 @@ import java.util.logging.Logger;
  * @author scorbo2
  * @since 2017-12-05
  */
-public class VisualizationWindow extends JFrame implements UIReloadable {
+public class VisualizationWindow implements UIReloadable {
 
     private static final Logger logger = Logger.getLogger(VisualizationWindow.class.getName());
-
-    private ImagePanel imagePanel;
 
     public enum DISPLAY {
         PRIMARY("Primary", 0),
@@ -65,34 +61,13 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
     private GraphicsDevice graphicsDevice;
     private boolean isFullscreenSupported;
     private static VisualizationWindow instance;
-    private final VisualizationThread thread;
+    private final VisualizationThread thread = new VisualizationThread();
     private int monitorCount;
-    private Robot robot;
     private InactivityListener inactivityListener;
+    private JFrame visFrame = null;
 
     private VisualizationWindow() {
-        super(Version.NAME + " visualizer");
-
-        thread = new VisualizationThread();
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         initializeDisplay();
-
-        // Turn off decorations on this window (otherwise you get an ugly title bar/window controls):
-        setUndecorated(isFullscreenSupported);
-        if (isFullscreenSupported) {
-            getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-        } else {
-            setLayout(new BorderLayout());
-            imagePanel = new ImagePanel(ImagePanelConfig.createSimpleReadOnlyProperties());
-            add(imagePanel, BorderLayout.CENTER);
-            thread.setImagePanel(imagePanel);
-        }
-
-        try {
-            robot = new Robot();
-        } catch (AWTException ignored) {
-            logger.warning("Visualizer: Robot is unsupported. Can't disable screensaver during visualization :(");
-        }
     }
 
     @Override
@@ -100,34 +75,30 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
         initializeDisplay();
     }
 
+    /**
+     * Prepares for visualization on whichever monitor has been selected in application preferences,
+     * assuming that monitor is available. Makes a best attempt to set up visualization, but will
+     * fall back to a windowed mode if something goes wrong. This method is safe to call multiple
+     * times, and in fact the intention here is that you can re-initialize if the user chooses a
+     * different monitor in application settings (of course it requires a restart of visualization,
+     * but not a restart of the application).
+     */
     public void initializeDisplay() {
         DISPLAY preferredDisplay = AppConfig.getInstance().getPreferredVisualizationDisplay();
-        setIconImage(MainWindow.getInstance().getIconImage());
+
         monitorCount = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length;
         if (preferredDisplay.monitorIndex >= monitorCount) {
             logger.warning("Visualizer: preferred display is not available; reverting to primary display.");
             preferredDisplay = DISPLAY.PRIMARY;
         } else {
-            logger.log(Level.INFO, "Starting up visualizer on display {0}", preferredDisplay.monitorIndex);
+            logger.log(Level.INFO, "Visualizer is ready on display {0}", preferredDisplay.monitorIndex);
         }
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         graphicsDevice = env.getScreenDevices()[preferredDisplay.monitorIndex];
-        DisplayMode displayMode = graphicsDevice.getDisplayMode();
-        setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
         isFullscreenSupported = graphicsDevice.isFullScreenSupported();
         logger.log(Level.INFO, "isFullscreenSupported: {0}", isFullscreenSupported);
         if (!isFullscreenSupported) {
             logger.warning("Full screen mode is not supported! Visualization will unfortunately not work very well :(");
-        }
-
-        // We don't need or want AWT paint messages as we will handle our own display:
-        setIgnoreRepaint(isFullscreenSupported);
-        getContentPane().setIgnoreRepaint(isFullscreenSupported);
-
-        // Also hide the mouse pointer:
-        if (isFullscreenSupported) {
-            getContentPane().setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
-                    new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "null"));
         }
     }
 
@@ -135,76 +106,6 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
         if (instance == null) {
             instance = new VisualizationWindow();
             ReloadUIAction.getInstance().registerReloadable(instance);
-
-            // Add the key listener once:
-            instance.addKeyListener(new KeyAdapter() {
-                @Override
-                public void keyReleased(KeyEvent e) {
-                    switch (e.getKeyCode()) {
-                        // Left or Up arrow for "previous song":
-                        case KeyEvent.VK_LEFT:
-                        case KeyEvent.VK_UP:
-                            AudioPanel.getInstance().prev();
-                            break;
-
-                        // Right or down arrow for "next song":
-                        case KeyEvent.VK_RIGHT:
-                        case KeyEvent.VK_DOWN:
-                            AudioPanel.getInstance().next();
-                            break;
-
-                        // Space for "pause":
-                        case KeyEvent.VK_SPACE:
-                            if (AudioPanel.getInstance().getPanelState() == AudioPanel.PanelState.PLAYING ||
-                                    AudioPanel.getInstance().getPanelState() == AudioPanel.PanelState.PLAYING) {
-                                AudioPanel.getInstance().pause();
-                            } else {
-                                AudioPanel.getInstance().play();
-                            }
-                            break;
-
-                        // I for track info on/off:
-                        case KeyEvent.VK_I:
-                            instance.thread.setTextOverlayEnabled(!instance.thread.isTextOverlayEnabled());
-                            break;
-
-                        case KeyEvent.VK_ESCAPE:
-                            //instance.setVisible(false);
-                            instance.stopFullScreen();
-                            break;
-                    }
-                }
-            });
-
-            // Add the focus listener once:
-            final int deviceCount = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length;
-            instance.addFocusListener(new FocusListener() {
-                @Override
-                public void focusGained(FocusEvent arg0) {
-                    instance.setAlwaysOnTop(true);
-                }
-
-                @Override
-                public void focusLost(FocusEvent arg0) {
-                    // If there's only one monitor, stop full screen mode when focus is lost.
-                    // This almost certainly means someone alt+tabbed away from the visualizer,
-                    // and so we'll just kill it.
-                    // If there's more than one monitor, ignore this event as it's possible
-                    // to leave the visualizer up on monitor 2 while doing stuff on monitor 1.
-                    if (instance.isFullscreenSupported && deviceCount == 1) {
-                        instance.stopFullScreen();
-                    }
-                }
-
-            });
-
-            // add a window state listener:
-            instance.addWindowStateListener(new WindowStateListener() {
-                @Override
-                public void windowStateChanged(WindowEvent e) {
-                    logger.log(Level.INFO, "window state changed: {0} to {1}", new Object[]{e.getOldState(), e.getNewState()});
-                }
-            });
         }
 
         return instance;
@@ -220,70 +121,158 @@ public class VisualizationWindow extends JFrame implements UIReloadable {
         thread.setTrackInfo(info, file);
     }
 
+    /**
+     * Starts fullscreen visualization mode. If fullscreen is not supported, we'll make a best effort
+     * to show a resizable visualization window, but performance will be terrible and this is not
+     * recommended. If fullscreen is supported, we'll use whichever monitor you've picked in
+     * application config (assuming you have more than one) and go fullscreen on that monitor.
+     * While in fullscreen mode, we will make efforts to prevent the screensaver from clicking on
+     * (but this is not guaranteed as we don't have much low-level control over the OS in Java by design).
+     */
     public void goFullScreen() {
         if (inactivityListener != null) {
             inactivityListener.stop();
             inactivityListener = null;
         }
+        if (thread.isRunning()) {
+            stopFullScreen();
+            return;
+        }
 
-        if (!thread.isRunning()) {
-            thread.setFullScreen(isFullscreenSupported);
+        thread.setFullScreen(isFullscreenSupported);
+        visFrame = buildVisualizationWindow();
+        thread.setVisFrame(visFrame);
+        if (isFullscreenSupported) {
+            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            graphicsDevice = env.getScreenDevices()[AppConfig.getInstance().getPreferredVisualizationDisplay().monitorIndex];
+            DisplayMode displayMode = graphicsDevice.getDisplayMode();
+            thread.setSize(displayMode.getWidth(), displayMode.getHeight());
+            graphicsDevice.setFullScreenWindow(visFrame);
+            visFrame.createBufferStrategy(2);
+        } else {
+            visFrame.setVisible(true);
+        }
+        new Thread(thread).start();
+    }
+
+    /**
+     * Exits fullscreen mode and stops visualization, if we were running it.
+     * Otherwise, does nothing. Our window is hidden, but not destroyed,
+     * as we can re-use it later if fullscreen mode is re-initiated.
+     */
+    public void stopFullScreen() {
+        if (inactivityListener != null) {
+            inactivityListener.stop();
+            inactivityListener = null;
+        }
+
+        if (thread.isRunning()) {
+            logger.info("Stopping animation thread.");
+            thread.stop();
             if (isFullscreenSupported) {
-                inactivityListener = new InactivityListener(this, new AbstractAction() {
+                graphicsDevice.setFullScreenWindow(null);
+            }
+        }
+
+        if (visFrame != null) {
+            visFrame.dispose();
+            visFrame = null;
+        }
+        thread.setVisFrame(null);
+    }
+
+    private JFrame buildVisualizationWindow() {
+        JFrame window = new JFrame(Version.NAME + " visualizer") {
+            @Override
+            public void paint(Graphics g) {
+                // Even though we setIgnoreRepaint, apparently we still need to prevent
+                // calling super.paint() if we're in full screen mode, or we can get all
+                // kinds of screen tearing and flickering.
+                if (!isFullscreenSupported) {
+                    super.paint(g);
+                }
+            }
+        };
+        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        window.setIconImage(MainWindow.loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
+        DisplayMode displayMode = graphicsDevice.getDisplayMode();
+        window.setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
+        KeyboardManager.addGlobalKeyListener(window);
+
+        if (isFullscreenSupported) {
+            // We don't need or want AWT paint messages as we will handle our own display:
+            window.setIgnoreRepaint(isFullscreenSupported);
+            window.getContentPane().setIgnoreRepaint(isFullscreenSupported);
+
+            // Also hide the mouse pointer:
+            window.getContentPane().setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
+                    new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "null"));
+
+            window.setUndecorated(true); // otherwise you get an ugly title bar/window controls
+            window.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+            try {
+                Robot robot = new Robot();
+                InactivityListener inactivityListener = new InactivityListener(window, new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         // jiggle mouse, mash keyboard, whatever, just stop the screensaver from clicking on:
                         robot.keyPress(KeyEvent.VK_SHIFT);
                         robot.keyRelease(KeyEvent.VK_SHIFT);
                         robot.mouseMove(1, 1);
-
                     }
                 });
                 inactivityListener.setRepeats(true);
                 inactivityListener.start();
-                GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                graphicsDevice = env.getScreenDevices()[AppConfig.getInstance().getPreferredVisualizationDisplay().monitorIndex];
-                DisplayMode displayMode = graphicsDevice.getDisplayMode();
-                setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
-                thread.setSize(displayMode.getWidth(), displayMode.getHeight());
-                graphicsDevice.setFullScreenWindow(instance);
-                if (getBufferStrategy() == null) {
-                    createBufferStrategy(2);
-                }
-            } else {
-                setVisible(true);
+            } catch (AWTException ignored) {
+                logger.warning("Visualizer: Robot is unsupported. Can't disable screensaver during visualization :(");
             }
-            new Thread(thread).start();
-            logger.log(Level.INFO, "Starting animation thread, window is {0}x{1}.", new Object[]{getContentPane().getWidth(), getContentPane().getHeight()});
+
         } else {
-            stopFullScreen();
+            window.setLayout(new BorderLayout());
+            ImagePanel imagePanel = new ImagePanel(ImagePanelConfig.createSimpleReadOnlyProperties());
+            window.add(imagePanel, BorderLayout.CENTER);
+            thread.setImagePanel(imagePanel);
         }
-    }
 
-    public void stopFullScreen() {
-        logger.info("Stopping animation thread.");
-        thread.stop();
-        if (isFullscreenSupported) {
-            graphicsDevice.setFullScreenWindow(null);
-            instance.setAlwaysOnTop(false);
-            if (getBufferStrategy() != null) {
-                getBufferStrategy().dispose();
+        // Add the key listener once:
+        // NOTE this is in addition to the global KeyboardManager, not instead of it:
+        window.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                switch (e.getKeyCode()) {
+                    // I for track info on/off:
+                    case KeyEvent.VK_I:
+                        thread.setTextOverlayEnabled(!thread.isTextOverlayEnabled());
+                        break;
+
+                    case KeyEvent.VK_ESCAPE:
+                        stopFullScreen();
+                        break;
+                }
             }
-        }
-        setVisible(false);
-    }
+        });
 
-    /**
-     * Even though we setIgnoreRepaint on both this window and the content pane, apparently
-     * we still need to override this to avoid calling super.paint(), else we get all kinds
-     * of screen tearing and flickering in the animation.
-     *
-     * @param g Ignored.
-     */
-    @Override
-    public void paint(Graphics g) {
-        if (!isFullscreenSupported) {
-            super.paint(g);
-        }
+        // Add the focus listener once:
+        final int deviceCount = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length;
+        window.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent arg0) {
+                window.setAlwaysOnTop(true);
+            }
+
+            @Override
+            public void focusLost(FocusEvent arg0) {
+                // If there's only one monitor, stop full screen mode when focus is lost.
+                // This almost certainly means someone alt+tabbed away from the visualizer,
+                // and so we'll just kill it.
+                // If there's more than one monitor, ignore this event as it's possible
+                // to leave the visualizer up on monitor 2 while doing stuff on monitor 1.
+                if (isFullscreenSupported && deviceCount == 1) {
+                    stopFullScreen();
+                }
+            }
+        });
+
+        return window;
     }
 }

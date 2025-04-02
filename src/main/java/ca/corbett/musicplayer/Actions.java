@@ -41,19 +41,12 @@ import java.util.List;
  */
 public final class Actions {
 
-    // TODO crazy idea... allow extensions to overwrite a built-in action?
-    //      like, if an extension registers an action named "play", it
-    //      replaces the built-in one? Is that possible?
-    //      My specific thought is I want to be able to customize how
-    //      playlists are loaded and saved, to offer an option
-    //      similar to MusicPlayer 1.5 as opposed to a file chooser.
-
     public static final MPAction[] mediaPlayerActions = {
             new MPAction("Play", "Play (space)", "media-playback-start.png", new PlayAction()),
             new MPAction("Pause", "Pause (space)", "media-playback-pause.png", new PauseAction()),
             new MPAction("Stop", "Stop (esc)", "media-playback-stop.png", new StopAction()),
-            new MPAction("Previous", "Previous (left/up)", "media-skip-backward.png", new PrevAction()),
-            new MPAction("Next", "Next (right/down)", "media-skip-forward.png", new NextAction()),
+            new MPAction("Previous", "Previous (left)", "media-skip-backward.png", new PrevAction()),
+            new MPAction("Next", "Next (right)", "media-skip-forward.png", new NextAction()),
             new MPAction("Fullscreen", "Fullscreen (v)", "icon-fullscreen.png", new FullScreenAction()),
             new MPAction("Settings", "Preferences (ctrl+p)", "icon-preferences.png", new SettingsAction()),
             new MPAction("Extensions", "Extension Manager", "icon-extensions2.png", new ExtensionsManagerAction()),
@@ -61,8 +54,8 @@ public final class Actions {
     };
 
     public static final MPAction[] playlistActions = {
-            new MPAction("Open", "Open (o)", "icon-open.png", new PlaylistOpenAction()),
-            new MPAction("Save", "Save (s)", "icon-save.png", new PlaylistSaveAction()),
+            new MPAction("Open", "Open (ctrl+o)", "icon-open.png", new PlaylistOpenAction()),
+            new MPAction("Save", "Save (ctrl+s)", "icon-save.png", new PlaylistSaveAction()),
             new MPAction("Add", "Add to playlist", "icon-add.png", new PlaylistAddAction()),
             new MPAction("Remove selected", "Remove selected", "icon-remove-single.png", new PlaylistRemoveOneAction()),
             new MPAction("Clear", "Clear playlist", "icon-remove-all.png", new PlaylistRemoveAllAction()),
@@ -143,6 +136,7 @@ public final class Actions {
         button.setFocusPainted(false);
         button.setBorderPainted(false);
         button.setContentAreaFilled(false);
+        button.setFocusable(false);
         button.setPreferredSize(new Dimension(btnSize, btnSize));
         BufferedImage iconImage = MainWindow.loadIconResource(action.iconResource, iconSize, iconSize);
         ImageIcon icon = new ImageIcon(iconImage, action.description);

@@ -4,6 +4,7 @@ import ca.corbett.extras.image.ImagePanel;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 
+import javax.swing.JFrame;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -54,6 +55,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private boolean textOverlayEnabled;
     private boolean isFullScreen;
     private ImagePanel imagePanel;
+    private JFrame visFrame;
 
     /**
      * Creates a new VisualizationThread with values taken from AppConfig.
@@ -141,6 +143,10 @@ public class VisualizationThread implements Runnable, UIReloadable {
         height = h;
     }
 
+    public void setVisFrame(JFrame frame) {
+        visFrame = frame;
+    }
+
     /**
      * Handles the animation loop until this thread is interrupted or terminated.
      */
@@ -149,7 +155,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
         running = true;
 
         // Get a handle on the buffer strategy (created by VisualizationWindow):
-        BufferStrategy strategy = VisualizationWindow.getInstance().getBufferStrategy();
+        BufferStrategy strategy = visFrame.getBufferStrategy();
 
         // Kludge alert: multi-monitor support is wonky. Seems the last entry contains the actual resolution.
         //   (the first entry contains width*2 x height instead of width x height)
@@ -190,7 +196,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
             //           the strategy can sometimes be null.
             if (isFullScreen && strategy == null) {
                 logger.log(Level.INFO, "MPLAY-55 NPE avoidance code triggered! No cause for alarm unless this message repeats.");
-                strategy = VisualizationWindow.getInstance().getBufferStrategy(); // try again, no idea why sometimes 1st time fails
+                strategy = visFrame.getBufferStrategy(); // try again, no idea why sometimes 1st time fails
             }
 
             // Animate something

@@ -29,9 +29,18 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
+ * Represents the audio panel, which presents a visual representation of the currently loaded
+ * track, along with controls like next, prev, play, pause, and so on. Our list of control
+ * buttons also reaches out to the extension manager so that extensions can register additional
+ * action buttons for us to display on our control panel.
+ * <p>
  * TODO saw an intermittent issue where if you set a manual mark position towards the
  *      very end of the clip and hit play, it won't play right to the end.
  *      Not sure, but seems like the playback thread might be miscalculating offset position.
+ *      </p>
+ *
+ * @author scorbo2
+ * @since 2025-03-23
  */
 public class AudioPanel extends JPanel implements UIReloadable {
 
@@ -108,12 +117,15 @@ public class AudioPanel extends JPanel implements UIReloadable {
             public void stopped() {
                 // If we stopped because we ran out of audio data, hit next()
                 if (panelState == PanelState.PLAYING) {
-                    next();
+                    next(); // TODO buggy! Needs fix in swing-extras: https://github.com/scorbo2/swing-extras/issues/10
                 }
             }
 
             @Override
             public boolean updateProgress(long curMillis, long totalMillis) {
+                if (audioData == null) {
+                    return false;
+                }
                 setPlaybackPosition((float) curMillis / (float) totalMillis);
                 trackInfo.currentTime = (int) (curMillis / 1000);
                 VisualizationWindow.getInstance().setTrackInfo(trackInfo, audioData.getSourceFile());
@@ -170,18 +182,20 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     public void setAudioData(AudioData data) {
-        if (data == null) {
+        // If we already had data, make sure we're stopped:
+        if (audioData != null || panelState != PanelState.IDLE) {
             stop();
             audioData = null;
             trackInfo.reset();
+        }
+
+        // If the new data is null, switch on the idle animation:
+        if (data == null) {
             AudioPanelIdleAnimation.getInstance().go();
             return;
         }
 
         AudioPanelIdleAnimation.getInstance().stop();
-        if (panelState != PanelState.IDLE) {
-            stop();
-        }
         waveformImage = data.getWaveformImage();
         audioData = data;
         markPosition = 0f;
@@ -239,6 +253,9 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     public void next() {
+        if (panelState != PanelState.IDLE) {
+            stop();
+        }
         setAudioData(Playlist.getInstance().getNext());
         if (audioData != null) {
             play();
@@ -246,6 +263,9 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     public void prev() {
+        if (panelState != PanelState.IDLE) {
+            stop();
+        }
         setAudioData(Playlist.getInstance().getPrev());
         if (audioData != null) {
             play();
@@ -344,6 +364,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         setLayout(new BorderLayout());
         add(imagePanel, BorderLayout.CENTER);
         add(NowPlayingPanel.getInstance(), BorderLayout.NORTH);
+        add(ControlPanel.getInstance(), BorderLayout.SOUTH);
     }
 
     /**

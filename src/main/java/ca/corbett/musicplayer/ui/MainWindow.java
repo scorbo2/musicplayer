@@ -4,9 +4,9 @@ import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
+import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
@@ -14,6 +14,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -21,8 +23,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * TODO global keyboard shortcuts
- * TODO keyboard shortcuts should also be extensible
+ * Represents the main window of the application, and wraps all our UI components.
+ *
+ * @author scorbo2
+ * @since 2025-03-23
  */
 public class MainWindow extends JFrame {
 
@@ -43,7 +47,9 @@ public class MainWindow extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
+        setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
         setLayout(new BorderLayout());
+        VisualizationWindow.getInstance(); // forces initialization of fullscreen stuff so it's ready to go later.
         resizeTimer = new Timer(250, e -> saveWindowState());
         resizeTimer.setRepeats(false);
         resizeTimer.setCoalesce(false);
@@ -54,11 +60,7 @@ public class MainWindow extends JFrame {
             }
         });
 
-        JPanel mediaPanel = new JPanel();
-        mediaPanel.setLayout(new BorderLayout());
-        mediaPanel.add(AudioPanel.getInstance(), BorderLayout.CENTER);
-        mediaPanel.add(ControlPanel.getInstance(), BorderLayout.SOUTH);
-        add(mediaPanel, BorderLayout.NORTH);
+        add(AudioPanel.getInstance(), BorderLayout.NORTH);
         add(Playlist.getInstance(), BorderLayout.CENTER);
     }
 
@@ -73,6 +75,7 @@ public class MainWindow extends JFrame {
         super.setVisible(visible);
         if (visible) {
             AppConfig.getInstance().load();
+            MusicPlayerExtensionManager.getInstance().activateAll();
             loadWindowState();
             AudioPanelIdleAnimation.getInstance().go();
         }
@@ -109,6 +112,8 @@ public class MainWindow extends JFrame {
     /**
      * Stupid swing nonsense... need to force a repaint sometimes to force components to
      * appear/disappear when added/removed.
+     *
+     * @param jiggy The thing with which we are to get jiggy.
      */
     public static void rejigger(final Component jiggy) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -134,6 +139,37 @@ public class MainWindow extends JFrame {
     public static MainWindow getInstance() {
         if (instance == null) {
             instance = new MainWindow();
+
+            // Set up our global key listener once:
+            KeyboardManager.addGlobalKeyListener(instance);
+
+            // Add our WindowAdapter once:
+            instance.addWindowListener(new WindowAdapter() {
+                /**
+                 * Invoked when the user manually closes a window by clicking its X button
+                 * or using a keyboard shortcut like Ctrl+Q or whatever. This event handler
+                 * is NOT invoked when you manually dispose() the window (at least in my
+                 * testing on linux mint).
+                 */
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    VisualizationWindow.getInstance().stopFullScreen();
+                    MusicPlayerExtensionManager.getInstance().deactivateAll();
+                    logger.info("Application windowClosing(): finished cleanup.");
+                }
+
+                /**
+                 * Invoked when you programmatically dispose() of the window. Note that the
+                 * user manually closing the window via the OS does NOT invoke this handler
+                 * (at least in my testing on linux mint).
+                 */
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    VisualizationWindow.getInstance().stopFullScreen();
+                    MusicPlayerExtensionManager.getInstance().deactivateAll();
+                    logger.info("Application windowClosed(): finished cleanup.");
+                }
+            });
         }
         return instance;
     }

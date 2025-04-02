@@ -9,12 +9,14 @@ import ca.corbett.musicplayer.audio.PlaylistUtil;
 import ca.corbett.musicplayer.extensions.builtin.ExtraAnimations;
 import ca.corbett.musicplayer.extensions.builtin.ExtraThemes;
 import ca.corbett.musicplayer.extensions.builtin.ExtraVisualizers;
+import ca.corbett.musicplayer.extensions.builtin.QuickLoadExtension;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.Font;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,7 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         addExtension(new ExtraThemes(), true);
         addExtension(new ExtraAnimations(), true);
         addExtension(new ExtraVisualizers(), true);
+        addExtension(new QuickLoadExtension(), true);
     }
 
     public static MusicPlayerExtensionManager getInstance() {
@@ -43,6 +46,24 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         }
 
         return instance;
+    }
+
+    /**
+     * Overridden here just for logging purposes.
+     */
+    @Override
+    public void activateAll() {
+        super.activateAll();
+        logger.info("Extension manager initialized with " + getEnabledLoadedExtensions().size() + " active extensions.");
+    }
+
+    /**
+     * Overridden here just for logging purposes.
+     */
+    @Override
+    public void deactivateAll() {
+        super.deactivateAll();
+        logger.info("Extension manager: all extensions have been shut down.");
     }
 
     /**
@@ -64,9 +85,9 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         label2.setFont(new Font(Font.MONOSPACED, Font.BOLD, 12));
         StaticLabelProperty label3 = new StaticLabelProperty("Extensions.Configuration.label2",
                 "<html>If the directory exists and is readable, it is scanned at startup<br>" +
-                        "automatically. You can set it using the system property:<br><br>" +
-                        "<pre>" + SCAN_DIR_PROP + "</pre><br>" +
-                        "But this requires an application restart!</html>");
+                        "automatically. You can set it using the following system property,<br>" +
+                        "but it requires an application restart!<br><br>" +
+                        "<pre>" + SCAN_DIR_PROP + "</pre></html>");
         label3.setFont(labelFont);
 
         props.add(label1);
@@ -205,13 +226,30 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     }
 
     /**
+     * Invoked when the application receives a keyboard shortcut. All extensions will be given
+     * a chance to respond to the KeyEvent. Processing does not stop if one extension reports
+     * that it did something with the KeyEvent, so in theory, multiple extensions could respond
+     * to the same KeyEvent.
+     *
+     * @param keyEvent The KeyEvent that triggered this message.
+     * @return true if any registered extension handled the KeyEvent.
+     */
+    public boolean handleKeyEvent(KeyEvent keyEvent) {
+        boolean handled = false;
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            handled = handled || extension.handleKeyEvent(keyEvent);
+        }
+        return handled;
+    }
+
+    /**
      * KLUDGE KLUDGE KLUDGE - HACK ALERT.
      * This is just to prevent our static labels from saving themselves to our
      * property file, which is really goofy. I will fix it in swing-extras:
      * https://github.com/scorbo2/swing-extras/issues/8
      */
     public static class StaticLabelProperty extends LabelProperty {
-        StaticLabelProperty(String name, String label) {
+        public StaticLabelProperty(String name, String label) {
             super(name, label);
         }
 
