@@ -313,13 +313,13 @@ public class AudioPanel extends JPanel implements UIReloadable {
      * if the control panel is visible and the user clicks it.
      */
     public void stop() {
+        panelState = PanelState.IDLE;
         if (playbackThread != null) {
             playbackThread.stop();
             playbackThread = null;
         }
 
         VisualizationWindow.getInstance().setTrackInfo(null, null);
-        panelState = PanelState.IDLE;
         setPlaybackPosition(0);
         markPosition = 0f; // arbitrary decision - "stop" should clear any current mark position
         redrawWaveform();
