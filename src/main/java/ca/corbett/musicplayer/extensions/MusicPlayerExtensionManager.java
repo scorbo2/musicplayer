@@ -5,6 +5,7 @@ import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.extras.properties.Properties;
 import ca.corbett.musicplayer.Actions;
+import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 import ca.corbett.musicplayer.extensions.builtin.ExtraAnimations;
 import ca.corbett.musicplayer.extensions.builtin.ExtraThemes;
@@ -20,6 +21,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Manages extensions for musicplayer, and provides wrapper methods to make it
@@ -30,14 +32,34 @@ import java.util.List;
  */
 public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExtension> {
 
+    private static final Logger logger = Logger.getLogger(MusicPlayerExtensionManager.class.getName());
+
     public static final String SCAN_DIR_PROP = "ca.corbett.musicplayer.extensions.dir";
     private static MusicPlayerExtensionManager instance;
 
     protected MusicPlayerExtensionManager() {
+        // Load all the built-in extensions:
         addExtension(new ExtraThemes(), true);
         addExtension(new ExtraAnimations(), true);
         addExtension(new ExtraVisualizers(), true);
         addExtension(new QuickLoadExtension(), true);
+
+        // Let's try to scan for dynamically loaded extensions:
+        String scanDir = System.getProperty(SCAN_DIR_PROP);
+        if (scanDir != null) {
+            File extensionDir = new File(scanDir);
+            if (extensionDir.exists() && extensionDir.canRead() && extensionDir.isDirectory()) {
+                int count = getLoadedExtensionCount();
+                loadExtensions(extensionDir, MusicPlayerExtension.class, Version.NAME, Version.VERSION);
+                if (getLoadedExtensionCount() > count) {
+                    logger.info("Successfully loaded " + (getLoadedExtensionCount() - count) + " dynamic extensions");
+                } else {
+                    logger.info("Extension manager: found no dynamic extensions in extension dir: " + extensionDir.getAbsolutePath());
+                }
+            } else {
+                logger.warning("Supplied extension scan dir does not exist or is not readable: " + extensionDir.getAbsolutePath());
+            }
+        }
     }
 
     public static MusicPlayerExtensionManager getInstance() {
