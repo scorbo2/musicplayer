@@ -128,6 +128,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
                 }
                 setPlaybackPosition((float) curMillis / (float) totalMillis);
                 trackInfo.currentTime = (int) (curMillis / 1000);
+                trackInfo.totalTime = audioData.getDurationSeconds();
                 VisualizationWindow.getInstance().setTrackInfo(trackInfo, audioData.getSourceFile());
                 return true;
             }
@@ -206,7 +207,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         trackInfo.title = data.getMetadata().title;
         trackInfo.album = data.getMetadata().album;
         trackInfo.currentTime = 0;
-        trackInfo.totalTime = 0; // TODO sort out duration -> data.getMetadata().durationStr;
+        trackInfo.totalTime = audioData.getDurationSeconds();
         fireAudioLoadedEvent();
     }
 
@@ -246,7 +247,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         // Set starting offset if set:
         long startOffset = 0;
         if (markPosition > 0f) {
-            startOffset = (long) (markPosition * (audioData.getRawData()[0].length / 44.1f)); // WARNING assuming bit rate
+            startOffset = (long) (markPosition * (audioData.getRawData()[0].length / (audioData.getSampleRate() / 1000)));
         }
 
         internalPlay(startOffset);
@@ -290,9 +291,10 @@ public class AudioPanel extends JPanel implements UIReloadable {
      * </p>
      */
     public void pause() {
+        final float audioLength = audioData.getRawData()[0].length / (audioData.getSampleRate() / 1000f);
         // If we were already paused, treat this as "resume":
         if (panelState == PanelState.PAUSED) {
-            long startOffset = (long) (markPosition * (audioData.getRawData()[0].length / 44.1f)); // WARNING assuming bit rate
+            long startOffset = (long) (markPosition * audioLength);
             internalPlay(startOffset);
             return;
         }
@@ -301,7 +303,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         if (panelState == PanelState.PLAYING) {
             panelState = PanelState.PAUSED;
             playbackThread.stop();
-            markPosition = (float) playbackThread.getCurrentOffset() / (audioData.getRawData()[0].length / 44.1f); // TODO assuming bitrate
+            markPosition = (float) playbackThread.getCurrentOffset() / audioLength;
             playbackThread = null;
             redrawWaveform();
         }

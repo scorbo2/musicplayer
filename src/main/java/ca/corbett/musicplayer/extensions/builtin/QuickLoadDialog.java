@@ -10,6 +10,7 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
@@ -24,7 +25,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -87,16 +87,16 @@ public class QuickLoadDialog extends JDialog {
     @Override
     public void setVisible(boolean visible) {
         if (visible) {
+            final JDialog thisFrame = this;
             playlistListModel.clear();
             playlistList.requestFocus();
+            File quickDir = QuickLoadExtension.getQuickDir();
+            if (!quickDir.exists() || !quickDir.isDirectory() || !quickDir.canRead()) {
+                JOptionPane.showMessageDialog(thisFrame, "Playlist quick load dir does not exist or is not readable.\nCheck application settings.",
+                        "Can't read playlist", JOptionPane.ERROR_MESSAGE);
+            }
             List<File> list = FileSystemUtil.findFiles(QuickLoadExtension.getQuickDir(), false, "mplist");
-            list.sort(new Comparator<File>() {
-                @Override
-                public int compare(File one, File two) {
-                    return one.getName().toLowerCase().compareTo(two.getName().toLowerCase());
-                }
-
-            });
+            list.sort((one, two) -> one.getName().toLowerCase().compareTo(two.getName().toLowerCase()));
             for (File file : list) {
                 playlistListModel.add(file);
             }

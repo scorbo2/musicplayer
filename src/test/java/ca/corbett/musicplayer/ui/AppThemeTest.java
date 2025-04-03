@@ -19,9 +19,9 @@ class AppThemeTest {
         AppTheme.Theme[] themes = AppTheme.getAll();
 
         // THEN we should only see the built-in themes:
-        assertEquals(2, themes.length);
-        assertEquals("Matrix", themes[0].getName());
-        assertEquals("Standard", themes[1].getName());
+        assertEquals(5, themes.length);
+        assertEquals("Standard", themes[0].getName());
+        assertEquals("Matrix", themes[1].getName());
     }
 
     @Test
@@ -33,14 +33,14 @@ class AppThemeTest {
         AppTheme.Theme[] themes = AppTheme.getAll();
 
         // THEN we should see our custom themes in addition to the built-in ones:
-        assertEquals(4, themes.length);
-        assertEquals("test1", themes[2].getName());
-        assertEquals("test2", themes[3].getName());
+        assertEquals(7, themes.length);
+        assertEquals("test1", themes[5].getName());
+        assertEquals("test2", themes[6].getName());
 
         // AND when we disable our extension, those themes should go away:
         MusicPlayerExtensionManager.getInstance().setExtensionEnabled(TestExtension.class.getName(), false);
         themes = AppTheme.getAll();
-        assertEquals(2, themes.length);
+        assertEquals(5, themes.length);
     }
 
     private static class TestExtension extends MusicPlayerExtension {

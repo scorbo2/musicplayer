@@ -75,6 +75,9 @@ public class ExtraVisualizers extends MusicPlayerExtension {
         return visualizers;
     }
 
+    /**
+     * This was actually the very first visualizer I wrote for MusicPlayer 1.0 back in 2017 or so.
+     */
     public static class RollingWaveVisualizer extends VisualizationManager.Visualizer {
 
         public static final String NAME = "Rolling waves";

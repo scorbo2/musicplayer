@@ -267,8 +267,8 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     /**
      * KLUDGE KLUDGE KLUDGE - HACK ALERT.
      * This is just to prevent our static labels from saving themselves to our
-     * property file, which is really goofy. I will fix it in swing-extras:
-     * https://github.com/scorbo2/swing-extras/issues/8
+     * property file, which is really goofy. I will fix it in
+     * <a href="https://github.com/scorbo2/swing-extras/issues/8">swing-extras issue 8</a>.
      */
     public static class StaticLabelProperty extends LabelProperty {
         public StaticLabelProperty(String name, String label) {

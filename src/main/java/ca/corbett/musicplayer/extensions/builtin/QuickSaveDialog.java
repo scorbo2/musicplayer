@@ -125,12 +125,12 @@ public class QuickSaveDialog extends JDialog {
     private void save() {
         final JDialog thisFrame = this;
         File saveDir = QuickLoadExtension.getQuickDir();
-        File destFile = new File(saveDir, nameTextField.getText() + ".mplist");
-        if (!saveDir.canWrite()) {
-            JOptionPane.showMessageDialog(thisFrame, "Problem writing playlist: destination not writable.",
+        if (!saveDir.exists() || !saveDir.isDirectory() || !saveDir.canWrite()) {
+            JOptionPane.showMessageDialog(thisFrame, "Playlist quick save dir does not exist or is not writable.\nCheck application settings.",
                     "Can't write playlist", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        File destFile = new File(saveDir, nameTextField.getText() + ".mplist");
         if (destFile.exists()) {
             int result = JOptionPane.showConfirmDialog(thisFrame, "Do you wish to overwrite the existing file?",
                     "Confirm overwrite", JOptionPane.YES_NO_OPTION);

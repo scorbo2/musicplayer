@@ -34,14 +34,26 @@ public class AudioData {
     private final File sourceFile;
     private BufferedImage waveformImage;
     private Metadata metadata;
+    private final float sampleRate;
+    private final int durationSeconds;
 
-    public AudioData(int[][] rawData, File sourceFile) {
+    public AudioData(int[][] rawData, File sourceFile, float sampleRate) {
         this.rawData = rawData;
         this.sourceFile = sourceFile;
+        this.sampleRate = (sampleRate < 0) ? 44100f : sampleRate;
+        this.durationSeconds = (int) (rawData[0].length / sampleRate);
     }
 
     public int[][] getRawData() {
         return rawData;
+    }
+
+    public float getSampleRate() {
+        return sampleRate;
+    }
+
+    public int getDurationSeconds() {
+        return durationSeconds;
     }
 
     public File getSourceFile() {
@@ -65,18 +77,19 @@ public class AudioData {
                 // Try to read it from the file metadata, if present:
                 AudioFileFormat fileFormat = AudioSystem.getAudioFileFormat(sourceFile);
                 if (fileFormat instanceof TAudioFileFormat) {
-                    Map properties = ((TAudioFileFormat) fileFormat).properties();
+                    Map properties = fileFormat.properties();
                     String title = (String) properties.get("title");
                     String author = (String) properties.get("author");
                     String album = (String) properties.get("album");
-                    Long duration = (Long) properties.get("duration");
                     if (title != null) {
                         metadata = new Metadata(title,
                                 author == null ? "" : author,
                                 album == null ? "" : album,
-                                duration == null ? "" : formatMicroseconds(duration));
+                                durationSeconds);
                     }
                 }
+            } catch (NullPointerException npe) {
+                logger.warning("Audio file " + sourceFile.getAbsolutePath() + " has no metadata.");
             } catch (Exception e) {
                 logger.warning("Unable to parse audio metadata from " + sourceFile.getAbsolutePath() + ": " + e.getMessage());
             }
@@ -96,12 +109,7 @@ public class AudioData {
                 // I'll just leave it blank:
                 String author = "";
 
-                // TODO can we get duration from audioData if present?
-                // TODO yes, we can, if we know the bitrate, we can do the math against the length of the
-                //      audioData array. The question is, do we for sure know the bitrate of loaded data?
-                String duration = "";
-
-                metadata = new Metadata(title, album, author, duration);
+                metadata = new Metadata(title, album, author, durationSeconds);
             }
         }
 
@@ -316,13 +324,13 @@ public class AudioData {
         public final String title;
         public final String author;
         public final String album;
-        public final String durationStr;
+        public final int durationSeconds;
 
-        public Metadata(String title, String author, String album, String durationStr) {
+        public Metadata(String title, String author, String album, int durationSeconds) {
             this.title = title;
             this.author = author;
             this.album = album;
-            this.durationStr = durationStr;
+            this.durationSeconds = durationSeconds;
         }
     }
 }

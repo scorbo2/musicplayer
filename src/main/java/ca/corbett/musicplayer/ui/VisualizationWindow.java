@@ -68,6 +68,10 @@ public class VisualizationWindow implements UIReloadable {
 
     private VisualizationWindow() {
         initializeDisplay();
+        logger.log(Level.INFO, "isFullscreenSupported: {0}", isFullscreenSupported);
+        if (!isFullscreenSupported) {
+            logger.warning("Full screen mode is not supported! Visualization will unfortunately not work very well :(");
+        }
     }
 
     @Override
@@ -91,15 +95,11 @@ public class VisualizationWindow implements UIReloadable {
             logger.warning("Visualizer: preferred display is not available; reverting to primary display.");
             preferredDisplay = DISPLAY.PRIMARY;
         } else {
-            logger.log(Level.INFO, "Visualizer is ready on display {0}", preferredDisplay.monitorIndex);
+            logger.log(Level.INFO, "Visualizer initialized on display {0}", preferredDisplay.monitorIndex);
         }
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         graphicsDevice = env.getScreenDevices()[preferredDisplay.monitorIndex];
         isFullscreenSupported = graphicsDevice.isFullScreenSupported();
-        logger.log(Level.INFO, "isFullscreenSupported: {0}", isFullscreenSupported);
-        if (!isFullscreenSupported) {
-            logger.warning("Full screen mode is not supported! Visualization will unfortunately not work very well :(");
-        }
     }
 
     public static VisualizationWindow getInstance() {
@@ -152,6 +152,7 @@ public class VisualizationWindow implements UIReloadable {
         } else {
             visFrame.setVisible(true);
         }
+        logger.info("Starting visualization thread");
         new Thread(thread).start();
     }
 
@@ -167,7 +168,7 @@ public class VisualizationWindow implements UIReloadable {
         }
 
         if (thread.isRunning()) {
-            logger.info("Stopping animation thread.");
+            logger.info("Stopping visualization thread.");
             thread.stop();
             if (isFullscreenSupported) {
                 graphicsDevice.setFullScreenWindow(null);
@@ -181,6 +182,27 @@ public class VisualizationWindow implements UIReloadable {
         thread.setVisFrame(null);
     }
 
+    /**
+     * Invoked internally to build the actual visualization window and return it.
+     * We used to pre-create one instance of this and re-use it, but there are some
+     * interesting scenarios there, particularly if the user goes into settings and
+     * changes the preferred display. So, I took a nuke-and-pave approach instead,
+     * and rebuild the window with fresh settings each time we start visualization.
+     * <p>
+     * If fullscreen mode is supported on this device, the returned window
+     * will be one that is ready for fullscreen mode (i.e. it will be undecorated
+     * and will be configured to ignore the usual repaint events). We will also
+     * make a best effort here to prevent the system screensaver from clicking on
+     * while the fullscreen window is up. No guarantees on that front.
+     * </p>
+     * <p>
+     * If fullscreen mode is not supported on this device, you'll get a regular
+     * JFrame which will have absolutely terrible performance. But, eh, it's
+     * better than nothing, I guess.
+     * </p>
+     *
+     * @return A window ready for visualization.
+     */
     private JFrame buildVisualizationWindow() {
         JFrame window = new JFrame(Version.NAME + " visualizer") {
             @Override

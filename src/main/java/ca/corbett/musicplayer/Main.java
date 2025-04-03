@@ -28,8 +28,6 @@ import java.util.logging.LogManager;
  *     so if you don't set this, you will be unable to load extension jars.</li>
  * </ul>
  *
- * TODO do a logging pass through the app and make sure we're logging everything appropriately
- *
  * @author scorbo2
  * @since 2025-03-23
  */

@@ -15,9 +15,6 @@ import java.awt.Insets;
 /**
  * Shows the currently loaded song info (title, length).
  *
- * TODO would be nice to show current time and total time in this panel
- *      currently we show the duration only, but we could live-update the current playback position.
- *
  * @author scorbo2
  * @since 2025-03-25
  */
@@ -34,7 +31,7 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
     private final AudioData.Metadata NOTHING_PLAYING;
 
     private NowPlayingPanel() {
-        NOTHING_PLAYING = new AudioData.Metadata("(n/a)", "(n/a)", "(n/a)", "(n/a)");
+        NOTHING_PLAYING = new AudioData.Metadata("(n/a)", "(n/a)", "(n/a)", 0);
         setLayout(new GridBagLayout());
         titleLabel = buildLabel("Title:", Font.BOLD, SwingConstants.RIGHT);
         durationLabel = buildLabel("Duration:", Font.BOLD, SwingConstants.RIGHT);
@@ -60,7 +57,7 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
         AudioData.Metadata meta = data == null ? NOTHING_PLAYING : data.getMetadata();
         titleValue.setText(meta.title);
         artistValue.setText(meta.author);
-        durationValue.setText(meta.durationStr.isBlank() ? " (n/a) " : " " + meta.durationStr + " ");
+        durationValue.setText(meta.durationSeconds <= 0 ? " (n/a) " : " " + formatSeconds(meta.durationSeconds) + " ");
     }
 
     @Override
@@ -114,5 +111,48 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
         label.setFont(label.getFont().deriveFont(fontStyle));
         label.setHorizontalTextPosition(textAlign);
         return label;
+    }
+
+    /**
+     * Given a value in seconds, return a more human-friendly version of it.
+     * For example, 2461 should return "41:01" indicating minutes:hours.
+     *
+     * @param timeValueSeconds A length value, in seconds.
+     * @return A human-friendly display version of that duration.
+     */
+    public static String formatSeconds(int timeValueSeconds) {
+
+        // special case for small values:
+        if (timeValueSeconds < 60) {
+            return "00:" + String.format("%02d", timeValueSeconds);
+        }
+
+        int hours = 0;
+        int minutes = 0;
+        int seconds = 0;
+        while (timeValueSeconds >= 3600) {
+            timeValueSeconds -= 3600;
+            hours++;
+        }
+        while (timeValueSeconds >= 60) {
+            timeValueSeconds -= 60;
+            minutes++;
+        }
+        seconds = timeValueSeconds;
+
+        String hoursStr = "";
+        String minutesStr = "";
+        String secondsStr = "";
+        if (hours > 0) {
+            hoursStr = hours + ":";
+        }
+        if (minutes > 0 || hours > 0) {
+            minutesStr = String.format("%02d", minutes) + ":";
+        }
+        if (seconds > 0 || minutes > 0 || hours > 0) {
+            secondsStr = String.format("%02d", seconds);
+        }
+
+        return hoursStr + minutesStr + secondsStr;
     }
 }

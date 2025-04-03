@@ -22,8 +22,8 @@ class AudioPanelIdleAnimationTest {
         AudioPanelIdleAnimation.Animation[] animations = anim.getAll();
 
         // THEN we should only see the built-in ones:
-        assertEquals(2, animations.length);
-        assertEquals("Plain solid color", animations[0].getName());
+        assertEquals(4, animations.length);
+        assertEquals("Standard", animations[0].getName());
         assertEquals("Rolling color wave", animations[1].getName());
     }
 
@@ -37,13 +37,13 @@ class AudioPanelIdleAnimationTest {
         AudioPanelIdleAnimation.Animation[] animations = anim.getAll();
 
         // THEN we should find our custom animation:
-        assertEquals(3, animations.length);
-        assertEquals("CustomAnimation", animations[2].getName());
+        assertEquals(5, animations.length);
+        assertEquals("Rolling color wave", animations[2].getName());
 
         // AND when we disable the extension, the custom animation should go away:
         MusicPlayerExtensionManager.getInstance().setExtensionEnabled(CustomAnimation.class.getName(), false);
         animations = anim.getAll();
-        assertEquals(2, animations.length);
+        assertEquals(4, animations.length);
     }
 
     private static class CustomAnimation extends MusicPlayerExtension {

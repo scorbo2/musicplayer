@@ -44,6 +44,8 @@ public class AudioUtil {
      * so TODO revisit this and smarten this up.
      * Also, I'm making assumptions about input wave format that probably need checking.
      *
+     * TODO large file loading locks the application UI. Put it in a worker thread with a progress monitor.
+     *
      * @param sourceFile The File containing the audio data. Must be in a supported format.
      * @return An instance of AudioData which will be partially populated (lazy loading on some stuff).
      * @throws UnsupportedAudioFileException Officially we support wav and mp3 but there's probably others not tested.
@@ -75,7 +77,7 @@ public class AudioUtil {
             convertedFile.delete();
         }
 
-        // Now split that byte array into channels and proper samples (assuming 16 bit samples here):
+        // Now we'll split our byte array into channels and samples.
         int numChannels = inputStream.getFormat().getChannels();
         int[][] audioData = new int[numChannels][frameLength];
         int sampleIndex = 0;
@@ -89,9 +91,10 @@ public class AudioUtil {
             sampleIndex++;
         }
 
+        float sampleRate = inputStream.getFormat().getSampleRate();
         inputStream.close();
 
-        return new AudioData(audioData, sourceFile);
+        return new AudioData(audioData, sourceFile, sampleRate);
     }
 
     public static PlaybackThread play(AudioData data, PlaybackListener listener) throws IOException, LineUnavailableException {
@@ -99,7 +102,7 @@ public class AudioUtil {
     }
 
     public static PlaybackThread play(AudioData data, long offset, PlaybackListener listener) throws IOException, LineUnavailableException {
-        AudioInputStream audioStream = getAudioInputStream(data.getRawData());
+        AudioInputStream audioStream = getAudioInputStream(data);
         PlaybackThread thread = new PlaybackThread(audioStream, offset, 0, listener);
         new Thread(thread).start();
         return thread;
@@ -109,41 +112,37 @@ public class AudioUtil {
      * Constructs an AudioInputStream based on the parsed audio data. This is mainly used
      * to play a clip that has been parsed by one of the parseAudio methods in this class.
      *
-     * @param audioData Audio data as parsed by one of the parseAudio methods in this class.
+     * @param audioData An AudioData instance.
      * @return An AudioInputStream ready to be read.
      */
-    public static AudioInputStream getAudioInputStream(int[][] audioData) {
+    public static AudioInputStream getAudioInputStream(AudioData audioData) {
         // Audio saving code cobbled together from
         //  https://stackoverflow.com/questions/3297749/java-reading-manipulating-and-writing-wav-files
 
         // Convert the int array into a single byte array:
-        byte[] byteArray = new byte[audioData[0].length * audioData.length * 2];
+        int[][] sourceData = audioData.getRawData();
+        byte[] byteArray = new byte[sourceData[0].length * sourceData.length * 2];
         int sample = 0;
         for (int i = 0; i < byteArray.length; ) {
-            for (int channel = 0; channel < audioData.length; channel++) {
-                byteArray[i++] = (byte) (audioData[channel][sample] & 0xff);
-                byteArray[i++] = (byte) (audioData[channel][sample] >>> 8);
+            for (int channel = 0; channel < sourceData.length; channel++) {
+                byteArray[i++] = (byte) (sourceData[channel][sample] & 0xff);
+                byteArray[i++] = (byte) (sourceData[channel][sample] >>> 8);
             }
             sample++;
         }
 
-        AudioFormat format = new AudioFormat(44100f, 16, audioData.length, true, false);
+        AudioFormat format = new AudioFormat(audioData.getSampleRate(), 16, sourceData.length, true, false);
         ByteArrayInputStream bais = new ByteArrayInputStream(byteArray);
-        AudioInputStream audioStream = new AudioInputStream(bais, format, audioData[0].length);
+        AudioInputStream audioStream = new AudioInputStream(bais, format, sourceData[0].length);
         return audioStream;
     }
 
     private static File convert(AudioInputStream inStream) throws IOException {
-        AudioFormat targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100f, 16, 2, 4, 1f, false);
+        AudioFormat sourceFormat = inStream.getFormat();
+        AudioFormat targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, sourceFormat.getSampleRate(), 16, sourceFormat.getChannels(), 4, sourceFormat.getFrameRate(), false);
         if (!AudioSystem.isConversionSupported(targetFormat, inStream.getFormat())) {
-            logger.warning("Unable to convert audio in stereo; will try fallback to mono...");
-
-            // Try again as mono:
-            targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100f, 16, 1, 4, 1f, false);
-            if (!AudioSystem.isConversionSupported(targetFormat, inStream.getFormat())) {
-                logger.warning("Unable to convert audio in mono; giving up!");
-                return null;
-            }
+            logger.severe("Audio conversion not possible for this track :(");
+            return null;
         }
         AudioInputStream convertedStream = AudioSystem.getAudioInputStream(targetFormat, inStream);
         File tmpFile = File.createTempFile("mp_", ".wav");
