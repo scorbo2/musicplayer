@@ -47,6 +47,7 @@ public class QuickLoadExtension extends MusicPlayerExtension {
                 .setVersion(Version.VERSION)
                 .setAuthor("Steve Corbett")
                 .setTargetAppVersion(Version.VERSION)
+                .setTargetAppName(Version.NAME)
                 .setReleaseNotes("[2025-04-01] for the MusicPlayer 2.0 release")
                 .addCustomField("Shortcuts", "L = load, S = save")
                 .build();
