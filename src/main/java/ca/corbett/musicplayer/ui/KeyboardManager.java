@@ -17,7 +17,7 @@ import java.awt.event.KeyEvent;
 /**
  * Utility class for handling global application keyboard shortcuts.
  *
- * @author scorbett
+ * @author scorbo2
  * @since 2024-12-30
  */
 public final class KeyboardManager {

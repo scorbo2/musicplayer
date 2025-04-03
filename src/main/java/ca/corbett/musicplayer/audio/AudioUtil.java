@@ -30,8 +30,9 @@ public class AudioUtil {
     }
 
     /**
-     * Load an AudioData object from the given source file. This implementation is a bit goofy
-     * and I'm not happy with it, but it goes like this:
+     * Invoked from AudioLoadThread when we have some audio data to be processed.
+     * The current audio load implementation is a bit wonky and I'm not happy with it,
+     * but it goes like this:
      * <ol>
      *     <li>If the file is a wav file, just load the audio data and we're done.</li>
      *     <li>If it's an mp3, convert it to wav and write the wav to the system temp dir.</li>
@@ -42,24 +43,14 @@ public class AudioUtil {
      * in the waveform panel to start playing from whatever location, which I can't seem to
      * figure out how to do with mp3spi and/or jlayer. But I'm sure it's possible,
      * so TODO revisit this and smarten this up.
-     * Also, I'm making assumptions about input wave format that probably need checking.
-     *
-     * TODO large file loading locks the application UI. Put it in a worker thread with a progress monitor.
      *
      * @param sourceFile The File containing the audio data. Must be in a supported format.
+     * @param convertedFile If audio conversion was required (see above), this is the temporary converted file.
      * @return An instance of AudioData which will be partially populated (lazy loading on some stuff).
      * @throws UnsupportedAudioFileException Officially we support wav and mp3 but there's probably others not tested.
      * @throws IOException                   In case of i/o error.
      */
-    public static AudioData load(File sourceFile) throws UnsupportedAudioFileException, IOException {
-        File convertedFile = null;
-        if (sourceFile.getName().toLowerCase().endsWith(".mp3")) {
-            AudioInputStream sourceStream = AudioSystem.getAudioInputStream(sourceFile);
-            convertedFile = convert(sourceStream);
-            if (convertedFile == null) {
-                throw new IOException("Decode mp3 failed!");
-            }
-        }
+    public static AudioData load(File sourceFile, File convertedFile) throws UnsupportedAudioFileException, IOException {
         AudioInputStream inputStream = AudioSystem.getAudioInputStream(convertedFile == null ? sourceFile : convertedFile);
 
         int frameLength = (int) inputStream.getFrameLength();
@@ -137,7 +128,16 @@ public class AudioUtil {
         return audioStream;
     }
 
-    private static File convert(AudioInputStream inStream) throws IOException {
+    /**
+     * Invoked as needed from AudioLoadThread. If the file we're trying to load was in mp3
+     * format, this will be invoked to convert it to wav format so we can process
+     * the raw audio data.
+     *
+     * @param inStream An audio input stream from the source file
+     * @return A file in the system temp dir that contains the converted data in wav format
+     * @throws IOException If something goes wrong.
+     */
+    public static File convert(AudioInputStream inStream) throws IOException {
         AudioFormat sourceFormat = inStream.getFormat();
         AudioFormat targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, sourceFormat.getSampleRate(), 16, sourceFormat.getChannels(), 4, sourceFormat.getFrameRate(), false);
         if (!AudioSystem.isConversionSupported(targetFormat, inStream.getFormat())) {

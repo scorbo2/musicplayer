@@ -232,11 +232,11 @@ public class AudioPanel extends JPanel implements UIReloadable {
         // If we don't already have audio data loaded, ask our playlist
         // for whatever is currently selected:
         if (audioData == null) {
-            AudioData data = Playlist.getInstance().getSelected();
-            if (data == null) {
-                data = Playlist.getInstance().getNext();
+            if (Playlist.getInstance().hasSelection()) {
+                Playlist.getInstance().loadSelected();
+            } else {
+                Playlist.getInstance().loadNext();
             }
-            setAudioData(data);
         }
 
         // If it's still null, we got nothing, so there's nothing to play:
@@ -257,20 +257,14 @@ public class AudioPanel extends JPanel implements UIReloadable {
         if (panelState != PanelState.IDLE) {
             stop();
         }
-        setAudioData(Playlist.getInstance().getNext());
-        if (audioData != null) {
-            play();
-        }
+        Playlist.getInstance().loadNext();
     }
 
     public void prev() {
         if (panelState != PanelState.IDLE) {
             stop();
         }
-        setAudioData(Playlist.getInstance().getPrev());
-        if (audioData != null) {
-            play();
-        }
+        Playlist.getInstance().loadPrev();
     }
 
     /**

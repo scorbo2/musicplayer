@@ -1,11 +1,11 @@
 package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.MessageUtil;
+import ca.corbett.extras.progress.MultiProgressDialog;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
-import ca.corbett.musicplayer.audio.AudioUtil;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 
 import javax.swing.DefaultListModel;
@@ -142,9 +142,9 @@ public class Playlist extends JPanel implements UIReloadable {
      *
      * @return A populated AudioData instance, or null.
      */
-    public AudioData getNext() {
+    public void loadNext() {
         if (fileListModel.isEmpty()) {
-            return null;
+            return;
         }
 
         // Make note of whatever is currently selected:
@@ -163,7 +163,7 @@ public class Playlist extends JPanel implements UIReloadable {
             // Did we hit the end of the list?
             if (index >= fileListModel.size()) {
                 if (!isRepeat) {
-                    return null; // we're done here.
+                    return; // we're done here.
                 }
                 index = 0;
             }
@@ -171,7 +171,7 @@ public class Playlist extends JPanel implements UIReloadable {
 
         // Select whatever we landed on and return it:
         fileList.setSelectedIndex(index);
-        return getSelected();
+        loadSelected();
     }
 
     /**
@@ -191,9 +191,9 @@ public class Playlist extends JPanel implements UIReloadable {
      *
      * @return A populated AudioData instance, or null.
      */
-    public AudioData getPrev() {
+    public void loadPrev() {
         if (fileListModel.isEmpty()) {
-            return null;
+            return;
         }
 
         // Make note of whatever is currently selected:
@@ -212,7 +212,7 @@ public class Playlist extends JPanel implements UIReloadable {
             // Did we hit the start of the list?
             if (index < 0) {
                 if (!isRepeat) {
-                    return null; // we're done here.
+                    return; // we're done here.
                 }
                 index = fileListModel.size() - 1;
             }
@@ -220,7 +220,7 @@ public class Playlist extends JPanel implements UIReloadable {
 
         // Select whatever we landed on and return it:
         fileList.setSelectedIndex(index);
-        return getSelected();
+        loadSelected();
     }
 
     /**
@@ -288,24 +288,31 @@ public class Playlist extends JPanel implements UIReloadable {
     }
 
     /**
-     * Parses the selected file's audio data and returns it in an AudioData instance.
-     * If nothing is selected, you get null. If the audio data cannot be parsed
-     * for whatever reason, an error will be raised and you will get null.
+     * Reports whether something is currently selected in the list.
      *
-     * @return Either a populated AudioData instance, or null.
+     * @return true if the list is non-empty and a file is currently selected.
      */
-    public AudioData getSelected() {
+    public boolean hasSelection() {
+        return (!fileListModel.isEmpty()) && fileList.getSelectedValue() != null;
+    }
+
+    /**
+     * Loads audio data for whatever is currently selected in the playlist.
+     * If the playlist is empty or nothing is selected, nothing happens.
+     * The load will be done in a worker thread with a progress dialog,
+     * so this method returns immediately while the data is still being
+     * loaded. Upon completion, the resulting AudioData will be loaded
+     * into the AudioPanel by the worker thread. If something goes wrong,
+     * an error is logged and displayed to the user and nothing is loaded.
+     */
+    public void loadSelected() {
         File selected = fileList.getSelectedValue();
         if (fileListModel.isEmpty() || selected == null) {
-            return null;
+            return;
         }
 
-        try {
-            return AudioUtil.load(selected);
-        } catch (Exception e) {
-            getMessageUtil().error("Problem loading file: " + e.getMessage(), e);
-        }
-        return null;
+        MultiProgressDialog progress = new MultiProgressDialog(MainWindow.getInstance(), "Loading audio data...");
+        progress.runWorker(new AudioLoadThread(selected), true);
     }
 
     protected void initComponents() {
