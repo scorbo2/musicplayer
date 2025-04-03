@@ -37,6 +37,14 @@ public class ReloadUIAction extends AbstractAction {
         return instance;
     }
 
+    /**
+     * Registers your class to receive messages whenever the UI is to reload.
+     * Your class can redraw itself or do whatever it needs to reflect
+     * the current settings. If AppConfig was modified by the user, it will
+     * be in the new state before your class receives this message.
+     *
+     * @param reloadable Any class that implements UIReloadable.
+     */
     public void registerReloadable(UIReloadable reloadable) {
         reloadables.add(reloadable);
     }

@@ -10,6 +10,16 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 
+/**
+ * Shows a dialog for saving the current playlist to disk.
+ * We'll consult the extension manager to see if any extensions have
+ * registered additional playlist save formats beyond our built-in one.
+ * If so, we'll delegate to the extension to actually save the
+ * current playlist.
+ *
+ * @author scorbo2
+ * @since 2025-03-27
+ */
 public class PlaylistSaveAction extends AbstractAction {
     private final JFileChooser fileChooser;
 

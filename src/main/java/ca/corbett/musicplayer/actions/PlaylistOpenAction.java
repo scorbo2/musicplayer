@@ -14,6 +14,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Shows a dialog to open a saved playlist. We'll consult with the extension manager
+ * to see if any extensions have supplied additional playlist formats, and if so,
+ * we'll delegate to the extension to actually handle the load.
+ *
+ * @author scorbo2
+ * @since 2023-03-27
+ */
 public class PlaylistOpenAction extends AbstractAction {
     private final JFileChooser fileChooser;
 
