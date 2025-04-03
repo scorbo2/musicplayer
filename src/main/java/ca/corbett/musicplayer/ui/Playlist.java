@@ -139,8 +139,6 @@ public class Playlist extends JPanel implements UIReloadable {
      * from the file - if this fails, an error will be raised
      * and you get null.
      * </p>
-     *
-     * @return A populated AudioData instance, or null.
      */
     public void loadNext() {
         if (fileListModel.isEmpty()) {
@@ -188,8 +186,6 @@ public class Playlist extends JPanel implements UIReloadable {
      * from the file - if this fails, an error will be raised
      * and you get null.
      * </p>
-     *
-     * @return A populated AudioData instance, or null.
      */
     public void loadPrev() {
         if (fileListModel.isEmpty()) {
