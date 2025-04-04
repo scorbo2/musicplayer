@@ -232,7 +232,10 @@ public class VisualizationWindow implements UIReloadable {
             window.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
             try {
                 Robot robot = new Robot();
-                InactivityListener inactivityListener = new InactivityListener(window, new AbstractAction() {
+                if (inactivityListener != null) {
+                    inactivityListener.stop();
+                }
+                inactivityListener = new InactivityListener(window, new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         // jiggle mouse, mash keyboard, whatever, just stop the screensaver from clicking on:

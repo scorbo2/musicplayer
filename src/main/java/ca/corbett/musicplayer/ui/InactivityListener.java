@@ -104,6 +104,7 @@ class InactivityListener implements ActionListener, AWTEventListener {
     public void setIntervalInMillis(int interval) {
         this.interval = interval;
         timer.setInitialDelay(interval);
+        timer.setDelay(interval);
     }
 
     /**
