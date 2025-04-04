@@ -3,6 +3,7 @@ package ca.corbett.musicplayer.ui;
 import ca.corbett.extras.image.ImagePanel;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
+import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 
 import javax.swing.JFrame;
 import java.awt.AlphaComposite;
@@ -49,6 +50,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private volatile boolean running;
     private final AnimationSpeed animationSpeed;
     private VisualizationTrackInfo trackInfo;
+    private VisualizationManager.Visualizer effectiveVisualizer;
     private File currentSongFile;
     private int width;
     private int height;
@@ -56,6 +58,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private boolean isFullScreen;
     private ImagePanel imagePanel;
     private JFrame visFrame;
+    private volatile boolean isRenderingPaused;
 
     /**
      * Creates a new VisualizationThread with values taken from AppConfig.
@@ -63,7 +66,10 @@ public class VisualizationThread implements Runnable, UIReloadable {
     public VisualizationThread() {
         animationSpeed = AppConfig.getInstance().getVisualizationAnimationSpeed();
         running = false;
+        isRenderingPaused = false;
+        currentSongFile = null;
         textOverlayEnabled = AppConfig.getInstance().isVisualizerOverlayEnabled();
+        effectiveVisualizer = AppConfig.getInstance().getVisualizer();
         ReloadUIAction.getInstance().registerReloadable(this);
         width = 1920; // completely arbitrary default
         height = 1080; // caller will override this with actual values
@@ -92,19 +98,67 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
     /**
      * Updates the current track info. Pass null to indicate nothing is currently playing.
+     * Whenever the current track changes, we check to see if we need to swap out the
+     * current visualizer for a different one. This can happen if "allow visualizer
+     * override" is enabled in application settings.
      *
      * @param info     TrackInfo for the currently playing track, or null for nothing playing.
-     * @param songFile A File object for the currently playing track, or null for nothing playing.
      */
-    public void setTrackInfo(VisualizationTrackInfo info, File songFile) {
+    public void setTrackInfo(VisualizationTrackInfo info) {
         trackInfo = info;
 
-        // New track?
-        if (!Objects.equals(songFile, currentSongFile)) {
+        // If we're not running, we're done here:
+        if (!isRunning()) {
+            currentSongFile = null;
+            return;
+        }
+
+        // If the track has changed, we may need to swap out our current visualizer or swap it back:
+        File songFile = (info == null) ? null : info.getSourceFile();
+        if (!Objects.equals(songFile, currentSongFile) && AppConfig.getInstance().isAllowVisualizerOverride()) {
             currentSongFile = songFile;
 
-            // TODO allow extensions to scan the current song for any triggers that would activate their visualizer
-            //      example: a lyrics sheet exists in this directory
+            // We don't want to stop() and initialize() visualizers that are in the process of rendering
+            // something, because bad things like NPEs will happen. So, we set a flag here to stop sending
+            // renderFrame() messages to whatever visualizer is active, then wait a short amount of time
+            // to make sure that any renders currently in progress finish, before we proceed:
+            isRenderingPaused = true;
+            try {
+                Thread.sleep(animationSpeed.delayMs * 2L); // sit out a frame or two
+            } catch (InterruptedException ignored) {
+            }
+
+            // Check our visualizers to see if any of them want to override the current one,
+            // based on the new song file:
+            boolean wasSwapped = false;
+            for (VisualizationManager.Visualizer visualizer : MusicPlayerExtensionManager.getInstance().getCustomVisualizers()) {
+                if (visualizer != effectiveVisualizer && visualizer.hasOverride(trackInfo)) {
+                    if (effectiveVisualizer != null) {
+                        effectiveVisualizer.stop();
+                    }
+                    effectiveVisualizer = visualizer;
+                    effectiveVisualizer.initialize(width, height);
+                    wasSwapped = true;
+                    logger.info("Swapping out default visualizer for " + ((effectiveVisualizer == null) ? "null" : effectiveVisualizer.getName()));
+                    break; // note we pick the first visualizer that volunteers, so load order matters here
+                }
+            }
+
+            // If no one volunteered, then see if we need to switch back to the user-selected one:
+            // (i.e. the previous track had an override but this one doesn't):
+            if (!wasSwapped) {
+                VisualizationManager.Visualizer defaultVisualizer = AppConfig.getInstance().getVisualizer();
+                if (effectiveVisualizer != defaultVisualizer) {
+                    logger.info("Restoring default visualizer");
+                    if (effectiveVisualizer != null) {
+                        effectiveVisualizer.stop();
+                    }
+                    effectiveVisualizer = defaultVisualizer;
+                    effectiveVisualizer.initialize(width, height);
+                }
+            }
+
+            isRenderingPaused = false;
         }
     }
 
@@ -118,7 +172,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
     @Override
     public void reloadUI() {
-
+        // TODO did I mean to do something in here? I can't remember why I implemented this interface here
     }
 
     /**
@@ -173,9 +227,11 @@ public class VisualizationThread implements Runnable, UIReloadable {
         //BufferedImage dbuffer = conf.createCompatibleImage(width, height);
         logger.log(Level.INFO, "VisualizationThread created; rendering at {0}x{1}", new Object[]{width, height});
 
-        // Get a handle on the selected Visualizer:
-        VisualizationManager.Visualizer visualizer = AppConfig.getInstance().getVisualizer();
-        visualizer.initialize(width, height);
+        // Initialize the currently selected visualizer from application settings.
+        // If visualizer override is enabled, this may change on us as we go, but that's okay.
+        // See setTrackInfo.
+        effectiveVisualizer = AppConfig.getInstance().getVisualizer();
+        effectiveVisualizer.initialize(width, height);
 
         // we want to re-render the text overlay every 1s or so (if it's enabled):
         Random rand = new Random();
@@ -201,7 +257,12 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
             // Animate something
             Graphics2D g = isFullScreen ? (Graphics2D) strategy.getDrawGraphics() : image.createGraphics();
-            visualizer.renderFrame(g, trackInfo);
+            if (isRenderingPaused) {
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, width, height); // please stand by
+            } else {
+                effectiveVisualizer.renderFrame(g, trackInfo);
+            }
 
             // Draw a "paused" symbol in the center if the media player is paused:
             if (AudioPanel.getInstance().getPanelState() == AudioPanel.PanelState.PAUSED) {
@@ -225,7 +286,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
                 if (textOverlay != null) {
                     int overlayBottom = height;
-                    if (visualizer.reserveBottomGutter()) {
+                    if (effectiveVisualizer.reserveBottomGutter()) {
                         overlayBottom = textBoxY;
                     }
                     overlayX += overlayDeltaX;
@@ -285,6 +346,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
             }
         }
 
-        visualizer.stop();
+        effectiveVisualizer.stop();
+        effectiveVisualizer = null;
     }
 }

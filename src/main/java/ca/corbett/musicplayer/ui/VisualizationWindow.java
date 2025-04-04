@@ -24,7 +24,6 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -115,10 +114,9 @@ public class VisualizationWindow implements UIReloadable {
      * Updates the current track info.
      *
      * @param info TrackInfo for the currently playing song, or null.
-     * @param file A File object representing the currently playing song, or null.
      */
-    public void setTrackInfo(VisualizationTrackInfo info, File file) {
-        thread.setTrackInfo(info, file);
+    public void setTrackInfo(VisualizationTrackInfo info) {
+        thread.setTrackInfo(info);
     }
 
     /**

@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer.extensions.builtin;
 
 import ca.corbett.extensions.AppExtensionInfo;
+import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.EnumProperty;
@@ -8,14 +9,20 @@ import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
+import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 import ca.corbett.musicplayer.ui.VisualizationTrackInfo;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.logging.Logger;
 
 /**
  * Provides some extra full-screen visualizations to supplement the boring built-in one.
@@ -27,7 +34,8 @@ import java.util.List;
 public class ExtraVisualizers extends MusicPlayerExtension {
     private final AppExtensionInfo info;
 
-    private RollingWaveVisualizer rollingWaves;
+    private final RollingWaveVisualizer rollingWaves;
+    private final AlbumArtVisualizer albumArtVisualizer;
 
     public ExtraVisualizers() {
         info = new AppExtensionInfo.Builder("Extra visualizers")
@@ -42,6 +50,7 @@ public class ExtraVisualizers extends MusicPlayerExtension {
                 .build();
 
         rollingWaves = new RollingWaveVisualizer();
+        albumArtVisualizer = new AlbumArtVisualizer();
     }
 
     @Override
@@ -54,6 +63,7 @@ public class ExtraVisualizers extends MusicPlayerExtension {
         List<AbstractProperty> props = new ArrayList<>();
 
         props.addAll(rollingWaves.getProperties());
+        props.addAll(albumArtVisualizer.getProperties());
 
         return props;
     }
@@ -71,6 +81,7 @@ public class ExtraVisualizers extends MusicPlayerExtension {
         List<VisualizationManager.Visualizer> visualizers = new ArrayList<>();
 
         visualizers.add(rollingWaves);
+        visualizers.add(albumArtVisualizer);
 
         return visualizers;
     }
@@ -120,6 +131,13 @@ public class ExtraVisualizers extends MusicPlayerExtension {
 
         public List<AbstractProperty> getProperties() {
             List<AbstractProperty> props = new ArrayList<>();
+            MusicPlayerExtensionManager.StaticLabelProperty label = new MusicPlayerExtensionManager.StaticLabelProperty(
+                    NAME + ".General.label",
+                    "<html>The " + NAME + " visualizer shows a gently rolling wave of<br>" +
+                            "color gradients, moving either horizontally or vertically.</html>"
+            );
+            label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
+            props.add(label);
             props.add(new ColorProperty(startColorPropName, "Start color:", ColorProperty.ColorType.SOLID, Color.BLACK));
             props.add(new ColorProperty(endColorPropName, "End color:", ColorProperty.ColorType.SOLID, Color.BLUE));
             props.add(new EnumProperty<>(directionPropName, "Direction:", RollingWaveVisualizer.DIRECTION.HORIZONTAL));
@@ -261,6 +279,393 @@ public class ExtraVisualizers extends MusicPlayerExtension {
             blue = (blue > 255) ? 255 : blue;
 
             return new Color((float) red / 255, (float) green / 255, (float) blue / 255);
+        }
+    }
+
+    /**
+     * The AlbumArtVisualizer looks for album or track images in the same directory as whatever
+     * audio file is being played. We start by looking for a file with the same filename as the
+     * audio track, but with a jpg or png extension. If that is not present, we look for a file
+     * named album.png or album.jpg in the same directory.
+     * <p>
+     * If a track image or an album image is found, it is shown using the configuration
+     * properties for this extension in application settings. Otherwise, a plain black
+     * screen.
+     * </p>
+     * <p>
+     * Note that this extension supports visualizer overrides. So, you don't have to pick
+     * it as the default visualizer. Just enable "visualizer override" in settings, and
+     * if a track or album image is detected, it will automatically activate this visualizer.
+     * </p>
+     *
+     * @author scorbo2
+     * @since 2024-04-03
+     */
+    public static class AlbumArtVisualizer extends VisualizationManager.Visualizer {
+
+        private static final Logger logger = Logger.getLogger(AlbumArtVisualizer.class.getName());
+
+        private static final String NAME = "Album art";
+        private static final String OVERSIZE_PROP = NAME + ".General.oversizeImage";
+        private static final String SPEED_PROP = NAME + ".General.scrollSpeed";
+
+        public enum OversizeHandling {
+            SCALE_TO_FIT("Scale to fit screen"),
+            STRETCH_TO_FIT("Stretch to fit screen"),
+            OVERFLOW_AND_PAN("Overflow and slow scroll");
+
+            private final String label;
+
+            OversizeHandling(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum ScrollSpeed {
+            VERY_SLOW("Very slow", 1),
+            SLOW("Slow", 2),
+            MEDIUM("Medium", 3),
+            FAST("Fast", 4),
+            VERY_FAST("Very fast", 5);
+
+            private final String label;
+            private final int speed;
+
+            ScrollSpeed(String label, int speed) {
+                this.label = label;
+                this.speed = speed;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+
+            public int getSpeed() {
+                return speed;
+            }
+        }
+
+        private BufferedImage image;
+        private File sourceFile;
+        int width;
+        int height;
+        private float zoomFactor;
+        private int xOffset;
+        private int yOffset;
+        private int xDelta;
+        private int yDelta;
+        private boolean scaleCalculationsDone;
+        private volatile boolean isLoadInProgress;
+
+        public AlbumArtVisualizer() {
+            super(NAME);
+        }
+
+        @Override
+        public void initialize(int width, int height) {
+            // We won't get image details until we get a renderFrame() message, so just blank out for now:
+            if (image != null) {
+                reset();
+                isLoadInProgress = false;
+            }
+
+            this.width = width;
+            this.height = height;
+        }
+
+        public List<AbstractProperty> getProperties() {
+            List<AbstractProperty> props = new ArrayList<>();
+            MusicPlayerExtensionManager.StaticLabelProperty label = new MusicPlayerExtensionManager.StaticLabelProperty(
+                    NAME + ".General.label",
+                    "<html>The " + NAME + " visualizer looks for a an image file<br>" +
+                            "for the current track or the current album. If it finds<br>" +
+                            "one, the image is displayed for visualization.<br><br>" +
+                            "Try putting an album.png or album.jpg in your music folder!<br>" +
+                            "Or, an image file with the same name as an audio track.<br>" +
+                            "  Example: some_track.mp3 and some_track.png</html>"
+            );
+            label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
+            props.add(label);
+            props.add(new EnumProperty<OversizeHandling>(OVERSIZE_PROP, "Oversized images:", OversizeHandling.SCALE_TO_FIT));
+            props.add(new EnumProperty<ScrollSpeed>(SPEED_PROP, "Scroll speed:", ScrollSpeed.SLOW));
+            return props;
+        }
+
+        /**
+         * Invoked internally by our image loading thread, so we don't block the rendering
+         * thread when loading track or album images.
+         *
+         * @param image The loaded image.
+         */
+        private void setImageData(BufferedImage image) {
+            this.isLoadInProgress = false;
+            reset();
+            this.image = image;
+        }
+
+        @Override
+        public boolean reserveBottomGutter() {
+            return true;
+        }
+
+        /**
+         * We will volunteer to override whatever the current visualizer is IF the given
+         * track has either an album image or a track image available. An album image is
+         * an image file in the same directory as the given audio file, and the album
+         * image must be named "album.jpg" or "album.png". That image applies to every
+         * track in the same directory. Alternatively, you can set a track image for a
+         * given audio file, by creating an image with the same name as the audio file
+         * but with a "jpg" or a "png" extension. For example, if your audio track is
+         * called "some_track.mp3", then a track image will be looked for with the name
+         * "some_track.jpg" or "some_track.png". If no such image files are found, then
+         * we return false here.
+         *
+         * @param trackInfo Metadata and source file information for the new track. The
+         *                  visualization manager will invoke this method once whenever
+         *                  the current track changes to the next one. Might be null
+         *                  if the audio has stopped.
+         * @return true if we found an album image or a track image for the given audio file.
+         */
+        @Override
+        public boolean hasOverride(VisualizationTrackInfo trackInfo) {
+            if (trackInfo != null && trackInfo.getSourceFile() != null && trackInfo.getSourceFile().exists()) {
+                return findImage(trackInfo.getSourceFile()) != null;
+            }
+            return false;
+        }
+
+        @Override
+        public void renderFrame(Graphics2D g, VisualizationTrackInfo trackInfo) {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, width, height);
+
+            OversizeHandling oversized = ((EnumProperty<OversizeHandling>) AppConfig.getInstance().getPropertiesManager().getProperty(OVERSIZE_PROP)).getSelectedItem();
+            ScrollSpeed scrollSpeed = ((EnumProperty<ScrollSpeed>) AppConfig.getInstance().getPropertiesManager().getProperty(SPEED_PROP)).getSelectedItem();
+
+            // Has the source file changed since our last render?
+            if (trackInfo != null && !Objects.equals(sourceFile, trackInfo.getSourceFile())) {
+                reset();
+                sourceFile = trackInfo.getSourceFile();
+            }
+
+            // If we have an image, render it:
+            if (image != null) {
+                // If the image dimensions are very small, just ignore it:
+                if (image.getWidth() < 5 && image.getHeight() < 5) {
+                    return;
+                }
+
+                // If we're set to stretch the image, do it:
+                if (oversized == OversizeHandling.STRETCH_TO_FIT) {
+                    g.drawImage(image, 0, 0, width, height, null);
+                }
+
+                // Otherwise, check to see if a scale is necessary:
+                else if (oversized == OversizeHandling.SCALE_TO_FIT || (image.getWidth() <= width && image.getHeight() <= height)) {
+                    if (!scaleCalculationsDone) {
+                        scaleCalculationsDone = true;
+                        float imgAspect = (float) image.getWidth() / (float) image.getHeight();
+                        float myAspect = (float) width / (float) height;
+                        if (imgAspect >= 1.0) {
+                            if (myAspect >= imgAspect) {
+                                zoomFactor = (float) height / image.getHeight();
+                            } else {
+                                zoomFactor = (float) width / image.getWidth();
+                            }
+                        } else {
+                            if (myAspect <= imgAspect) {
+                                zoomFactor = (float) width / image.getWidth();
+                            } else {
+                                zoomFactor = (float) height / image.getHeight();
+                            }
+                        }
+
+                        if (zoomFactor <= 0.0) {
+                            zoomFactor = 1;
+                        }
+                    }
+
+                    // Figure out our actual image dimensions:
+                    int imgWidth = (int) (image.getWidth() * zoomFactor);
+                    int imgHeight = (int) (image.getHeight() * zoomFactor);
+                    int centerX = (width / 2) - (imgWidth / 2);
+                    int centerY = (height / 2) - (imgHeight / 2);
+                    g.drawImage(image, centerX, centerY, imgWidth, imgHeight, null);
+                }
+
+                // Otherwise, we're slowly panning an oversized image:
+                else {
+                    if (!scaleCalculationsDone) {
+                        scaleCalculationsDone = true;
+                        boolean isPortrait = image.getHeight() > image.getWidth();
+                        zoomFactor = isPortrait ? (float) width / image.getWidth() : (float) height / image.getHeight();
+                        if (zoomFactor <= 0.0) {
+                            zoomFactor = 1;
+                        }
+                        if (isPortrait) {
+                            yDelta = -scrollSpeed.getSpeed();
+                        } else {
+                            xDelta = -scrollSpeed.getSpeed();
+                        }
+                        int imgWidth = (int) (image.getWidth() * zoomFactor);
+                        int imgHeight = (int) (image.getHeight() * zoomFactor);
+
+                        // Wonky case: if we scale it down and it ends up fitting inside the screen,
+                        // we can't scroll around inside it, so just center it instead:
+                        if (imgWidth <= width && imgHeight <= height) {
+                            xDelta = 0;
+                            yDelta = 0;
+                            xOffset = (width / 2) - (imgWidth / 2);
+                            yOffset = (height / 2) - (imgHeight / 2);
+                        }
+                    }
+                    int imgWidth = (int) (image.getWidth() * zoomFactor);
+                    int imgHeight = (int) (image.getHeight() * zoomFactor);
+                    g.drawImage(image, xOffset, yOffset, imgWidth, imgHeight, null);
+
+                    // Scroll speed can be adjusted on the fly, so re-read it every loop:
+                    scrollSpeed = ((EnumProperty<ScrollSpeed>) AppConfig.getInstance().getPropertiesManager().getProperty(SPEED_PROP)).getSelectedItem();
+                    if (xDelta < 0) {
+                        xDelta = -scrollSpeed.getSpeed();
+                    } else if (xDelta > 0) {
+                        xDelta = scrollSpeed.getSpeed();
+                    }
+                    if (yDelta < 0) {
+                        yDelta = -scrollSpeed.getSpeed();
+                    } else if (yDelta > 0) {
+                        yDelta = scrollSpeed.getSpeed();
+                    }
+
+                    // Apply the delta:
+                    xOffset += xDelta;
+                    yOffset += yDelta;
+
+                    // Bounds check and bounce if necessary:
+                    if (xDelta > 0 && xOffset >= 0) {
+                        xDelta = -xDelta;
+                    } else if (xDelta < 0 && xOffset <= (width - imgWidth)) {
+                        xDelta = -xDelta;
+                    }
+                    if (yDelta > 0 && yOffset >= 0) {
+                        yDelta = -yDelta;
+                    } else if (yDelta < 0 && yOffset <= (height - imgHeight)) {
+                        yDelta = -yDelta;
+                    }
+                }
+            }
+
+            // otherwise, fire off a worker thread to load it:
+            else {
+                if (!isLoadInProgress && sourceFile != null) {
+                    asyncImageLoad(findImage(sourceFile));
+                }
+            }
+        }
+
+        private void reset() {
+            if (image != null) {
+                image.flush();
+                image = null;
+                sourceFile = null;
+                zoomFactor = 0f;
+                xOffset = 0;
+                yOffset = 0;
+                xDelta = 0;
+                yDelta = 0;
+                scaleCalculationsDone = false;
+            }
+        }
+
+        private void asyncImageLoad(File imageFile) {
+            isLoadInProgress = true;
+            final AlbumArtVisualizer thisVisualizer = this;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    // We default to a very small image. This seems goofy, but setting this
+                    // is preferable to "null" in the case that something goes wrong, because
+                    // otherwise we'd end up calling this over and over every time renderFrame()
+                    // is invoked, in the case of an image that can't be loaded. So, default
+                    // to a very small image, and we'll add some logic in the render loop to
+                    // just ignore such small images. That way we only hit this code once.
+                    BufferedImage image = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
+                    try {
+                        if (imageFile != null) {
+                            logger.info("Loading track image: " + imageFile.getAbsolutePath());
+                            image = ImageUtil.loadImage(imageFile);
+                        }
+                    } catch (IOException ioe) {
+                        logger.severe("Unable to load track image: " + ioe.getMessage());
+                    }
+                    thisVisualizer.setImageData(image);
+                }
+            }).start();
+        }
+
+        @Override
+        public void stop() {
+            reset();
+        }
+
+        /**
+         * Looks for an album image or a track image for the given audio file.
+         * We will prioritize a track image if one exists, and fall back to
+         * an album image if there is no track image. If no image exists,
+         * we return null. We prioritize png over jpg, so if both exist,
+         * we'll use the png to avoid compression artifacts.
+         *
+         * @param audioFile The audio file in question.
+         * @return A track image, or album image, or null if nothing was found.
+         */
+        private File findImage(File audioFile) {
+            File parentDir = audioFile.getParentFile();
+            File albumImageJpg = new File(parentDir, "album.jpg");
+            File albumImagePng = new File(parentDir, "album.png");
+            File trackImageJpg = new File(parentDir, createFilename(audioFile.getName(), "jpg"));
+            File trackImagePng = new File(parentDir, createFilename(audioFile.getName(), "png"));
+            if (trackImagePng.exists()) {
+                return trackImagePng;
+            }
+            if (trackImageJpg.exists()) {
+                return trackImageJpg;
+            }
+            if (albumImagePng.exists()) {
+                return albumImagePng;
+            }
+            if (albumImageJpg.exists()) {
+                return albumImageJpg;
+            }
+            return null;
+        }
+
+        /**
+         * Takes any file name, strips off its extension, and returns an equivalent filename
+         * with the new given extension. For example:
+         * <pre>createFilename("some_file.mp3", "png");</pre>
+         * This will return "some_file.png".
+         * <p>
+         * If the input filename has no extension, we'll just tack the given extension onto it.
+         * </p>
+         *
+         * @param basename     The base name of the input file.
+         * @param newExtension The new extension to use, replacing the old extension.
+         * @return A new filename.
+         */
+        private String createFilename(String basename, String newExtension) {
+            // Special case files with no extension:
+            if (!basename.contains(".")) {
+                return basename + "." + newExtension;
+            }
+
+            // Otherwise, strip off the last extension and add the new one:
+            String newName = basename.substring(0, basename.lastIndexOf("."));
+            return newName + "." + newExtension;
         }
     }
 }

@@ -164,9 +164,9 @@ public final class VisualizationOverlay implements UIReloadable {
         graphics.drawString("Time:", labelX, trackTimeBaselineY);
 
         // Grab label values from the TrackInfo, or fill them in if needed:
-        String title = (trackInfo == null) ? "(nothing playing)" : trackInfo.title;
-        String artist = (trackInfo == null) ? "N/A" : trackInfo.artist;
-        String album = (trackInfo == null) ? "N/A" : trackInfo.album;
+        String title = (trackInfo == null) ? "(nothing playing)" : trackInfo.getTitle();
+        String artist = (trackInfo == null) ? "N/A" : trackInfo.getArtist();
+        String album = (trackInfo == null) ? "N/A" : trackInfo.getAlbum();
         String trackTime = computeTrackTime();
 
         // Draw all value labels:
@@ -189,8 +189,8 @@ public final class VisualizationOverlay implements UIReloadable {
             graphics.fillRect(progressBarLeft, barTop, barWidth, barHeight);
             graphics.setColor(highlightFgColor);
             int elapsed = 0;
-            if (trackInfo.totalTime != 0) {
-                elapsed = (int) ((trackInfo.currentTime / (double) trackInfo.totalTime) * barWidth);
+            if (trackInfo.getTotalTimeSeconds() != 0) {
+                elapsed = (int) ((trackInfo.getCurrentTimeSeconds() / (double) trackInfo.getTotalTimeSeconds()) * barWidth);
             }
             graphics.fillRect(progressBarLeft + 2, barTop + 2, elapsed, barHeight - 4);
         }
@@ -208,9 +208,9 @@ public final class VisualizationOverlay implements UIReloadable {
         String trackTime = "N/A";
         if (trackInfo != null) {
             int currentMins = 0;
-            int currentSecs = trackInfo.currentTime;
+            int currentSecs = trackInfo.getCurrentTimeSeconds();
             int totalMins = 0;
-            int totalSecs = trackInfo.totalTime;
+            int totalSecs = trackInfo.getTotalTimeSeconds();
 
             while (currentSecs >= 60) {
                 currentSecs -= 60;

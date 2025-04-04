@@ -127,9 +127,10 @@ public class AudioPanel extends JPanel implements UIReloadable {
                     return false;
                 }
                 setPlaybackPosition((float) curMillis / (float) totalMillis);
-                trackInfo.currentTime = (int) (curMillis / 1000);
-                trackInfo.totalTime = audioData.getDurationSeconds();
-                VisualizationWindow.getInstance().setTrackInfo(trackInfo, audioData.getSourceFile());
+                trackInfo.setSourceFile(audioData.getSourceFile());
+                trackInfo.setCurrentTimeSeconds((int) (curMillis / 1000));
+                trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
+                VisualizationWindow.getInstance().setTrackInfo(trackInfo);
                 return true;
             }
 
@@ -203,11 +204,13 @@ public class AudioPanel extends JPanel implements UIReloadable {
         playbackPosition = 0f;
         redrawWaveform();
         NowPlayingPanel.getInstance().setNowPlaying(data);
-        trackInfo.artist = data.getMetadata().author;
-        trackInfo.title = data.getMetadata().title;
-        trackInfo.album = data.getMetadata().album;
-        trackInfo.currentTime = 0;
-        trackInfo.totalTime = audioData.getDurationSeconds();
+        trackInfo.reset();
+        trackInfo.setSourceFile(data.getSourceFile());
+        trackInfo.setArtist(data.getMetadata().author);
+        trackInfo.setTitle(data.getMetadata().title);
+        trackInfo.setAlbum(data.getMetadata().album);
+        trackInfo.setCurrentTimeSeconds(0);
+        trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
         fireAudioLoadedEvent();
     }
 
@@ -315,7 +318,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
             playbackThread = null;
         }
 
-        VisualizationWindow.getInstance().setTrackInfo(null, null);
+        VisualizationWindow.getInstance().setTrackInfo(null);
         setPlaybackPosition(0);
         markPosition = 0f; // arbitrary decision - "stop" should clear any current mark position
         redrawWaveform();
@@ -401,9 +404,6 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     public void regenerateWaveformImage() {
-        if (panelState != PanelState.IDLE) {
-            stop();
-        }
         if (audioData == null) {
             return;
         }

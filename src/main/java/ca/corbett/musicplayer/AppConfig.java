@@ -29,6 +29,7 @@ import ca.corbett.musicplayer.ui.VisualizationWindow;
 import javax.swing.AbstractAction;
 import javax.swing.JTabbedPane;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
 
 /**
  * Taking advantage of the AppProperties helper class in my own
- * application-extensions library, as it saves a LOT of work in
+ * app-extensions library, as it saves a LOT of work in
  * managing application properties and exposing them to the user.
  * <p>
  * The persistence file for application properties defaults
@@ -48,8 +49,9 @@ import java.util.logging.Logger;
  * ca.corbett.musicplayer.props.file system property.
  * </p>
  * <p>
- * <B>Example:</B> java -Dca.corbett.musicplayer.props.file=/tmp/blah.props MusicPlayer.jar
+ * <B>Example:</B>
  * </p>
+ * <pre>java -Dca.corbett.musicplayer.props.file=/tmp/blah.props -jar MusicPlayer.jar</pre>
  *
  * @author scorbo2
  * @since 2025-03-23
@@ -77,6 +79,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
     private ComboProperty visualizerType;
+    private BooleanProperty allowVisualizerOverride;
     private EnumProperty<VisualizationWindow.DISPLAY> visualizerDisplay;
     private EnumProperty<VisualizationThread.AnimationSpeed> visualizerSpeed;
     private BooleanProperty visualizerOverlayEnabled;
@@ -86,41 +89,68 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private DecimalProperty visualizerOverlayOpacity;
 
     public enum ButtonSize {
-        XSMALL(16),
-        SMALL(20),
-        NORMAL(24),
-        LARGE(30),
-        XLARGE(36);
+        XSMALL(16, "Extra small"),
+        SMALL(20, "Small"),
+        NORMAL(24, "Normal"),
+        LARGE(30, "Large"),
+        XLARGE(36, "Huge");
 
         final private int buttonSize;
+        final private String label;
 
-        ButtonSize(int btnSize) {
+        ButtonSize(int btnSize, String label) {
             buttonSize = btnSize;
+            this.label = label;
         }
 
         public int getButtonSize() {
             return buttonSize;
         }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     public enum ControlAlignment {
-        LEFT, CENTER, RIGHT;
+        LEFT("Left"),
+        CENTER("Center"),
+        RIGHT("Right");
+
+        private final String label;
+
+        ControlAlignment(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     public enum WaveformResolution {
-        LOW(512),
-        MEDIUM(1024),
-        HIGH(2048),
-        SUPER_HIGH(4096);
+        LOW(512, "Low"),
+        MEDIUM(1024, "Medium"),
+        HIGH(2048, "High"),
+        SUPER_HIGH(4096, "Super high");
 
         private final int xLimit;
+        private final String label;
 
-        WaveformResolution(int xLimit) {
+        WaveformResolution(int xLimit, String label) {
             this.xLimit = xLimit;
+            this.label = label;
         }
 
         public int getXLimit() {
             return xLimit;
+        }
+
+        @Override
+        public String toString() {
+            return label;
         }
     }
 
@@ -186,56 +216,28 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return instance;
     }
 
-    public void setButtonSize(ButtonSize newSize) {
-        buttonSize.setSelectedItem(newSize);
-    }
-
     public ButtonSize getButtonSize() {
         return buttonSize.getSelectedItem();
-    }
-
-    public void setControlAlignment(ControlAlignment alignment) {
-        controlAlignment.setSelectedItem(alignment);
     }
 
     public ControlAlignment getControlAlignment() {
         return controlAlignment.getSelectedItem();
     }
 
-    public void setWaveformBgColor(Color color) {
-        waveformBgColor.setColor(color);
-    }
-
     public Color getWaveformBgColor() {
         return waveformBgColor.getColor();
-    }
-
-    public void setWaveformFillColor(Color color) {
-        waveformFillColor.setColor(color);
     }
 
     public Color getWaveformFillColor() {
         return waveformFillColor.getColor();
     }
 
-    public void setWaveformOutlineColor(Color color) {
-        waveformOutlineColor.setColor(color);
-    }
-
     public Color getWaveformOutlineColor() {
         return waveformOutlineColor.getColor();
     }
 
-    public void setWaveformOutlineWidth(int width) {
-        waveformOutlineThickness.setValue(width);
-    }
-
     public int getWaveformOutlineWidth() {
         return waveformOutlineThickness.getValue();
-    }
-
-    public void setWaveformResolution(WaveformResolution resolution) {
-        waveformResolution.setSelectedItem(resolution);
     }
 
     public WaveformResolution getWaveformResolution() {
@@ -338,6 +340,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return visualizerOverlayEnabled.getValue();
     }
 
+    public boolean isAllowVisualizerOverride() {
+        return allowVisualizerOverride.getValue();
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         buttonSize = new EnumProperty<ButtonSize>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
@@ -393,6 +399,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
         selectedIndex = (options.size() == 1) ? 0 : 1; // pick the first non-standard one if there is one
         visualizerType = new ComboProperty("Visualization.General.visualizer", "Visualizer:", options, selectedIndex, false);
+        allowVisualizerOverride = new BooleanProperty("Visualization.General.allowOverride", "Allow override of selected visualizer based on file triggers.", true);
         visualizerDisplay = new EnumProperty<>("Visualization.General.preferredDisplay", "Preferred display:", VisualizationWindow.DISPLAY.PRIMARY);
         visualizerSpeed = new EnumProperty<>("Visualization.General.animationSpeed", "Animation speed:", VisualizationThread.AnimationSpeed.HIGH);
         visualizerOverlayEnabled = new BooleanProperty("Visualization.Overlay.enabled", "Enable visualizer overlay for current track info", true);
@@ -417,6 +424,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 windowHeight,
                 lastBrowseDir,
                 visualizerType,
+                allowVisualizerOverride,
                 visualizerDisplay,
                 visualizerSpeed,
                 visualizerOverlayEnabled,
@@ -465,6 +473,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 tabPane.addTab(category, formPanel);
             }
             dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", tabPane);
+            dialog.setSize(660, 480);
+            dialog.setMinimumSize(new Dimension(660, 480));
         }
 
         dialog.setVisible(true);

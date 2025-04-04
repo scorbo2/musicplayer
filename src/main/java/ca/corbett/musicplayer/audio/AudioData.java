@@ -189,7 +189,7 @@ public class AudioData {
         if (width > config.getXLimit()) {
             width = config.getXLimit();
             xScale = audioData[0].length / config.getXLimit();
-            logger.log(Level.INFO, "AudioUtil: Adjusted xScale from {0} to {1} to accommodate x limit of {2}.",
+            logger.log(Level.INFO, "AudioUtil: scaling waveform image down to fit X limit of {2} (you can change this in settings).",
                     new Object[]{config.getXScale(), xScale, config.getXLimit()});
         }
         int height = maxY1 + maxY2;

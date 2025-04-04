@@ -84,13 +84,42 @@ public class VisualizationManager {
         /**
          * Invoked when the Visualizer is started, to supply it with the width and height
          * of the target window and to allow it to prepare to start visualizing.
-         * This will get invoked once before you start receiving renderFrame() calls, so you
+         * This will get invoked once, before you start receiving renderFrame() calls, so you
          * can do some initialization here if you need to.
          *
          * @param width  The width of the display area.
          * @param height The height of the display area.
          */
         public abstract void initialize(int width, int height);
+
+        /**
+         * For the given audio file, the visualization manager will ask each extension if
+         * they have an "override" for that file. That is, can we interrupt whatever visualizer
+         * was selected by the user in application settings in order to activate this visualizer
+         * for this specific file? For an example of why we would want to do this, check out
+         * the AlbumArtVisualizer in the ExtraVisualizers extension. That visualizer can only
+         * function if an album image and/or a song image is present for a given audio file.
+         * So, you could pick some other visualizer in application settings, and that visualizer
+         * will function most of the time. But when we switch to a track that has album art,
+         * the AlbumArtVisualizer could report that it has an override - that is, that it could
+         * take over visualization just for this one track if you want.
+         * <p>
+         * Visualizer overrides can be disabled entirely in application settings, if you
+         * just want to pick one visualizer and use that no matter what. But allowing
+         * overrides in this manner, allows more creative use of visualizers, especially
+         * in custom extensions, if you want to do custom visualizations for specific
+         * audio tracks or based on specific audio metadata (i.e. a visualizer specific
+         * to a given artist or a specific genre of music or whatever).
+         * </p>
+         *
+         * @param trackInfo Metadata and source file information for the new track. The
+         *                  visualization manager will invoke this method once whenever
+         *                  the current track changes to the next one. Might be null
+         *                  if the audio has stopped.
+         */
+        public boolean hasOverride(VisualizationTrackInfo trackInfo) {
+            return false;
+        }
 
         /**
          * Invoked in the animation loop to render a single frame.

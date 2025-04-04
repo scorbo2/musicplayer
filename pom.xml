@@ -95,6 +95,14 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <!-- Javadoc warnings need to chill out a lot -->
+                    <additionalOptions>-Xdoclint:all -Xdoclint:-missing</additionalOptions>
+                    <additionalJOptions>
+                        <additionalJOption>-Xdoclint:all</additionalJOption>
+                        <additionalJOption>-Xdoclint:-missing</additionalJOption>
+                    </additionalJOptions>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -129,6 +137,7 @@
                 </configuration>
             </plugin>
             <plugin>
+                <!-- See readme.txt in extra-jars for an explanation of this monstrosity -->
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.3.1</version>
                 <executions>
