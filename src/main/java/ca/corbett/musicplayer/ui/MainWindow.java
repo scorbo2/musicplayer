@@ -49,7 +49,6 @@ public class MainWindow extends JFrame {
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
         setLayout(new BorderLayout());
-        VisualizationWindow.getInstance(); // forces initialization of fullscreen stuff so it's ready to go later.
         resizeTimer = new Timer(250, e -> saveWindowState());
         resizeTimer.setRepeats(false);
         resizeTimer.setCoalesce(false);
@@ -74,10 +73,10 @@ public class MainWindow extends JFrame {
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (visible) {
-            AppConfig.getInstance().load();
             MusicPlayerExtensionManager.getInstance().activateAll();
             loadWindowState();
             AudioPanelIdleAnimation.getInstance().go();
+            VisualizationWindow.getInstance(); // forces initialization of fullscreen stuff so it's ready to go later.
         }
     }
 

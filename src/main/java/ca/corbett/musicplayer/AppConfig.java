@@ -208,6 +208,13 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         ReloadUIAction.getInstance().actionPerformed(null);
     }
 
+    /**
+     * Basically only invoked once on app startup to kick things off
+     */
+    public void loadWithoutUIReload() {
+        super.load();
+    }
+
     public static AppConfig getInstance() {
         if (instance == null) {
             instance = new AppConfig();

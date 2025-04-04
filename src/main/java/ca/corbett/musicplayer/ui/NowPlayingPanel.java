@@ -62,21 +62,22 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
 
     @Override
     public void reloadUI() {
-        setBackground(AppConfig.getInstance().getAppTheme().dialogBgColor);
+        AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
+        setBackground(theme.dialogBgColor);
 
-        titleLabel.setBackground(AppConfig.getInstance().getAppTheme().headerBgColor);
-        artistLabel.setBackground(AppConfig.getInstance().getAppTheme().headerBgColor);
-        durationLabel.setBackground(AppConfig.getInstance().getAppTheme().headerBgColor);
-        titleLabel.setForeground(AppConfig.getInstance().getAppTheme().headerFgColor);
-        artistLabel.setForeground(AppConfig.getInstance().getAppTheme().headerFgColor);
-        durationLabel.setForeground(AppConfig.getInstance().getAppTheme().headerFgColor);
+        titleLabel.setBackground(theme.headerBgColor);
+        artistLabel.setBackground(theme.headerBgColor);
+        durationLabel.setBackground(theme.headerBgColor);
+        titleLabel.setForeground(theme.headerFgColor);
+        artistLabel.setForeground(theme.headerFgColor);
+        durationLabel.setForeground(theme.headerFgColor);
 
-        titleValue.setBackground(AppConfig.getInstance().getAppTheme().normalBgColor);
-        titleValue.setForeground(AppConfig.getInstance().getAppTheme().normalFgColor);
-        artistValue.setBackground(AppConfig.getInstance().getAppTheme().normalBgColor);
-        artistValue.setForeground(AppConfig.getInstance().getAppTheme().normalFgColor);
-        durationValue.setBackground(AppConfig.getInstance().getAppTheme().normalBgColor);
-        durationValue.setForeground(AppConfig.getInstance().getAppTheme().normalFgColor);
+        titleValue.setBackground(theme.normalBgColor);
+        titleValue.setForeground(theme.normalFgColor);
+        artistValue.setBackground(theme.normalBgColor);
+        artistValue.setForeground(theme.normalFgColor);
+        durationValue.setBackground(theme.normalBgColor);
+        durationValue.setForeground(theme.normalFgColor);
     }
 
     private void initLayout() {
