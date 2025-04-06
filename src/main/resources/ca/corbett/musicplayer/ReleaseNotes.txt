@@ -1,7 +1,13 @@
 MusicPlayer Release Notes
 Author: Steve Corbett
 
-Version 2.0 [pending] - UI rewrite
+Version 2.0 [2025-04-06] - complete UI rewrite
+  - upgrading to app-extensions and swing-extras libraries
+  - implement extensions!
+  - visualizers can now be written as separate extensions
+  - extensions are actually quite powerful...
+  - almost the entire application can be extended
+  - some built-in extensions are included as a starter
 
 Version 1.5 [2023-04-16] - Maintenance release
   [MPLAY-53] - Playlist version check needs to chill out
@@ -44,7 +50,7 @@ Version 1.1 [2019-11-09] - Maintenance release
   [MPLAY-25] - Upgrade to Netbeans/Java 11
   [MPLAY-26] - Better playlist open dialog
   [MPLAY-27] - Better playlist save dialog
-  [MPLAY-28] - Upgrade to newer version of player library, if any.
+  [MPLAY-28] - Upgrade to newer version of player library.
   [MPLAY-29] - Allow Ctrl+Q to close the app
   [MPLAY-30] - Absorb mp-visualization-core into this project
 
