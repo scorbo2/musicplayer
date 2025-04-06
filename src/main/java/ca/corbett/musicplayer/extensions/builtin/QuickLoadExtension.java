@@ -3,12 +3,11 @@ package ca.corbett.musicplayer.extensions.builtin;
 import ca.corbett.extensions.AppExtensionInfo;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.DirectoryProperty;
+import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
-import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 
-import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -62,13 +61,11 @@ public class QuickLoadExtension extends MusicPlayerExtension {
     public List<AbstractProperty> getConfigProperties() {
         List<AbstractProperty> props = new ArrayList<>();
 
-        MusicPlayerExtensionManager.StaticLabelProperty label = new MusicPlayerExtensionManager.StaticLabelProperty("Quickload.General.label",
+        props.add(LabelProperty.createLabel("Quickload.General.label",
                 "<html>The following directory will be used for quickloading<br>" +
                         "and quicksaving playlists. Press L or S from the main window<br>" +
                         "to do this. Note: changing the directory here doesn't move<br>" +
-                        "any playlists you've already saved there!</html>");
-        label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
-        props.add(label);
+                        "any playlists you've already saved there!</html>"));
 
         File defaultDir = new File(System.getProperty("user.home"), DEFAULT_DIR);
         props.add(new DirectoryProperty("Quickload.General.quickDir", "Directory:", false, defaultDir));

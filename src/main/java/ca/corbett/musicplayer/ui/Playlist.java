@@ -17,7 +17,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -361,13 +360,13 @@ public class Playlist extends JPanel implements UIReloadable {
             if (button.getName().equalsIgnoreCase("shuffle")) {
                 if (AppConfig.getInstance().isShuffleEnabled()) {
                     button.setContentAreaFilled(true);
-                    button.setBackground(getDarkerColor(AppConfig.getInstance().getAppTheme().dialogBgColor));
+                    button.setBackground(AppTheme.getOffsetColor(AppConfig.getInstance().getAppTheme().dialogBgColor));
                 }
             }
             if (button.getName().equalsIgnoreCase("repeat")) {
                 if (AppConfig.getInstance().isRepeatEnabled()) {
                     button.setContentAreaFilled(true);
-                    button.setBackground(getDarkerColor(AppConfig.getInstance().getAppTheme().dialogBgColor));
+                    button.setBackground(AppTheme.getOffsetColor(AppConfig.getInstance().getAppTheme().dialogBgColor));
                 }
             }
 
@@ -402,37 +401,6 @@ public class Playlist extends JPanel implements UIReloadable {
             }
         }
         return newIndex;
-    }
-
-    /**
-     * Returns a slightly darker shade of whatever color you supply.
-     * I'm trying to make toggle buttons look like toggle buttons, but this
-     * is a bit wonky. Yeah, I know JToggleButton is a thing but I don't
-     * want to have borders on these toolbar buttons.
-     * <p>
-     *     Update: there's a wonky case where you might have created
-     *     a theme with a black background, and of course we can't
-     *     make a darker shade of black. So, if your supplied color
-     *     is black, or very close to black, this method will instead
-     *     return a lighter shade of that color, despite the method name.
-     *     The joys of supporting a highly customizable environment!
-     * </p>
-     *
-     * @param input Any color.
-     * @return A slightly darker shade of that color.
-     */
-    private Color getDarkerColor(Color input) {
-        int delta = -35;
-
-        // wonky special case: don't try to darken an already dark color:
-        if (input.getRed() < 35 && input.getGreen() < 35 && input.getBlue() < 35) {
-            delta = 35;
-        }
-
-        int red = Math.max(input.getRed() + delta, 0);
-        int green = Math.max(input.getGreen() + delta, 0);
-        int blue = Math.max(input.getBlue() + delta, 0);
-        return new Color(red, green, blue);
     }
 
     protected JComponent buildListPanel() {

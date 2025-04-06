@@ -114,10 +114,10 @@ public class AudioPanel extends JPanel implements UIReloadable {
             }
 
             @Override
-            public void stopped() {
+            public void stopped(PlaybackThread.StopReason stopReason) {
                 // If we stopped because we ran out of audio data, hit next()
-                if (panelState == PanelState.PLAYING) {
-                    next(); // TODO buggy! Needs fix in swing-extras: https://github.com/scorbo2/swing-extras/issues/10
+                if (panelState == PanelState.PLAYING && stopReason != PlaybackThread.StopReason.INTERRUPTED) {
+                    next();
                 }
             }
 

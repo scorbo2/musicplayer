@@ -3,7 +3,6 @@ package ca.corbett.musicplayer.extensions;
 import ca.corbett.extensions.ExtensionManager;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.LabelProperty;
-import ca.corbett.extras.properties.Properties;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
@@ -100,21 +99,13 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     public List<AbstractProperty> getAllEnabledExtensionProperties() {
         List<AbstractProperty> props = super.getAllEnabledExtensionProperties();
 
-        Font labelFont = new Font(Font.DIALOG, Font.PLAIN, 12);
-        StaticLabelProperty label1 = new StaticLabelProperty("Extensions.Configuration.label1", "The following directory will be scanned for extension jars:");
-        label1.setFont(labelFont);
-        StaticLabelProperty label2 = new StaticLabelProperty("Extensions.Configuration.scanDir", System.getProperty(SCAN_DIR_PROP) == null ? "(not set)" : System.getProperty(SCAN_DIR_PROP));
-        label2.setFont(new Font(Font.MONOSPACED, Font.BOLD, 12));
-        StaticLabelProperty label3 = new StaticLabelProperty("Extensions.Configuration.label2",
+        props.add(LabelProperty.createLabel("Extensions.Configuration.label1", "The following directory will be scanned for extension jars:"));
+        props.add(new LabelProperty("Extensions.Configuration.scanDir", System.getProperty(SCAN_DIR_PROP) == null ? "(not set)" : System.getProperty(SCAN_DIR_PROP), new Font(Font.MONOSPACED, Font.BOLD, 12)));
+        props.add(LabelProperty.createLabel("Extensions.Configuration.label2",
                 "<html>If the directory exists and is readable, it is scanned at startup<br>" +
                         "automatically. You can set it using the following system property,<br>" +
                         "but it requires an application restart!<br><br>" +
-                        "<pre>" + SCAN_DIR_PROP + "</pre></html>");
-        label3.setFont(labelFont);
-
-        props.add(label1);
-        props.add(label2);
-        props.add(label3);
+                        "<pre>" + SCAN_DIR_PROP + "</pre></html>"));
         return props;
     }
 
@@ -262,26 +253,6 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
             handled = handled || extension.handleKeyEvent(keyEvent);
         }
         return handled;
-    }
-
-    /**
-     * KLUDGE KLUDGE KLUDGE - HACK ALERT.
-     * This is just to prevent our static labels from saving themselves to our
-     * property file, which is really goofy. I will fix it in
-     * <a href="https://github.com/scorbo2/swing-extras/issues/8">swing-extras issue 8</a>.
-     */
-    public static class StaticLabelProperty extends LabelProperty {
-        public StaticLabelProperty(String name, String label) {
-            super(name, label);
-        }
-
-        @Override
-        public void saveToProps(Properties props) {
-        }
-
-        @Override
-        public void loadFromProps(Properties props) {
-        }
     }
 }
 

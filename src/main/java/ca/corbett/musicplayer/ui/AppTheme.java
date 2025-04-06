@@ -68,6 +68,67 @@ public class AppTheme {
         return STANDARD; // arbitrary default in case of garbage data
     }
 
+    public static Color getOffsetColor(Color input) {
+        final int DEFAULT_OFFSET = -35;
+        return getOffsetColor(input, DEFAULT_OFFSET);
+    }
+
+    /**
+     * Returns a slightly darker shade of whatever color you supply.
+     * I'm trying to make toggle buttons look like toggle buttons, but this
+     * is a bit wonky. Yeah, I know JToggleButton is a thing but I don't
+     * want to have borders on these toolbar buttons.
+     * <p>
+     * Update: there's a wonky case where you might have created
+     * a theme with a black background, and of course we can't
+     * make a darker shade of black. So, if your supplied color
+     * is black, or very close to black, this method will instead
+     * return a lighter shade of that color, despite the method name.
+     * The joys of supporting a highly customizable environment!
+     * </p>
+     *
+     * @param input Any color.
+     * @return A slightly darker shade of that color.
+     */
+    public static Color getOffsetColor(Color input, int offset) {
+        int delta = offset;
+
+        // wonky special case if darkening: don't try to darken an already dark color:
+        if (delta < 0) {
+            final int limit = Math.abs(delta);
+            if (input.getRed() < limit && input.getGreen() < limit && input.getBlue() < limit) {
+                delta = limit;
+            }
+        }
+
+        // wonky special case if lightening: don't try to lighten an already light color:
+        else {
+            final int limit = 255 - offset;
+            if (input.getRed() > limit && input.getGreen() > limit && input.getBlue() > limit) {
+                delta = -delta;
+            }
+        }
+
+        // darken it:
+        Color output;
+        if (delta < 0) {
+            int red = Math.max(input.getRed() + delta, 0);
+            int green = Math.max(input.getGreen() + delta, 0);
+            int blue = Math.max(input.getBlue() + delta, 0);
+            output = new Color(red, green, blue);
+        }
+
+        // or lighten it:
+        else {
+            int red = Math.min(input.getRed() + delta, 255);
+            int green = Math.min(input.getGreen() + delta, 255);
+            int blue = Math.min(input.getBlue() + delta, 255);
+            output = new Color(red, green, blue);
+        }
+
+        return output;
+    }
+
     /**
      * Extensions can extend this class and return an instance of it to supply
      * a new custom theme that the user can select in AppConfig.

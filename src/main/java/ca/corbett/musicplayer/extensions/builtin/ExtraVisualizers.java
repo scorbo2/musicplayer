@@ -6,15 +6,14 @@ import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.IntegerProperty;
+import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
-import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 import ca.corbett.musicplayer.ui.VisualizationTrackInfo;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -131,13 +130,10 @@ public class ExtraVisualizers extends MusicPlayerExtension {
 
         public List<AbstractProperty> getProperties() {
             List<AbstractProperty> props = new ArrayList<>();
-            MusicPlayerExtensionManager.StaticLabelProperty label = new MusicPlayerExtensionManager.StaticLabelProperty(
-                    NAME + ".General.label",
+            props.add(LabelProperty.createLabel(NAME + ".General.label",
                     "<html>The " + NAME + " visualizer shows a gently rolling wave of<br>" +
                             "color gradients, moving either horizontally or vertically.</html>"
-            );
-            label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
-            props.add(label);
+            ));
             props.add(new ColorProperty(startColorPropName, "Start color:", ColorProperty.ColorType.SOLID, Color.BLACK));
             props.add(new ColorProperty(endColorPropName, "End color:", ColorProperty.ColorType.SOLID, Color.BLUE));
             props.add(new EnumProperty<>(directionPropName, "Direction:", RollingWaveVisualizer.DIRECTION.HORIZONTAL));
@@ -381,17 +377,13 @@ public class ExtraVisualizers extends MusicPlayerExtension {
 
         public List<AbstractProperty> getProperties() {
             List<AbstractProperty> props = new ArrayList<>();
-            MusicPlayerExtensionManager.StaticLabelProperty label = new MusicPlayerExtensionManager.StaticLabelProperty(
-                    NAME + ".General.label",
+            props.add(LabelProperty.createLabel(NAME + ".General.label",
                     "<html>The " + NAME + " visualizer looks for a an image file<br>" +
                             "for the current track or the current album. If it finds<br>" +
                             "one, the image is displayed for visualization.<br><br>" +
                             "Try putting an album.png or album.jpg in your music folder!<br>" +
                             "Or, an image file with the same name as an audio track.<br>" +
-                            "  Example: some_track.mp3 and some_track.png</html>"
-            );
-            label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
-            props.add(label);
+                            "  Example: some_track.mp3 and some_track.png</html>"));
             props.add(new EnumProperty<OversizeHandling>(OVERSIZE_PROP, "Oversized images:", OversizeHandling.SCALE_TO_FIT));
             props.add(new EnumProperty<ScrollSpeed>(SPEED_PROP, "Scroll speed:", ScrollSpeed.SLOW));
             return props;

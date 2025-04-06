@@ -27,7 +27,6 @@ import ca.corbett.musicplayer.ui.VisualizationThread;
 import ca.corbett.musicplayer.ui.VisualizationWindow;
 
 import javax.swing.AbstractAction;
-import javax.swing.JTabbedPane;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -442,48 +441,21 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     /**
-     * HACK HACK HACK Kludge alert! In order to add custom logic to the generated
-     * properties dialog, we have to override this and add a bunch of hacky code.
-     * I've created a ticket to deal with this in the upstream swing-extras
-     * and app-extensions libraries, but until I get to those tickets, this
-     * code exists here in the downstream application.
+     * Overridden here so we can add custom logic to our properties form before
+     * it gets rendered. Setting certain action listeners and the initial state
+     * of controls needs to be done before the form is rendered. Fortunately,
+     * the PropertiesManager class provides a way for us to do that somewhat easily.
      *
      * @param owner The owning Frame (so we can make the dialog modal to that Frame).
      * @return true if the user OK'd the dialog with changes.
      */
     @Override
     public boolean showPropertiesDialog(Frame owner) {
-        List<String> categories = propsManager.getCategories();
-        if (categories.isEmpty()) {
-            return false; // won't happen in our case but whatever
-        }
-        List<FormPanel> formPanels = new ArrayList<>();
-        for (String category : categories) {
-            formPanels.add(propsManager.generateUnrenderedFormPanel(category, true, 24));
-        }
+        List<FormPanel> formPanels = propsManager.generateUnrenderedFormPanels(FormPanel.Alignment.TOP_LEFT, 24);
         addCustomFormBehaviour(formPanels);
-
-        // If there's only one category, just wrap it in a single form panel:
-        PropertiesDialog dialog;
-        if (formPanels.size() == 1) {
-            formPanels.get(0).render();
-            dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", formPanels.get(0));
-        }
-
-        // If there's more than one category, wrap it all in a tab pane:
-        else {
-            JTabbedPane tabPane = new JTabbedPane();
-            int index = 0;
-            for (String category : categories) {
-                FormPanel formPanel = formPanels.get(index++);
-                formPanel.render();
-                tabPane.addTab(category, formPanel);
-            }
-            dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", tabPane);
-            dialog.setSize(660, 480);
-            dialog.setMinimumSize(new Dimension(660, 480));
-        }
-
+        PropertiesDialog dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", formPanels);
+        dialog.setSize(660, 480);
+        dialog.setMinimumSize(new Dimension(660, 480));
         dialog.setVisible(true);
         if (dialog.wasOkayed()) {
             save();

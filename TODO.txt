@@ -1,0 +1,23 @@
+next() in full screen mode in single monitor setup kills visualizer because of focus lost.
+log console window icon is the java default
+add config options for pre-convert directory?
+  - how would that work? 
+  - if all files in the playlist are in the same dir, spin up a background thread to pre-convert all of them?
+  - store them in temp in some kind of pre-cache dir?
+  - eh, would that even help with load times? yeah, but at the expense of disk space
+  - and what do you do if the playlist has files from all over
+  - I guess your precache dir could have the same structure
+    /tmp/MusicPlayerCache/some/dir/file1.wav
+    /tmp/MusicPlayerCache/some/other/dir/file2.wav
+  - the cache directory could be configurable, max cache size, so on
+  - seems like a lot of work to get around the fact that our audio load sucks balls
+Robot should maybe be a config option as it does literally move the mouse to 1,1 every minute
+  - can we get the current mouse position and just wiggle it in place?
+Would be nice if the playlist would scroll to keep the selected file in view... seems like it just doesn't right now
+The weird blank screen on visualizer startup still randomly happens
+  - maybe a threading issue
+  - maybe suspend drawing on the window for a split second after it comes up? I dunno, just a thought
+100% cpu usage seen coming out of visualization
+  - like, AFTER visualization. 
+  - is something still running? some wonky thread run amok?
+

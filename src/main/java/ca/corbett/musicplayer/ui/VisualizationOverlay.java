@@ -181,13 +181,24 @@ public final class VisualizationOverlay implements UIReloadable {
 
         // Draw track time progress bar:
         if (trackInfo != null) {
-            graphics.setColor(highlightBgColor);
+
+            // Kludge alert: some themes (cough cough matrix) happen to have the
+            // same value for highlightFgColor as they do for bgColor, which means
+            // we're going to draw a black box on a black background (for example).
+            // So, if that's the case, let's subtly change the requested color
+            // so that we can actually see it:
+            Color outlineColor = highlightFgColor;
+            if (highlightFgColor.equals(bgColor)) {
+                outlineColor = AppTheme.getOffsetColor(outlineColor, 70);
+            }
+
+            graphics.setColor(outlineColor);
             int barBottom = trackTimeBaselineY + 2;
             int barHeight = (int) (trackTimeHeight * 0.7f); // slight vertical margin
             int barTop = barBottom - barHeight;
             int barWidth = progressBarRight - progressBarLeft;
             graphics.fillRect(progressBarLeft, barTop, barWidth, barHeight);
-            graphics.setColor(highlightFgColor);
+            graphics.setColor(highlightBgColor);
             int elapsed = 0;
             if (trackInfo.getTotalTimeSeconds() != 0) {
                 elapsed = (int) ((trackInfo.getCurrentTimeSeconds() / (double) trackInfo.getTotalTimeSeconds()) * barWidth);
