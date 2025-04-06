@@ -302,6 +302,7 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public void loadSelected() {
         File selected = fileList.getSelectedValue();
+        fileList.ensureIndexIsVisible(fileList.getSelectedIndex());
         if (fileListModel.isEmpty() || selected == null) {
             return;
         }
