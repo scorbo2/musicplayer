@@ -72,6 +72,11 @@ public final class KeyboardManager {
                             new FullScreenAction().actionPerformed(null);
                             break;
 
+                        // ESC stops visualizer if it was running
+                        case KeyEvent.VK_ESCAPE:
+                            VisualizationWindow.getInstance().stopFullScreen();
+                            break;
+
                         // Ctrl+P for Preferences
                         case KeyEvent.VK_P:
                             if ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0) {

@@ -160,12 +160,12 @@ public class VisualizationWindow implements UIReloadable {
      * as we can re-use it later if fullscreen mode is re-initiated.
      */
     public void stopFullScreen() {
-        if (inactivityListener != null) {
-            inactivityListener.stop();
-            inactivityListener = null;
-        }
-
         if (thread.isRunning()) {
+            if (inactivityListener != null) {
+                inactivityListener.stop();
+                inactivityListener = null;
+            }
+
             logger.info("Stopping visualization thread.");
             thread.stop();
             if (isFullscreenSupported) {
@@ -290,7 +290,7 @@ public class VisualizationWindow implements UIReloadable {
                 // and so we'll just kill it.
                 // If there's more than one monitor, ignore this event as it's possible
                 // to leave the visualizer up on monitor 2 while doing stuff on monitor 1.
-                if (isFullscreenSupported && deviceCount == 1) {
+                if (isFullscreenSupported && deviceCount == 1 && AppConfig.getInstance().isStopVisualizerOnFocusLost()) {
                     stopFullScreen();
                 }
             }

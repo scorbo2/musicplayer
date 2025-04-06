@@ -1,4 +1,3 @@
-next() in full screen mode in single monitor setup kills visualizer because of focus lost.
 log console window icon is the java default
 add config options for pre-convert directory?
   - how would that work? 
@@ -20,4 +19,3 @@ The weird blank screen on visualizer startup still randomly happens
 100% cpu usage seen coming out of visualization
   - like, AFTER visualization. 
   - is something still running? some wonky thread run amok?
-

@@ -49,7 +49,7 @@ public final class VisualizationOverlay implements UIReloadable {
 
     private int width;   // Pixel width of the generated image, including all margins + border
     private int height;  // Pixel height of the generated image, including all margins + border
-    private int borderWidth = 2; // make this configurable or nah?
+    private int borderThickness; // Width of the overlay border in pixels
 
     private boolean isEnabled;
     private int labelX;  // The starting x co-ordinate for the label text
@@ -64,6 +64,7 @@ public final class VisualizationOverlay implements UIReloadable {
     // These will be grabbed from AppConfig as needed:
     private String fontFamily;
     private int fontSize;
+    private int columnWidth;
     private Color bgColor;
     private Color fgColor;
     private Color highlightBgColor;
@@ -94,16 +95,33 @@ public final class VisualizationOverlay implements UIReloadable {
 
     @Override
     public void reloadUI() {
-        AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
+        // Get basic properties for the overlay:
         isEnabled = AppConfig.getInstance().isVisualizerOverlayEnabled();
-        bgColor = theme.getNormalBgColor();
-        fgColor = theme.getNormalFgColor();
-        headerColor = theme.getHeaderFgColor();
+        borderThickness = AppConfig.getInstance().getVisualizerOverlayBorderWidth();
         fontFamily = AppConfig.getInstance().getVisualizerOverlayFont().familyName;
         fontSize = AppConfig.getInstance().getVisualizerOverlayFontSize();
-        highlightBgColor = theme.getSelectedBgColor();
-        highlightFgColor = theme.getSelectedFgColor();
         opacity = AppConfig.getInstance().getVisualizationOverlayOpacity();
+        columnWidth = AppConfig.getInstance().getVisualizationOverlaySize().columns;
+
+        // Cosmetic properties can be derived from the current app theme:
+        if (!AppConfig.getInstance().isVisualizerOverlayOverrideTheme()) {
+            AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
+            bgColor = theme.getNormalBgColor();
+            fgColor = theme.getNormalFgColor();
+            headerColor = theme.getHeaderFgColor();
+            highlightBgColor = theme.getSelectedBgColor();
+            highlightFgColor = theme.getSelectedFgColor();
+        }
+
+        // Unless the user has chosen to override the app theme:
+        else {
+            bgColor = AppConfig.getInstance().getVisualizerOverlayBackground();
+            fgColor = AppConfig.getInstance().getVisualizerOverlayForeground();
+            headerColor = AppConfig.getInstance().getVisualizerOverlayHeader();
+            highlightBgColor = AppConfig.getInstance().getVisualizerOverlayProgressBackground();
+            highlightFgColor = AppConfig.getInstance().getVisualizerOverlayProgressForeground();
+        }
+
         recomputeSize();
     }
 
@@ -139,12 +157,12 @@ public final class VisualizationOverlay implements UIReloadable {
         // It's faster to just do a flood fill with the border colour
         // and then a subfill with the background colour if we're required
         // to draw a border:
-        if (borderWidth > 0) {
+        if (borderThickness > 0) {
             graphics.setColor(fgColor);
             graphics.fillRect(0, 0, width, height);
 
             graphics.setColor(bgColor);
-            graphics.fillRect(borderWidth, borderWidth, width - (borderWidth * 2), height - (borderWidth * 2));
+            graphics.fillRect(borderThickness, borderThickness, width - (borderThickness * 2), height - (borderThickness * 2));
         }
 
         // If there's no border, just do a flood fill with the background colour.
@@ -192,13 +210,13 @@ public final class VisualizationOverlay implements UIReloadable {
                 outlineColor = AppTheme.getOffsetColor(outlineColor, 70);
             }
 
-            graphics.setColor(outlineColor);
+            graphics.setColor(highlightBgColor);
             int barBottom = trackTimeBaselineY + 2;
             int barHeight = (int) (trackTimeHeight * 0.7f); // slight vertical margin
             int barTop = barBottom - barHeight;
             int barWidth = progressBarRight - progressBarLeft;
             graphics.fillRect(progressBarLeft, barTop, barWidth, barHeight);
-            graphics.setColor(highlightBgColor);
+            graphics.setColor(outlineColor);
             int elapsed = 0;
             if (trackInfo.getTotalTimeSeconds() != 0) {
                 elapsed = (int) ((trackInfo.getCurrentTimeSeconds() / (double) trackInfo.getTotalTimeSeconds()) * barWidth);
@@ -285,7 +303,7 @@ public final class VisualizationOverlay implements UIReloadable {
         // fonts are proportional, so there isn't a fixed column width to use. We'll go
         // with capital A as our baseline column width.
         String sampleValue = "";
-        for (int i = 0; i < AppConfig.getInstance().getVisualizationOverlaySize().columns; i++) {
+        for (int i = 0; i < columnWidth; i++) {
             sampleValue += "A";
         }
         graphics.setFont(new Font(fontFamily, Font.PLAIN, fontSize));
@@ -308,15 +326,15 @@ public final class VisualizationOverlay implements UIReloadable {
 
         // We can now compute an overall width and height, based on these computed values
         // and adding a small margin where needed.
-        width = valueX + valueWidth + (int) (valueWidth * 0.1) + (borderWidth * 2);
+        width = valueX + valueWidth + (int) (valueWidth * 0.1) + (borderThickness * 2);
         height = titleHeight + (int) (titleHeight * 0.2);
         height += artistHeight + (int) (artistHeight * 0.2);
         height += albumHeight + (int) (albumHeight * 0.2);
         height += trackTimeHeight + (int) (trackTimeHeight * 0.4);
-        height += borderWidth * 2;
+        height += borderThickness * 2;
 
         // Figure out the baseline Y values where each label can be drawn:
-        titleBaselineY = titleHeight + (int) (titleHeight * 0.1) + borderWidth;
+        titleBaselineY = titleHeight + (int) (titleHeight * 0.1) + borderThickness;
         artistBaselineY = titleBaselineY + (int) (titleHeight * 0.1)
                 + artistHeight + (int) (artistHeight * 0.1);
         albumBaselineY = artistBaselineY + (int) (artistHeight * 0.1)

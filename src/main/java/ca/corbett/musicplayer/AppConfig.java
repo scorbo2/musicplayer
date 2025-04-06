@@ -13,6 +13,7 @@ import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.PropertiesDialog;
 import ca.corbett.extras.properties.PropertiesManager;
 import ca.corbett.forms.FormPanel;
+import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
 import ca.corbett.forms.fields.FormField;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
@@ -78,6 +79,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
     private ComboProperty visualizerType;
+    private BooleanProperty stopVisualizerOnFocusLost;
     private BooleanProperty allowVisualizerOverride;
     private EnumProperty<VisualizationWindow.DISPLAY> visualizerDisplay;
     private EnumProperty<VisualizationThread.AnimationSpeed> visualizerSpeed;
@@ -86,6 +88,13 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty visualizerOverlayFontSize;
     private EnumProperty<VisualizationOverlay.OverlaySize> visualizerOverlaySize;
     private DecimalProperty visualizerOverlayOpacity;
+    private IntegerProperty visualizerOverlayBorderWidth;
+    private BooleanProperty visualizerOverlayOverrideTheme;
+    private ColorProperty visualizerOverlayBackground;
+    private ColorProperty visualizerOverlayForeground;
+    private ColorProperty visualizerOverlayHeader;
+    private ColorProperty visualizerOverlayProgressBackground;
+    private ColorProperty visualizerOverlayProgressForeground;
 
     public enum ButtonSize {
         XSMALL(16, "Extra small"),
@@ -350,6 +359,38 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return allowVisualizerOverride.getValue();
     }
 
+    public boolean isVisualizerOverlayOverrideTheme() {
+        return visualizerOverlayOverrideTheme.getValue();
+    }
+
+    public int getVisualizerOverlayBorderWidth() {
+        return visualizerOverlayBorderWidth.getValue();
+    }
+
+    public Color getVisualizerOverlayBackground() {
+        return visualizerOverlayBackground.getColor();
+    }
+
+    public Color getVisualizerOverlayForeground() {
+        return visualizerOverlayForeground.getColor();
+    }
+
+    public Color getVisualizerOverlayHeader() {
+        return visualizerOverlayHeader.getColor();
+    }
+
+    public Color getVisualizerOverlayProgressBackground() {
+        return visualizerOverlayProgressBackground.getColor();
+    }
+
+    public Color getVisualizerOverlayProgressForeground() {
+        return visualizerOverlayProgressForeground.getColor();
+    }
+
+    public boolean isStopVisualizerOnFocusLost() {
+        return stopVisualizerOnFocusLost.getValue();
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         buttonSize = new EnumProperty<ButtonSize>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
@@ -405,7 +446,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
         selectedIndex = (options.size() == 1) ? 0 : 1; // pick the first non-standard one if there is one
         visualizerType = new ComboProperty("Visualization.General.visualizer", "Visualizer:", options, selectedIndex, false);
-        allowVisualizerOverride = new BooleanProperty("Visualization.General.allowOverride", "Allow override of selected visualizer based on file triggers.", true);
+        stopVisualizerOnFocusLost = new BooleanProperty("Visualization.General.stopOnFocusLost", "In single-monitor mode, stop visualizer on window focus lost", true);
+        allowVisualizerOverride = new BooleanProperty("Visualization.General.allowOverride", "Allow override of selected visualizer based on file triggers", true);
         visualizerDisplay = new EnumProperty<>("Visualization.General.preferredDisplay", "Preferred display:", VisualizationWindow.DISPLAY.PRIMARY);
         visualizerSpeed = new EnumProperty<>("Visualization.General.animationSpeed", "Animation speed:", VisualizationThread.AnimationSpeed.HIGH);
         visualizerOverlayEnabled = new BooleanProperty("Visualization.Overlay.enabled", "Enable visualizer overlay for current track info", true);
@@ -413,6 +455,13 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         visualizerOverlayFontSize = new IntegerProperty("Visualization.Overlay.fontSize", "Font point size:", 12, 8, 99, 2);
         visualizerOverlaySize = new EnumProperty<>("Visualization.Overlay.size", "Overlay size:", VisualizationOverlay.OverlaySize.SMALL);
         visualizerOverlayOpacity = new DecimalProperty("Visualization.Overlay.opacity", "Overlay opacity:", 1.0, 0.0, 1.0, 0.1);
+        visualizerOverlayBorderWidth = new IntegerProperty("Visualization.Overlay.borderWidth", "Border width:", 2, 0, 10, 1);
+        visualizerOverlayOverrideTheme = new BooleanProperty("Visualization.Overlay.overrideTheme", "Override app theme and use the following colors:", false);
+        visualizerOverlayBackground = new ColorProperty("Visualization.Overlay.normalBg", "Text background:", ColorProperty.ColorType.SOLID, Color.BLACK);
+        visualizerOverlayForeground = new ColorProperty("Visualization.Overlay.normalFg", "Text foreground:", ColorProperty.ColorType.SOLID, Color.LIGHT_GRAY);
+        visualizerOverlayHeader = new ColorProperty("Visualization.Overlay.header", "Header text:", ColorProperty.ColorType.SOLID, Color.WHITE);
+        visualizerOverlayProgressBackground = new ColorProperty("Visualization.Overlay.progressBg", "Progress background:", ColorProperty.ColorType.SOLID, Color.DARK_GRAY);
+        visualizerOverlayProgressForeground = new ColorProperty("Visualization.Overlay.progressFg", "Progress foreground:", ColorProperty.ColorType.SOLID, Color.BLUE);
 
         return List.of(buttonSize,
                 controlAlignment,
@@ -430,6 +479,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 windowHeight,
                 lastBrowseDir,
                 visualizerType,
+                stopVisualizerOnFocusLost,
                 allowVisualizerOverride,
                 visualizerDisplay,
                 visualizerSpeed,
@@ -437,7 +487,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 visualizerOverlayFont,
                 visualizerOverlayFontSize,
                 visualizerOverlaySize,
-                visualizerOverlayOpacity);
+                visualizerOverlayOpacity,
+                visualizerOverlayBorderWidth,
+                visualizerOverlayOverrideTheme,
+                visualizerOverlayBackground,
+                visualizerOverlayForeground,
+                visualizerOverlayHeader,
+                visualizerOverlayProgressBackground,
+                visualizerOverlayProgressForeground);
     }
 
     /**
@@ -452,7 +509,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     @Override
     public boolean showPropertiesDialog(Frame owner) {
         List<FormPanel> formPanels = propsManager.generateUnrenderedFormPanels(FormPanel.Alignment.TOP_LEFT, 24);
-        addCustomFormBehaviour(formPanels);
+
+        // Our custom form logic goes here:
+        addWaveformOverrideFormBehaviour(formPanels);
+        addOverlayOverrideFormBehaviour(formPanels);
+
         PropertiesDialog dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", formPanels);
         dialog.setSize(660, 480);
         dialog.setMinimumSize(new Dimension(660, 480));
@@ -464,46 +525,79 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return dialog.wasOkayed();
     }
 
-    private void addCustomFormBehaviour(List<FormPanel> formPanels) {
-        final ComboField combo = (ComboField) findFormField(formPanels, "Waveform.Waveform graphics.override");
-        final FormField bgColorField = findFormField(formPanels, "Waveform.Waveform graphics.bgColor");
-        final FormField fillColorField = findFormField(formPanels, "Waveform.Waveform graphics.fillColor");
-        final FormField outlineColorField = findFormField(formPanels, "Waveform.Waveform graphics.outlineColor");
-        final FormField outlineWidthField = findFormField(formPanels, "Waveform.Waveform graphics.outlineWidth");
-        if (combo != null && bgColorField != null && fillColorField != null && outlineColorField != null && outlineWidthField != null) {
-
-            // Set initial state for these fields:
-            bgColorField.setEnabled(combo.getSelectedIndex() == 1);
-            fillColorField.setEnabled(combo.getSelectedIndex() == 1);
-            outlineColorField.setEnabled(combo.getSelectedIndex() == 1);
-            outlineWidthField.setEnabled(combo.getSelectedIndex() == 1);
-
-            // Now allow it to change based on the override combo box value:
-            combo.addValueChangedAction(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    boolean shouldEnable = combo.getSelectedIndex() == 1;
-                    bgColorField.setEnabled(shouldEnable);
-                    fillColorField.setEnabled(shouldEnable);
-                    outlineColorField.setEnabled(shouldEnable);
-                    outlineWidthField.setEnabled(shouldEnable);
-                }
-            });
-        } else {
-            logger.warning("addCustomFormBehaviour: unable to locate required form fields.");
+    /**
+     * Adds custom logic to enable/disable the waveform cosmetic properties depending on the value
+     * of the override combo box, and sets the initial state of all relevant components.
+     * This can only be done before the form panel is rendered.
+     *
+     * @param formPanels A list of unrendered FormPanels.
+     */
+    private void addWaveformOverrideFormBehaviour(List<FormPanel> formPanels) {
+        final ComboField combo = (ComboField) PropertiesManager.findFormField("Waveform.Waveform graphics.override", formPanels);
+        final FormField bgColorField = PropertiesManager.findFormField("Waveform.Waveform graphics.bgColor", formPanels);
+        final FormField fillColorField = PropertiesManager.findFormField("Waveform.Waveform graphics.fillColor", formPanels);
+        final FormField outlineColorField = PropertiesManager.findFormField("Waveform.Waveform graphics.outlineColor", formPanels);
+        final FormField outlineWidthField = PropertiesManager.findFormField("Waveform.Waveform graphics.outlineWidth", formPanels);
+        if (combo == null || bgColorField == null || fillColorField == null || outlineColorField == null || outlineWidthField == null) {
+            logger.warning("addWaveformOverrideFormBehaviour: unable to locate required form fields.");
+            return;
         }
+
+        // Set initial state for these fields:
+        bgColorField.setEnabled(combo.getSelectedIndex() == 1);
+        fillColorField.setEnabled(combo.getSelectedIndex() == 1);
+        outlineColorField.setEnabled(combo.getSelectedIndex() == 1);
+        outlineWidthField.setEnabled(combo.getSelectedIndex() == 1);
+
+        // Now allow it to change based on the override combo box value:
+        combo.addValueChangedAction(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean shouldEnable = combo.getSelectedIndex() == 1;
+                bgColorField.setEnabled(shouldEnable);
+                fillColorField.setEnabled(shouldEnable);
+                outlineColorField.setEnabled(shouldEnable);
+                outlineWidthField.setEnabled(shouldEnable);
+            }
+        });
     }
 
-    private FormField findFormField(List<FormPanel> formPanels, String fieldIdentifier) {
-        for (FormPanel formPanel : formPanels) {
-            List<FormField> fields = formPanel.getFormFields();
-            for (FormField field : fields) {
-                String id = field.getIdentifier();
-                if (id != null && id.equals(fieldIdentifier)) {
-                    return field;
-                }
-            }
+    /**
+     * Adds custom logic to enable/disable the waveform cosmetic properties depending on the value
+     * of the override combo box, and sets the initial state of all relevant components.
+     * This can only be done before the form panel is rendered.
+     *
+     * @param formPanels A list of unrendered FormPanels.
+     */
+    private void addOverlayOverrideFormBehaviour(List<FormPanel> formPanels) {
+        CheckBoxField allowOverride = (CheckBoxField) PropertiesManager.findFormField("Visualization.Overlay.overrideTheme", formPanels);
+        FormField overlayBg = PropertiesManager.findFormField("Visualization.Overlay.normalBg", formPanels);
+        FormField overlayFg = PropertiesManager.findFormField("Visualization.Overlay.normalFg", formPanels);
+        FormField headerFg = PropertiesManager.findFormField("Visualization.Overlay.header", formPanels);
+        FormField progressBg = PropertiesManager.findFormField("Visualization.Overlay.progressBg", formPanels);
+        FormField progressFg = PropertiesManager.findFormField("Visualization.Overlay.progressFg", formPanels);
+        if (allowOverride == null || overlayBg == null || overlayFg == null || headerFg == null || progressFg == null || progressBg == null) {
+            logger.warning("addOverlayOverrideFormBehaviour: unable to locate required form fields.");
+            return;
         }
-        return null;
+
+        // set initial state for these fields:
+        overlayBg.setEnabled(allowOverride.isChecked());
+        overlayFg.setEnabled(allowOverride.isChecked());
+        headerFg.setEnabled(allowOverride.isChecked());
+        progressBg.setEnabled(allowOverride.isChecked());
+        progressFg.setEnabled(allowOverride.isChecked());
+
+        // now allow it to change based on the override checkbox:
+        allowOverride.addValueChangedAction(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                overlayBg.setEnabled(allowOverride.isChecked());
+                overlayFg.setEnabled(allowOverride.isChecked());
+                headerFg.setEnabled(allowOverride.isChecked());
+                progressBg.setEnabled(allowOverride.isChecked());
+                progressFg.setEnabled(allowOverride.isChecked());
+            }
+        });
     }
 }
