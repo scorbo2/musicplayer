@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.image.ImageUtil;
+import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
@@ -77,6 +78,7 @@ public class MainWindow extends JFrame {
             loadWindowState();
             AudioPanelIdleAnimation.getInstance().go();
             VisualizationWindow.getInstance(); // forces initialization of fullscreen stuff so it's ready to go later.
+            LogConsole.getInstance().setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
         }
     }
 
