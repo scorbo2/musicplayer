@@ -1,6 +1,0 @@
-The weird blank screen on visualizer startup still randomly happens
-  - maybe a threading issue
-  - maybe suspend drawing on the window for a split second after it comes up? I dunno, just a thought
-100% cpu usage seen coming out of visualization
-  - like, AFTER visualization. 
-  - is something still running? some wonky thread run amok?
