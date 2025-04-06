@@ -230,24 +230,26 @@ public class VisualizationWindow implements UIReloadable {
 
             window.setUndecorated(true); // otherwise you get an ugly title bar/window controls
             window.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-            try {
-                Robot robot = new Robot();
-                if (inactivityListener != null) {
-                    inactivityListener.stop();
+            if (inactivityListener != null) {
+                inactivityListener.stop();
+            }
+            if (AppConfig.getInstance().isVisualizerScreensaverPreventionEnabled()) {
+                try {
+                    Robot robot = new Robot();
+                    inactivityListener = new InactivityListener(window, new AbstractAction() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            // jiggle mouse, mash keyboard, whatever, just stop the screensaver from clicking on:
+                            robot.keyPress(KeyEvent.VK_SHIFT);
+                            robot.keyRelease(KeyEvent.VK_SHIFT);
+                            robot.mouseMove(1, 1);
+                        }
+                    });
+                    inactivityListener.setRepeats(true);
+                    inactivityListener.start();
+                } catch (AWTException ignored) {
+                    logger.warning("Visualizer: Robot is unsupported. Can't disable screensaver during visualization :(");
                 }
-                inactivityListener = new InactivityListener(window, new AbstractAction() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        // jiggle mouse, mash keyboard, whatever, just stop the screensaver from clicking on:
-                        robot.keyPress(KeyEvent.VK_SHIFT);
-                        robot.keyRelease(KeyEvent.VK_SHIFT);
-                        robot.mouseMove(1, 1);
-                    }
-                });
-                inactivityListener.setRepeats(true);
-                inactivityListener.start();
-            } catch (AWTException ignored) {
-                logger.warning("Visualizer: Robot is unsupported. Can't disable screensaver during visualization :(");
             }
 
         } else {

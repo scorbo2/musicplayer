@@ -79,6 +79,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
     private ComboProperty visualizerType;
+    private BooleanProperty visualizerScreensaverPrevention;
     private BooleanProperty stopVisualizerOnFocusLost;
     private BooleanProperty allowVisualizerOverride;
     private EnumProperty<VisualizationWindow.DISPLAY> visualizerDisplay;
@@ -391,6 +392,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return stopVisualizerOnFocusLost.getValue();
     }
 
+    public boolean isVisualizerScreensaverPreventionEnabled() {
+        return visualizerScreensaverPrevention.getValue();
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         buttonSize = new EnumProperty<ButtonSize>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
@@ -446,6 +451,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
         selectedIndex = (options.size() == 1) ? 0 : 1; // pick the first non-standard one if there is one
         visualizerType = new ComboProperty("Visualization.General.visualizer", "Visualizer:", options, selectedIndex, false);
+        visualizerScreensaverPrevention = new BooleanProperty("Visualization.General.screensaverPrevention", "Prevent screensaver during visualization (requires Robot)", true);
         stopVisualizerOnFocusLost = new BooleanProperty("Visualization.General.stopOnFocusLost", "In single-monitor mode, stop visualizer on window focus lost", true);
         allowVisualizerOverride = new BooleanProperty("Visualization.General.allowOverride", "Allow override of selected visualizer based on file triggers", true);
         visualizerDisplay = new EnumProperty<>("Visualization.General.preferredDisplay", "Preferred display:", VisualizationWindow.DISPLAY.PRIMARY);
@@ -479,6 +485,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 windowHeight,
                 lastBrowseDir,
                 visualizerType,
+                visualizerScreensaverPrevention,
                 stopVisualizerOnFocusLost,
                 allowVisualizerOverride,
                 visualizerDisplay,
