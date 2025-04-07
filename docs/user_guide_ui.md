@@ -11,7 +11,7 @@ color scheme:
 But almost everything you see can be changed! Let's take a quick look at the Preferences dialog,
 either by hitting ctrl+p on the keyboard, or clicking the gear icon on the player toolbar.
 
-![Config - UI](screenshots/config_ui.jpg "Config - UI)
+![Config - UI](screenshots/config_ui.jpg "Config - UI")
 
 Here we have some options for picking the size of our toolbar buttons, their alignment
 within their respective panels, and also the "idle animation" - this is a little animation

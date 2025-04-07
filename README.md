@@ -44,9 +44,9 @@ java -jar musicplayer-2.0.jar
 
 ## Developer guide
 
-- General application design
-- Making use of `swing-extras` for application configuration
-- Making use of `app-extensions` to customize the app
+- [General application design](docs/developer_overview.md)
+- [Making use of `swing-extras` for application configuration](docs/developer_properties.md)
+- [Making use of `app-extensions` to customize the app](docs/developer_extensions.md)
 - Exercise1: let's write a custom extension!
 - Exercise2: let's write a custom visualizer!
 
