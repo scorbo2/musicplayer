@@ -1,7 +1,5 @@
 package ca.corbett.musicplayer.ui;
 
-import ca.corbett.extras.audio.AudioWaveformPanel;
-
 public interface AudioPanelListener {
     /**
      * Indicates a state change within the panel.
@@ -16,11 +14,11 @@ public interface AudioPanelListener {
     public void stateChanged(AudioPanel sourcePanel, AudioPanel.PanelState state);
 
     /**
-     * Indicates that an audio clip has been loaded into the panel. This event is also triggered
-     * after recording a clip, as the newly recorded clip is loaded into the panel.
+     * Indicates that an audio clip has been loaded into the panel.
      *
      * @param sourcePanel The AudioPanel that triggered this event.
+     * @param trackInfo Contains information about the track that was loaded.
      */
-    public void audioLoaded(AudioPanel sourcePanel);
+    public void audioLoaded(AudioPanel sourcePanel, VisualizationTrackInfo trackInfo);
 
 }

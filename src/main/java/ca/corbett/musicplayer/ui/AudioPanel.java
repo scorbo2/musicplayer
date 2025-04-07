@@ -211,7 +211,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         trackInfo.setAlbum(data.getMetadata().album);
         trackInfo.setCurrentTimeSeconds(0);
         trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
-        fireAudioLoadedEvent();
+        fireAudioLoadedEvent(trackInfo);
     }
 
     /**
@@ -474,10 +474,12 @@ public class AudioPanel extends JPanel implements UIReloadable {
 
     /**
      * Notifies all listeners that an audio clip has been loaded into this panel.
+     *
+     * @param trackInfo Information about the track that was loaded
      */
-    private void fireAudioLoadedEvent() {
+    private void fireAudioLoadedEvent(VisualizationTrackInfo trackInfo) {
         for (AudioPanelListener listener : panelListeners) {
-            listener.audioLoaded(null);
+            listener.audioLoaded(this, trackInfo);
         }
     }
 
