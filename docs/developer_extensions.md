@@ -1,6 +1,6 @@
 <-- [Back to musicplayer documentation](../README.md)
 
-# Developer overview: Using `app-extensinos` to extend the application
+# Developer overview: Using `app-extensions` to extend the application
 
 The abstract `ExtensionManager` class in the `app-extensions` library is deceptively powerful.
 This class can scan a given directory for jar files, and then examine those jar files to see
@@ -47,7 +47,7 @@ With `ExtensionManager`, the important question usually isn't "how can I extend 
 point is the fullscreen visualization. I want to be able to write a new Visualizer and have the application
 pick it up dynamically, without changing the code of the application itself. How would we do this?
 
-Let's start by defining and abstract `Visualizer` class that our extensions can extend. (This example is
+Let's start by defining an abstract `Visualizer` class that our extensions can extend. (This example is
 pulled from the actual musicplayer application code, but I'm omitting a bunch of stuff for brevity - I invite
 you to look through the actual code for all the nitty gritty details):
 

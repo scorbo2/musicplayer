@@ -55,7 +55,7 @@ startup, looking for jar files that contain extension classes for our applicatio
 Each extension can supply its own list of configuration properties, which we can
 combine together with our own application's properties to generate one unified
 `PropertiesDialog` that contains everything. The neat part about this is that
-extensions can be enabled and disabled at runtime, and the `PropetiesDialog` 
+extensions can be enabled and disabled at runtime, and the `PropertiesDialog` 
 will automatically reflect those changes, either by hiding configuration 
 properties related to now-disabled extensions, or showing configuration properties
 related to now-enabled extensions. We don't have to write any of the UI code

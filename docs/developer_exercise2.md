@@ -65,7 +65,6 @@ public void renderFrame(Graphics2D g, VisualizationTrackInfo trackInfo) {
     g.setFont(font);
     g.setColor(textColor);
     g.drawString(text, x, y);
-    System.out.println("Drawing "+text+" at "+x+","+y);
     y++;
     if (y > height) {
         y = 0;
@@ -146,7 +145,6 @@ public void renderFrame(Graphics2D g, VisualizationTrackInfo trackInfo) {
     g.setFont(font);
     g.setColor(textColor);
     g.drawString(text, x, y);
-    System.out.println("Drawing "+text+" at "+x+","+y);
     y++;
     if (y > height) {
         y = 0;

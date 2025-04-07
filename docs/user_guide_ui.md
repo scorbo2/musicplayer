@@ -60,7 +60,7 @@ We can see that there are quite a few general options we can set here. Let's loo
 
 - **Prevent screensaver during visualization**: this will use java.awt.Robot (if supported in your JRE) to wiggle the mouse every now and then during visualization to prevent the screensaver from clicking on. Disable it here if you don't want your mouse jiggled.
 - **In single-monitor mode, stop visualizer on window focus lost**: if you're on a machine with only one monitor, it's sometimes nice to have the visualizer automatically stop when you alt+tab to do something else.
-- **Allow override of selected visualizer based on file triggers**: Some visualizers (for example, the Album Art visualizer) can interrupted the current visualizer if certain conditions are met. For example, the Album Art visualizer can commandeer the visualizer window if the application starts playing a track that has a track image or an album image. Deselect this option if you want to force musicplayer to always use the visualizer you've picked on this tab.
+- **Allow override of selected visualizer based on file triggers**: Some visualizers (for example, the Album Art visualizer) can interrupt the current visualizer if certain conditions are met. For example, the Album Art visualizer can commandeer the visualizer window if the application starts playing a track that has a track image or an album image. Deselect this option if you want to force musicplayer to always use the visualizer you've picked on this tab.
 - **Preferred display**: on multi-monitor setups, you can choose which display will be used for full-screen visualization.
 - **Animation speed**: you can speed up the animation thread at the expense of more cpu usage, or tone it down if your visualizer doesn't need crazy high frame rates.
 
@@ -95,7 +95,7 @@ In the Preferences dialog, we can take a look at the Album Art tab to see what o
 
 Basically, this visualizer looks for an `album.png` or `album.jpg` in the same directory as the currently
 playing track. If not found, it will look for an image with the same base filename as the currently playing
-track. For example, if the current track is `track01.mpg`, then the visualizer will look for `track01.jpg`
+track. For example, if the current track is `track01.mp3`, then the visualizer will look for `track01.jpg`
 or `track01.png`. If both a track image and an album image are present, the track image (the more specific
 one) will be used. If both a png and a jpg are present, the png will be used (because it's lossless).
 If neither are found, then the visualizer will simply display a black screen.
