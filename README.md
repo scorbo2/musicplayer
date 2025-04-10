@@ -17,7 +17,7 @@ Agreed. Go download VLC if you want something extremely solid and full-featured.
 ## So why does this project exist?
 
 I wanted to play music on the tv in my living room, but with interesting and customizable full-screen visualization
-so I could just leave it running and have something nice to look at while I do other stuff. With version 2.0, I 
+so I could just leave it running and have something nice to look at while I do other stuff. With version 2.x, I 
 also used musicplayer as a testbed for my own [app-extensions](https://github.com/scorbo2/app-extensions) library 
 so I could test out ways to make an application incredibly customizable via dynamically-loaded extensions. I also 
 wanted to prove out the `AppProperties` class from `app-extensions` to really demonstrate how to develop an extremely 
@@ -33,7 +33,7 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-2.0.jar
+java -jar musicplayer-2.1.jar
 ```
 
 ## User guide
