@@ -9,6 +9,7 @@ import ca.corbett.extras.properties.ComboProperty;
 import ca.corbett.extras.properties.DecimalProperty;
 import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
+import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.PropertiesDialog;
 import ca.corbett.extras.properties.PropertiesManager;
@@ -85,18 +86,24 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private EnumProperty<VisualizationWindow.DISPLAY> visualizerDisplay;
     private EnumProperty<VisualizationThread.AnimationSpeed> visualizerSpeed;
     private BooleanProperty visualizerOverlayEnabled;
-    private EnumProperty<FontFamily> visualizerOverlayFont;
-    private IntegerProperty visualizerOverlayFontSize;
+    private FontProperty visualizerOverlayTrackFont;
+    private FontProperty visualizerOverlayHeaderFont;
     private EnumProperty<VisualizationOverlay.OverlaySize> visualizerOverlaySize;
     private DecimalProperty visualizerOverlayOpacity;
     private IntegerProperty visualizerOverlayBorderWidth;
     private BooleanProperty visualizerOverlayOverrideTheme;
     private ColorProperty visualizerOverlayBackground;
-    private ColorProperty visualizerOverlayForeground;
-    private ColorProperty visualizerOverlayHeader;
+    private ColorProperty visualizerOverlayBorderColor;
+    private ColorProperty visualizerOverlayTrackColor;
+    private ColorProperty visualizerOverlayHeaderColor;
     private ColorProperty visualizerOverlayProgressBackground;
     private ColorProperty visualizerOverlayProgressForeground;
 
+    /**
+     * Used to control the sizes of buttons on the toolbars.
+     * The icons scale up and down as needed based on these
+     * arbitrary pre-selected sizes.
+     */
     public enum ButtonSize {
         XSMALL(16, "Extra small"),
         SMALL(20, "Small"),
@@ -122,6 +129,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
     }
 
+    /**
+     * Controls the positioning of buttons within the toolbars.
+     */
     public enum ControlAlignment {
         LEFT("Left"),
         CENTER("Center"),
@@ -139,6 +149,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
     }
 
+    /**
+     * Controls the scaling of the generated waveform images.
+     * Higher values represent more accurate images, but take
+     * up more memory.
+     */
     public enum WaveformResolution {
         LOW(512, "Low"),
         MEDIUM(1024, "Medium"),
@@ -163,23 +178,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
     }
 
-    public enum FontFamily {
-        SANS_SERIF(Font.SANS_SERIF),
-        SERIF(Font.SERIF),
-        MONOSPACED(Font.MONOSPACED);
-
-        public final String familyName;
-
-        FontFamily(String label) {
-            this.familyName = label;
-        }
-
-        @Override
-        public String toString() {
-            return familyName;
-        }
-    }
-
+    // The location of the properties file can be set with a system property
+    // on startup (refer to the user's guide in the README). If so set, we
+    // need to read it in this static initializer block on startup so we're
+    // ready to go if it's somewhere other than the default location.
     static {
         File f;
         if (System.getProperty("ca.corbett.musicplayer.props.file") != null) {
@@ -194,6 +196,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         super(Version.FULL_NAME, PROPS_FILE, MusicPlayerExtensionManager.getInstance());
     }
 
+    /**
+     * Saves current settings and triggers a UI reload in case something
+     * important has changed.
+     */
     public void saveAndReloadUI() {
         save();
         ReloadUIAction.getInstance().actionPerformed(null);
@@ -202,8 +208,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     /**
      * We need to expose the properties manager so that extensions can get access
      * to the underlying properties instance for manual property lookups.
-     * This is to deal with the bug described here:
-     * https://github.com/scorbo2/app-extensions/issues/5
+     * This is to deal with the bug described <a href="https://github.com/scorbo2/app-extensions/issues/5">here</a>.
      *
      * @return Our PropertiesManager instance
      */
@@ -211,6 +216,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return propsManager;
     }
 
+    /**
+     * Overridden here so that we can force a UI reload after every load().
+     * The rationale is that the properties file may have been hand-edited
+     * on disk, and we need to update to reflect any changes that were made.
+     */
     @Override
     public void load() {
         super.load();
@@ -218,7 +228,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     /**
-     * Basically only invoked once on app startup to kick things off
+     * Basically only invoked once on app startup to kick things off.
      */
     public void loadWithoutUIReload() {
         super.load();
@@ -336,12 +346,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return visualizerSpeed.getSelectedItem();
     }
 
-    public FontFamily getVisualizerOverlayFont() {
-        return visualizerOverlayFont.getSelectedItem();
+    public Font getVisualizerOverlayTrackFont() {
+        return visualizerOverlayTrackFont.getFont();
     }
 
-    public int getVisualizerOverlayFontSize() {
-        return visualizerOverlayFontSize.getValue();
+    public Font getVisualizerOverlayHeaderFont() {
+        return visualizerOverlayHeaderFont.getFont();
     }
 
     public VisualizationOverlay.OverlaySize getVisualizationOverlaySize() {
@@ -372,12 +382,16 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return visualizerOverlayBackground.getColor();
     }
 
-    public Color getVisualizerOverlayForeground() {
-        return visualizerOverlayForeground.getColor();
+    public Color getVisualizerOverlayBorderColor() {
+        return visualizerOverlayBorderColor.getColor();
     }
 
-    public Color getVisualizerOverlayHeader() {
-        return visualizerOverlayHeader.getColor();
+    public Color getVisualizerOverlayTrackColor() {
+        return visualizerOverlayTrackColor.getColor();
+    }
+
+    public Color getVisualizerOverlayHeaderColor() {
+        return visualizerOverlayHeaderColor.getColor();
     }
 
     public Color getVisualizerOverlayProgressBackground() {
@@ -457,15 +471,16 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         visualizerDisplay = new EnumProperty<>("Visualization.General.preferredDisplay", "Preferred display:", VisualizationWindow.DISPLAY.PRIMARY);
         visualizerSpeed = new EnumProperty<>("Visualization.General.animationSpeed", "Animation speed:", VisualizationThread.AnimationSpeed.HIGH);
         visualizerOverlayEnabled = new BooleanProperty("Visualization.Overlay.enabled", "Enable visualizer overlay for current track info", true);
-        visualizerOverlayFont = new EnumProperty<>("Visualization.Overlay.fontFamily", "Overlay font:", FontFamily.SANS_SERIF);
-        visualizerOverlayFontSize = new IntegerProperty("Visualization.Overlay.fontSize", "Font point size:", 12, 8, 99, 2);
+        visualizerOverlayTrackFont = new FontProperty("Visualization.Overlay.trackFont", "Info font:");
+        visualizerOverlayHeaderFont = new FontProperty("Visualization.Overlay.headerFont", "Header font:");
         visualizerOverlaySize = new EnumProperty<>("Visualization.Overlay.size", "Overlay size:", VisualizationOverlay.OverlaySize.SMALL);
         visualizerOverlayOpacity = new DecimalProperty("Visualization.Overlay.opacity", "Overlay opacity:", 1.0, 0.0, 1.0, 0.1);
         visualizerOverlayBorderWidth = new IntegerProperty("Visualization.Overlay.borderWidth", "Border width:", 2, 0, 10, 1);
         visualizerOverlayOverrideTheme = new BooleanProperty("Visualization.Overlay.overrideTheme", "Override app theme and use the following colors:", false);
-        visualizerOverlayBackground = new ColorProperty("Visualization.Overlay.normalBg", "Text background:", ColorProperty.ColorType.SOLID, Color.BLACK);
-        visualizerOverlayForeground = new ColorProperty("Visualization.Overlay.normalFg", "Text foreground:", ColorProperty.ColorType.SOLID, Color.LIGHT_GRAY);
-        visualizerOverlayHeader = new ColorProperty("Visualization.Overlay.header", "Header text:", ColorProperty.ColorType.SOLID, Color.WHITE);
+        visualizerOverlayBackground = new ColorProperty("Visualization.Overlay.bgColor", "Overlay background:", ColorProperty.ColorType.SOLID, Color.BLACK);
+        visualizerOverlayBorderColor = new ColorProperty("Visualization.Overlay.borderColor", "Overlay border:", ColorProperty.ColorType.SOLID, Color.WHITE);
+        visualizerOverlayTrackColor = new ColorProperty("Visualization.Overlay.trackColor", "Info text:", ColorProperty.ColorType.SOLID, Color.LIGHT_GRAY);
+        visualizerOverlayHeaderColor = new ColorProperty("Visualization.Overlay.headerColor", "Header text:", ColorProperty.ColorType.SOLID, Color.WHITE);
         visualizerOverlayProgressBackground = new ColorProperty("Visualization.Overlay.progressBg", "Progress background:", ColorProperty.ColorType.SOLID, Color.DARK_GRAY);
         visualizerOverlayProgressForeground = new ColorProperty("Visualization.Overlay.progressFg", "Progress foreground:", ColorProperty.ColorType.SOLID, Color.BLUE);
 
@@ -491,15 +506,16 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 visualizerDisplay,
                 visualizerSpeed,
                 visualizerOverlayEnabled,
-                visualizerOverlayFont,
-                visualizerOverlayFontSize,
+                visualizerOverlayHeaderFont,
+                visualizerOverlayTrackFont,
                 visualizerOverlaySize,
                 visualizerOverlayOpacity,
                 visualizerOverlayBorderWidth,
                 visualizerOverlayOverrideTheme,
                 visualizerOverlayBackground,
-                visualizerOverlayForeground,
-                visualizerOverlayHeader,
+                visualizerOverlayBorderColor,
+                visualizerOverlayHeaderColor,
+                visualizerOverlayTrackColor,
                 visualizerOverlayProgressBackground,
                 visualizerOverlayProgressForeground);
     }
