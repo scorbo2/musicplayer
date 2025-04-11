@@ -160,10 +160,82 @@ There it is!
 
 You may wonder why every frame, we read the current values from `AppConfig`, set them, and use them. This seems a little
 inefficient. Why don't we just note them once in `initialize()` and then we don't need to re-read `AppConfig`
-every single time we render a frame? Well, you can do it that way, certainly. It does however mean that if the
-user visits the `PropertiesDialog` and changes the value while your visualizer is running, your visualizer will
-not reflect the changes until the user stops visualization and restarts it, which is a bit annoying. By reading
-the latest values every frame, we guarantee that our visualizer can instantly respond to any changes in our properties.
+every single time we render a frame? Well, we want to respond to user changes in our properties dialog, don't we?
+When the user changes our settings while our visualizer is running, how else would we update ourselves? If only there
+was a better, more efficient way to do that!
+
+## A better, more efficient way to respond to properties changes
+
+Let's look at the `UIReloadable` interface:
+
+```java
+public interface UIReloadable {
+    /**
+     * Invoked by ReloadUIAction when it's time to reload the UI.
+     * AppConfig should be queried for the latest state of all
+     * user-configurable application settings.
+     */
+    void reloadUI();
+}
+```
+
+This very simple interface gives us a single method to implement: `reloadUI()`. If we register our
+extension class as a `UIReloadable` implementation, we will receive this message whenever our properties
+have been changed, and we can respond accordingly. Let's update our extension class:
+
+```java
+public class TestVisualizer extends VisualizationManager.Visualizer 
+        implements UIReloadable {
+
+    // ...
+
+    public TestVisualizer() {
+        super("Test Visualizer");
+        ReloadUIAction.getInstance().registerReloadable(this);
+    }
+
+    // ...
+}
+```
+
+In our class declaration, we implement the `UIReloadable` interface. However, that alone won't do anything.
+We have to register our class with the `ReloadUIAction` in our constructor, to make it aware of our existence
+and tell it to please notify us when our settings change. Now, we can move the properties update code
+to our implementation of the `reloadUI()` method:
+
+```java
+@Override
+public void reloadUI() {
+    PropertiesManager propsManager = AppConfig.getInstance().getPropertiesManager();
+    text = ((TextProperty)propsManager.getProperty("TestExtension.General.text")).getValue();
+    backgroundColor = ((ColorProperty)propsManager.getProperty("TestExtension.General.bgColor")).getColor();
+    textColor = ((ColorProperty)propsManager.getProperty("TestExtension.General.textColor")).getColor();
+    int fontSize = ((IntegerProperty)propsManager.getProperty("TestExtension.General.fontSize")).getValue();
+    font = font.deriveFont((float)fontSize);
+}
+```
+
+Great! Now this code will only be invoked with the user hits OK on the properties dialog, instead of within
+every call to our render() method. This has the side effect of making our render() implementation a lot simpler:
+
+```java
+@Override
+public void renderFrame(Graphics2D g, VisualizationTrackInfo trackInfo) {
+    g.setColor(backgroundColor);
+    g.fillRect(0,0,width,height);
+    g.setFont(font);
+    g.setColor(textColor);
+    g.drawString(text, x, y);
+    y++;
+    if (y > height) {
+        y = 0;
+    }
+}
+```
+
+Now our `render()` method only has to worry about doing whatever drawing it needs to do, and it can just use
+our class properties for font and style information. These properties will be updated for us, and we can respond
+to those changes, even if our visualizer is running when those changes are made! 
 
 ## Summary
 
