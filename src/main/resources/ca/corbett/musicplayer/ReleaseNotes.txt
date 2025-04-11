@@ -1,6 +1,12 @@
 MusicPlayer Release Notes
 Author: Steve Corbett
 
+Version 2.1 [2025-04-10] - Maintenance release
+  - (upstream fix) Fixed high CPU utilization in playback
+  - upgrade to swing-forms 1.9.1 for new FontField
+  - upgrade to swing-extras 1.9.4
+  - improved overlay font and color options
+
 Version 2.0 [2025-04-06] - complete UI rewrite
   - upgrading to app-extensions and swing-extras libraries
   - implement extensions!
