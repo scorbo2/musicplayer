@@ -62,14 +62,15 @@ public final class VisualizationOverlay implements UIReloadable {
     private int progressBarRight; // The ending x co-ordinate for the track progress bar
 
     // These will be grabbed from AppConfig as needed:
-    private String fontFamily;
-    private int fontSize;
+    private Font trackFont;
+    private Font headerFont;
     private int columnWidth;
     private Color bgColor;
-    private Color fgColor;
-    private Color highlightBgColor;
-    private Color highlightFgColor;
+    private Color borderColor;
+    private Color trackColor;
     private Color headerColor;
+    private Color progressBgColor;
+    private Color progressFgColor;
     private float opacity;
 
     /**
@@ -98,8 +99,8 @@ public final class VisualizationOverlay implements UIReloadable {
         // Get basic properties for the overlay:
         isEnabled = AppConfig.getInstance().isVisualizerOverlayEnabled();
         borderThickness = AppConfig.getInstance().getVisualizerOverlayBorderWidth();
-        fontFamily = AppConfig.getInstance().getVisualizerOverlayFont().familyName;
-        fontSize = AppConfig.getInstance().getVisualizerOverlayFontSize();
+        trackFont = AppConfig.getInstance().getVisualizerOverlayTrackFont();
+        headerFont = AppConfig.getInstance().getVisualizerOverlayHeaderFont();
         opacity = AppConfig.getInstance().getVisualizationOverlayOpacity();
         columnWidth = AppConfig.getInstance().getVisualizationOverlaySize().columns;
 
@@ -107,19 +108,21 @@ public final class VisualizationOverlay implements UIReloadable {
         if (!AppConfig.getInstance().isVisualizerOverlayOverrideTheme()) {
             AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
             bgColor = theme.getNormalBgColor();
-            fgColor = theme.getNormalFgColor();
+            borderColor = theme.getHeaderFgColor();
+            trackColor = theme.getNormalFgColor();
             headerColor = theme.getHeaderFgColor();
-            highlightBgColor = theme.getSelectedBgColor();
-            highlightFgColor = theme.getSelectedFgColor();
+            progressBgColor = theme.getSelectedBgColor();
+            progressFgColor = theme.getSelectedFgColor();
         }
 
         // Unless the user has chosen to override the app theme:
         else {
             bgColor = AppConfig.getInstance().getVisualizerOverlayBackground();
-            fgColor = AppConfig.getInstance().getVisualizerOverlayForeground();
-            headerColor = AppConfig.getInstance().getVisualizerOverlayHeader();
-            highlightBgColor = AppConfig.getInstance().getVisualizerOverlayProgressBackground();
-            highlightFgColor = AppConfig.getInstance().getVisualizerOverlayProgressForeground();
+            borderColor = AppConfig.getInstance().getVisualizerOverlayBorderColor();
+            trackColor = AppConfig.getInstance().getVisualizerOverlayTrackColor();
+            headerColor = AppConfig.getInstance().getVisualizerOverlayHeaderColor();
+            progressBgColor = AppConfig.getInstance().getVisualizerOverlayProgressBackground();
+            progressFgColor = AppConfig.getInstance().getVisualizerOverlayProgressForeground();
         }
 
         recomputeSize();
@@ -158,7 +161,7 @@ public final class VisualizationOverlay implements UIReloadable {
         // and then a subfill with the background colour if we're required
         // to draw a border:
         if (borderThickness > 0) {
-            graphics.setColor(fgColor);
+            graphics.setColor(borderColor);
             graphics.fillRect(0, 0, width, height);
 
             graphics.setColor(bgColor);
@@ -175,7 +178,7 @@ public final class VisualizationOverlay implements UIReloadable {
 
         // Draw all labels:
         graphics.setColor(headerColor);
-        graphics.setFont(new Font(fontFamily, Font.BOLD, fontSize));
+        graphics.setFont(headerFont);
         graphics.drawString("Title:", labelX, titleBaselineY);
         graphics.drawString("Artist:", labelX, artistBaselineY);
         graphics.drawString("Album:", labelX, albumBaselineY);
@@ -188,8 +191,8 @@ public final class VisualizationOverlay implements UIReloadable {
         String trackTime = computeTrackTime();
 
         // Draw all value labels:
-        graphics.setColor(fgColor);
-        graphics.setFont(new Font(fontFamily, Font.PLAIN, fontSize));
+        graphics.setColor(trackColor);
+        graphics.setFont(trackFont);
         graphics.drawString(title, valueX, titleBaselineY);
         graphics.drawString(artist, valueX, artistBaselineY);
         graphics.drawString(album, valueX, albumBaselineY);
@@ -205,12 +208,12 @@ public final class VisualizationOverlay implements UIReloadable {
             // we're going to draw a black box on a black background (for example).
             // So, if that's the case, let's subtly change the requested color
             // so that we can actually see it:
-            Color outlineColor = highlightFgColor;
-            if (highlightFgColor.equals(bgColor)) {
+            Color outlineColor = progressFgColor;
+            if (progressFgColor.equals(bgColor)) {
                 outlineColor = AppTheme.getOffsetColor(outlineColor, 70);
             }
 
-            graphics.setColor(highlightBgColor);
+            graphics.setColor(progressBgColor);
             int barBottom = trackTimeBaselineY + 2;
             int barHeight = (int) (trackTimeHeight * 0.7f); // slight vertical margin
             int barTop = barBottom - barHeight;
@@ -286,7 +289,7 @@ public final class VisualizationOverlay implements UIReloadable {
 
         // Figure out the width of the widest label. They all use the same font so this should
         // be consistent.
-        graphics.setFont(new Font(fontFamily, Font.BOLD, fontSize));
+        graphics.setFont(headerFont);
         int labelWidth = (int) graphics.getFontMetrics().stringWidth("Artist:");
         int labelHeight = (int) graphics.getFontMetrics().getLineMetrics("A", graphics).getAscent();
 
@@ -306,7 +309,7 @@ public final class VisualizationOverlay implements UIReloadable {
         for (int i = 0; i < columnWidth; i++) {
             sampleValue += "A";
         }
-        graphics.setFont(new Font(fontFamily, Font.PLAIN, fontSize));
+        graphics.setFont(trackFont);
         int titleWidth = (int) graphics.getFontMetrics().stringWidth(sampleValue);
         int titleHeight = (int) graphics.getFontMetrics().getLineMetrics("A", graphics).getAscent();
         titleHeight = (titleHeight > labelHeight) ? titleHeight : labelHeight;
