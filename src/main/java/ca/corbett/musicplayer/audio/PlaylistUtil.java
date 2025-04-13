@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * contain valid audio data, the problem won't be known until that file is played.
  * </p>
  * <p>
- * <b>NEW IN VERSION 2.0 - extension support</b><br>
+ * <b>NEW IN VERSION 2.x - extension support</b><br>
  * Extension methods are now available for playlist saving and loading. We will
  * query the extension manager here to see if any extension offers the ability
  * to save or load playlists. Out of the box, the app supports the format
@@ -164,7 +164,7 @@ public class PlaylistUtil {
     protected static List<File> parseMPList(File mpListFile) {
         List<File> list = new ArrayList<>();
 
-        // This format did not change from 1.0 to 1.5, so let's keep it the same for 2.0:
+        // This format did not change from 1.0 to 1.5, so let's keep it the same for 2.x:
         try (BufferedReader reader = new BufferedReader(new FileReader(mpListFile))) {
             // The first line is the application name and version:
             String line = reader.readLine();

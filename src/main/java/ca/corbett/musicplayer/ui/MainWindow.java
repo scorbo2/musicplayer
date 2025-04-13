@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.MessageUtil;
+import ca.corbett.extras.audio.PlaybackThread;
 import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
@@ -74,6 +75,7 @@ public class MainWindow extends JFrame {
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (visible) {
+            PlaybackThread.setUpdateIntervalMs(250); // let's go slightly faster than default
             MusicPlayerExtensionManager.getInstance().activateAll();
             loadWindowState();
             AudioPanelIdleAnimation.getInstance().go();
