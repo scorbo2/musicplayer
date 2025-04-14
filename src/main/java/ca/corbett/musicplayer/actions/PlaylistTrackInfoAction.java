@@ -1,5 +1,6 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.MainWindow;
 import ca.corbett.musicplayer.ui.Playlist;
 import ca.corbett.musicplayer.ui.TrackInfoDialog;
@@ -17,6 +18,15 @@ public class PlaylistTrackInfoAction extends AbstractAction {
             JOptionPane.showMessageDialog(MainWindow.getInstance(), "Nothing selected.");
             return;
         }
-        new TrackInfoDialog(selectedTrack).setVisible(true);
+
+        // See if any registered extension can do this for us:
+        TrackInfoDialog dialog = MusicPlayerExtensionManager.getInstance().getTrackInfoDialog(selectedTrack);
+
+        // If not, we'll do it ourselves:
+        if (dialog == null) {
+            dialog = new TrackInfoDialog(selectedTrack);
+        }
+        
+        dialog.setVisible(true);
     }
 }
