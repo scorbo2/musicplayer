@@ -4,6 +4,7 @@ import ca.corbett.extensions.AppExtension;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
+import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -141,5 +142,16 @@ public abstract class MusicPlayerExtension implements AppExtension {
      */
     public boolean handleKeyEvent(KeyEvent keyEvent) {
         return false;
+    }
+
+    /**
+     * Returns a TrackInfoDialog (or some derived instance) for the given
+     * File, if this extension is capable of displaying detailed track
+     * information for an audio file.
+     *
+     * @return a TrackInfoDialog instance, or null if this extension doesn't supply one.
+     */
+    public TrackInfoDialog getTrackInfoDialog(File trackFile) {
+        return null;
     }
 }

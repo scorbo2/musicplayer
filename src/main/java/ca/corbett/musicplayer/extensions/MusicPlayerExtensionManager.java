@@ -12,6 +12,7 @@ import ca.corbett.musicplayer.extensions.builtin.ExtraVisualizers;
 import ca.corbett.musicplayer.extensions.builtin.QuickLoadExtension;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
+import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -253,6 +254,25 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
             handled = handled || extension.handleKeyEvent(keyEvent);
         }
         return handled;
+    }
+
+    /**
+     * Queries all extensions to see if any of them care to provide a TrackInfoDialog
+     * for the given audio file. The first extension that returns one will be used.
+     * If no extension supports this feature, null is returned.
+     *
+     * @param trackFile The audio file in question.
+     * @return A TrackInfoDialog instance, or null.
+     */
+    public TrackInfoDialog getTrackInfoDialog(File trackFile) {
+        TrackInfoDialog dialog = null;
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            dialog = extension.getTrackInfoDialog(trackFile);
+            if (dialog != null) {
+                break;
+            }
+        }
+        return dialog;
     }
 }
 
