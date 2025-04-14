@@ -9,6 +9,7 @@ import ca.corbett.musicplayer.actions.ReloadUIAction;
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.DisplayMode;
@@ -151,7 +152,16 @@ public class VisualizationWindow implements UIReloadable {
             visFrame.setVisible(true);
         }
         logger.info("Starting visualization thread");
-        new Thread(thread).start();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(75); // just hang on a tick, window still initializing
+                    new Thread(thread).start();
+                }
+                catch (InterruptedException ignored) { }
+            }
+        });
     }
 
     /**

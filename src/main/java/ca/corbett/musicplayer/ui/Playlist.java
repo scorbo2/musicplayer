@@ -125,6 +125,19 @@ public class Playlist extends JPanel implements UIReloadable {
     }
 
     /**
+     * Returns the File object associated with the currently selected track, if there
+     * is a track selected, otherwise null.
+     *
+     * @return A File object, or null.
+     */
+    public File getSelectedTrackFile() {
+        if (fileList.getSelectedIndex() != -1) {
+            return fileList.getSelectedValue();
+        }
+        return null;
+    }
+
+    /**
      * Returns the "next" item in the playlist. The word "next" is in
      * quotes because it may not be what you expect. Normally, this will
      * simply be the next item after whatever is currently selected. But,

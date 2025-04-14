@@ -1,6 +1,12 @@
 MusicPlayer Release Notes
 Author: Steve Corbett
 
+Version 2.2 [2025-04-13] - Maintenance release
+  - #1 (bug) intermittent blank screen on visualizer startup
+  - #4 add "track info" action to playlist toolbar
+  - #5 (bug) visualizer "blinks" twice on each track change
+  - #7 upgrade to swing-extras 2.0.0
+
 Version 2.1 [2025-04-10] - Maintenance release
   - (upstream fix) Fixed high CPU utilization in playback
   - upgrade to swing-forms 1.9.1 for new FontField
