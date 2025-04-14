@@ -118,22 +118,13 @@ public class VisualizationThread implements Runnable, UIReloadable {
         if (!Objects.equals(songFile, currentSongFile) && AppConfig.getInstance().isAllowVisualizerOverride()) {
             currentSongFile = songFile;
 
-            // We don't want to stop() and initialize() visualizers that are in the process of rendering
-            // something, because bad things like NPEs will happen. So, we set a flag here to stop sending
-            // renderFrame() messages to whatever visualizer is active, then wait a short amount of time
-            // to make sure that any renders currently in progress finish, before we proceed:
-            isRenderingPaused = true;
-            try {
-                Thread.sleep(animationSpeed.delayMs * 2L); // sit out a frame or two
-            } catch (InterruptedException ignored) {
-            }
-
             // Check our visualizers to see if any of them want to override the current one,
             // based on the new song file:
             boolean wasSwapped = false;
             for (VisualizationManager.Visualizer visualizer : MusicPlayerExtensionManager.getInstance().getCustomVisualizers()) {
                 if (visualizer != effectiveVisualizer && visualizer.hasOverride(trackInfo)) {
                     if (effectiveVisualizer != null) {
+                        pauseRendering();
                         effectiveVisualizer.stop();
                     }
                     effectiveVisualizer = visualizer;
@@ -151,6 +142,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
                 if (effectiveVisualizer != defaultVisualizer) {
                     logger.info("Restoring default visualizer");
                     if (effectiveVisualizer != null) {
+                        pauseRendering();
                         effectiveVisualizer.stop();
                     }
                     effectiveVisualizer = defaultVisualizer;
@@ -348,5 +340,23 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
         effectiveVisualizer.stop();
         effectiveVisualizer = null;
+    }
+
+    /**
+     * Invoked internally if we need to temporarily pause rendering, for example to swap
+     * out the current visualizer for a different one. Calling code must set
+     * isRenderingPaused back to false once the new visualizer is in place!
+     */
+    private void pauseRendering() {
+        // We don't want to stop() and initialize() visualizers that are in the process of rendering
+        // something, because bad things like NPEs will happen. So, we set a flag here to stop sending
+        // renderFrame() messages to whatever visualizer is active, then wait a short amount of time
+        // to make sure that any renders currently in progress finish, before we proceed:
+        isRenderingPaused = true;
+        try {
+            Thread.sleep(animationSpeed.delayMs * 2L); // sit out a frame or two
+        }
+        catch (InterruptedException ignored) {
+        }
     }
 }
