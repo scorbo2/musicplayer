@@ -156,7 +156,7 @@ public class VisualizationWindow implements UIReloadable {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(75); // just hang on a tick, window still initializing
+                    Thread.sleep(100); // just hang on a tick, window still initializing
                     new Thread(thread).start();
                 }
                 catch (InterruptedException ignored) { }
@@ -188,6 +188,28 @@ public class VisualizationWindow implements UIReloadable {
             visFrame = null;
         }
         thread.setVisFrame(null);
+    }
+
+    /**
+     * This is temp code until I can find out why the visualization window very occasionally fails
+     * to load. There's some kind of rare edge case condition that causes the visualization window
+     * to come up completely blank. You have to close it and restart it to get it to work, and I'm
+     * not sure why. Hit X to dump this debug information to the log, maybe it'll be useful.
+     */
+    public void debugDump() {
+        logger.info("Visualization debug dump begins");
+        logger.info("Thread running: " + thread.isRunning());
+        logger.info(
+            "Display mode: " + graphicsDevice.getDisplayMode().getWidth()
+                + "x"
+                + graphicsDevice.getDisplayMode().getHeight()
+                + " (bit depth:"
+                + graphicsDevice.getDisplayMode().getBitDepth()
+                + ", refreshRate:"
+                + graphicsDevice.getDisplayMode().getRefreshRate()
+                + ")");
+        thread.debugDump();
+        logger.info("Debug dump complete.");
     }
 
     /**
