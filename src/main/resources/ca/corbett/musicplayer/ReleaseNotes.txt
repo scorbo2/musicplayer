@@ -1,6 +1,10 @@
 MusicPlayer Release Notes
 Author: Steve Corbett
 
+Version 2.3 [2025-04-14] - Maintenance release
+  - #8 clean up AppConfig a bit
+  - Add debug logging to help with intermittent visualization issue
+
 Version 2.2 [2025-04-13] - Maintenance release
   - #1 (bug) intermittent blank screen on visualizer startup
   - #4 add "track info" action to playlist toolbar
