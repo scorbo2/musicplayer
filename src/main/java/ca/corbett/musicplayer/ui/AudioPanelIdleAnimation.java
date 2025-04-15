@@ -30,6 +30,8 @@ public class AudioPanelIdleAnimation implements UIReloadable {
 
     private static final Logger logger = Logger.getLogger(AudioPanelIdleAnimation.class.getName());
 
+    public static final Animation STANDARD = new PlainBackground();
+
     protected static AudioPanelIdleAnimation instance;
     protected Animation runningThread;
 
@@ -62,13 +64,13 @@ public class AudioPanelIdleAnimation implements UIReloadable {
 
         // Fallback default in case of garbage input:
         logger.warning("Requested animation \"" + name + "\" not found; using built-in default.");
-        return new PlainBackground();
+        return STANDARD;
     }
 
     public Animation[] getAll() {
         List<AudioPanelIdleAnimation.Animation> extensionAnimations = MusicPlayerExtensionManager.getInstance().getCustomIdleAnimations();
         Animation[] animations = new Animation[1 + extensionAnimations.size()];
-        animations[0] = new PlainBackground();
+        animations[0] = STANDARD;
         int index = 1;
         for (Animation animation : extensionAnimations) {
             animations[index++] = animation;

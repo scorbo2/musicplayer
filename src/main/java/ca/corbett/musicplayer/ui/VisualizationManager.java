@@ -18,6 +18,8 @@ public class VisualizationManager {
 
     private static final Logger logger = Logger.getLogger(VisualizationManager.class.getName());
 
+    public static final Visualizer STANDARD = new StandardVisualizer();
+
     protected VisualizationManager() {
     }
 
@@ -30,7 +32,7 @@ public class VisualizationManager {
     public static Visualizer[] getAll() {
         List<Visualizer> extensionVisualizers = MusicPlayerExtensionManager.getInstance().getCustomVisualizers();
         Visualizer[] all = new Visualizer[1 + extensionVisualizers.size()];
-        all[0] = new StandardVisualizer();
+        all[0] = STANDARD;
         int index = 1;
         for (Visualizer visualizer : extensionVisualizers) {
             all[index++] = visualizer;
@@ -50,7 +52,7 @@ public class VisualizationManager {
         }
 
         logger.warning("Requested visualizer \"" + name + "\" not found; using STANDARD as default.");
-        return new StandardVisualizer();
+        return STANDARD;
     }
 
     /**

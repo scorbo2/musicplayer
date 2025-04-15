@@ -516,4 +516,33 @@ public class AudioPanel extends JPanel implements UIReloadable {
         }
         return messageUtil;
     }
+
+    /**
+     * Controls the scaling of the generated waveform images.
+     * Higher values represent more accurate images, but take
+     * up more memory.
+     */
+    public enum WaveformResolution {
+        LOW(512, "Low"),
+        MEDIUM(1024, "Medium"),
+        HIGH(2048, "High"),
+        SUPER_HIGH(4096, "Super high");
+
+        private final int xLimit;
+        private final String label;
+
+        WaveformResolution(int xLimit, String label) {
+            this.xLimit = xLimit;
+            this.label = label;
+        }
+
+        public int getXLimit() {
+            return xLimit;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
 }
