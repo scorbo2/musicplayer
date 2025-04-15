@@ -103,6 +103,12 @@ public final class KeyboardManager {
                             if ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0) {
                                 new PlaylistSaveAction().actionPerformed(null);
                             }
+                            break;
+
+                        // Undocumented debug helper: press X to dump visualization thread info:
+                        case KeyEvent.VK_X:
+                            VisualizationWindow.getInstance().debugDump();
+                            break;
 
                         default:
                             break;

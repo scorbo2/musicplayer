@@ -48,10 +48,10 @@ public class ControlPanel extends JPanel implements UIReloadable {
         GridBagConstraints constraints = new GridBagConstraints();
 
         // This is holdover code from AudioWaveformPanel, on which this is based.
-        AppConfig.ControlAlignment controlAlignment = AppConfig.getInstance().getControlAlignment();
-        boolean biasStart = controlAlignment == AppConfig.ControlAlignment.LEFT;
-        boolean biasCenter = controlAlignment == AppConfig.ControlAlignment.CENTER;
-        boolean biasEnd = controlAlignment == AppConfig.ControlAlignment.RIGHT;
+        ControlAlignment controlAlignment = AppConfig.getInstance().getControlAlignment();
+        boolean biasStart = controlAlignment == ControlAlignment.LEFT;
+        boolean biasCenter = controlAlignment == ControlAlignment.CENTER;
+        boolean biasEnd = controlAlignment == ControlAlignment.RIGHT;
 
         JLabel spacer = new JLabel("");
         constraints.gridx = 0;
@@ -88,5 +88,55 @@ public class ControlPanel extends JPanel implements UIReloadable {
         }
 
         return messageUtil;
+    }
+
+    /**
+     * Used to control the sizes of buttons on the toolbars.
+     * The icons scale up and down as needed based on these
+     * arbitrary pre-selected sizes.
+     */
+    public enum ButtonSize {
+        XSMALL(16, "Extra small"),
+        SMALL(20, "Small"),
+        NORMAL(24, "Normal"),
+        LARGE(30, "Large"),
+        XLARGE(36, "Huge");
+
+        final private int buttonSize;
+        final private String label;
+
+        ButtonSize(int btnSize, String label) {
+            buttonSize = btnSize;
+            this.label = label;
+        }
+
+        public int getButtonSize() {
+            return buttonSize;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    /**
+     * Controls the positioning of buttons within the toolbars.
+     */
+    public enum ControlAlignment {
+        LEFT("Left"),
+        CENTER("Center"),
+        RIGHT("Right");
+
+        private final String label;
+
+        ControlAlignment(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 }
