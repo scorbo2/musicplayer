@@ -1,8 +1,8 @@
 MusicPlayer Release Notes
 Author: Steve Corbett
 
-Version 2.4 [TODO] - Maintenance release
-  - Upgrade to swing-extras 2.1 to pick up ExtensionManager bug fix
+Version 2.4 [2025-05-17] - Maintenance release
+  #11 Upgrade to swing-extras 2.1 to pick up ExtensionManager bug fix
 
 Version 2.3 [2025-04-14] - Maintenance release
   - #8 clean up AppConfig a bit
