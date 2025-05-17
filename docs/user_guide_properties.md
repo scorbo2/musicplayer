@@ -10,7 +10,7 @@ a `.MusicPlayer` directory in my home directory, and I want the application to u
 in that directory. All I need to do is specify that on startup:
 
 ```shell
-$ java -Dca.corbett.musicplayer.props.file=/home/scorbett/.MusicPlayer/app.config -jar musicplayer-2.3.jar 
+$ java -Dca.corbett.musicplayer.props.file=/home/scorbett/.MusicPlayer/app.config -jar musicplayer-2.4.jar 
 ```
 
 Now when I start the application, I see that file get created in that location, and when I make changes to the
