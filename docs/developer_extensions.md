@@ -171,7 +171,7 @@ Since there is no default value, you have to manually specify the location to be
 want to put extension jars in ~/.MusicPlayer/extensionJars :
 
 ```shell
-java -Dca.corbett.musicplayer.extensions.dir=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-2.4.jar
+java -Dca.corbett.musicplayer.extensions.dir=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-2.5.jar
 ```
 
 On startup, we should see some log output describing what happened:
