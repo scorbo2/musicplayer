@@ -131,7 +131,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
             f = new File(System.getProperty("ca.corbett.musicplayer.props.file"));
         }
         else {
-            f = new File(System.getProperty("user.home"), "MusicPlayer.props");
+            f = new File(Version.APP_HOME, "MusicPlayer.props");
         }
         PROPS_FILE = f;
     }

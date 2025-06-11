@@ -6,7 +6,7 @@
 
     <groupId>ca.corbett</groupId>
     <artifactId>musicplayer</artifactId>
-    <version>2.4</version>
+    <version>2.5</version>
 
     <name>musicplayer</name>
     <description>MusicPlayer - an extensible music player in Java Swing</description>
@@ -57,7 +57,14 @@
         <dependency>
             <groupId>ca.corbett</groupId>
             <artifactId>swing-extras</artifactId>
-            <version>2.1.0</version>
+            <version>2.2.0</version>
+        </dependency>
+
+        <!-- Not used here but some extensions want it, so... -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.49.1.0</version>
         </dependency>
 
         <dependency>

@@ -10,9 +10,9 @@ public class ExtensionsManagerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (AppConfig.getInstance().showExtensionDialog(MainWindow.getInstance())) {
-            // User OK'd the dialog, reload the UI:
+            // User OK'd the dialog, reinitialize AppConfig:
+            // (this will force a properties reload and then a UI reload):
             AppConfig.getInstance().reinitialize();
-            ReloadUIAction.getInstance().actionPerformed(null);
         }
     }
 }
