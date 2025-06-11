@@ -1,8 +1,10 @@
 MusicPlayer Release Notes
 Author: Steve Corbett
 
-Version 2.5 [TODO] - Maintenance release
+Version 2.5 [2025-06-10] - Maintenance release
+  #17 Default props/config directory should be adjusted
   #13 Upgrade to swing-extras 2.1.1 for minor extension changes
+  #10 Bug - Enabling/disabling an extension resets all properties
 
 Version 2.4 [2025-05-17] - Maintenance release
   #11 Upgrade to swing-extras 2.1 to pick up ExtensionManager bug fix
