@@ -121,10 +121,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
      */
     private static final WaveformConfig defaultWaveform = new WaveformConfig();
 
-    // The location of the properties file can be set with a system property
-    // on startup (refer to the user's guide in the README). If so set, we
-    // need to read it in this static initializer block on startup so we're
-    // ready to go if it's somewhere other than the default location.
     static {
         PROPS_FILE = new File(Version.APPLICATION_DIR, "MusicPlayer.props");
     }
