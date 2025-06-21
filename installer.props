@@ -1,0 +1,19 @@
+# Experimental for 2.6 release
+# This is for the make-installer script to autogenerate our installer package.
+
+# Currently we are limited to "tarball" (.tar.gz)
+# In future, may support RPM or DEB package generation.
+FORMAT=tarball
+
+# Application name/version will also be used for the jar file name.
+APPLICATION=MusicPlayer
+VERSION=2.6
+
+# Extra memory settings like Xmx and Xms can be specified here:
+JAVAMEM=
+
+# Application settings will be stored in this directory in user's home dir:
+APPLICATION_HOME=.MusicPlayer
+
+# Extensions will be stored in this directory in user's home dir:
+EXTENSIONS_DIR=.MusicPlayer/extensions
