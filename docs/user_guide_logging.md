@@ -6,7 +6,7 @@ If you started musicplayer using the command line, you probably noticed a few lo
 to the console:
 
 ```shell
-$ java -jar musicplayer-2.5.jar 
+$ java -jar musicplayer-2.6.jar 
 2025-04-06 03:54:52 P.M. [INFO] Extension manager initialized with 4 active extensions.
 2025-04-06 03:54:52 P.M. [INFO] Visualizer initialized on display 0
 2025-04-06 03:54:52 P.M. [INFO] isFullscreenSupported: true
@@ -22,27 +22,14 @@ directory. You can, of course, override this by supplying your own. Let's look a
 
 ## Specifying your own logging.properties
 
-Option 1 is to create a `logging.properties` file in whichever directory you are launching the application
-from. If this file is detected at startup in the current directory, it will override the one that is built
-into the musicplayer jar file.
+Option 1 is to create a `logging.properties` file in the `.MusicPlayer` directory in your user home directory.
+If this file is detected at startup, it will override the one that is built into the musicplayer jar file.
 
 Option 2 is to explicitly find a home for `logging.properties` and specify it as a system property on startup.
-For example, let's say I want to have a `.MusicPlayer` directory in my home directory, and put the logging.properties
-file in there. I can modify that `logging.properties` so that the application will write to a log file in
-that same directory:
+For example:
 
 ```shell
-.level=INFO
-handlers=java.util.logging.ConsoleHandler,ca.corbett.extras.logging.LogConsoleHandler,java.util.logging.FileHandler
-java.util.logging.SimpleFormatter.format=%1$tF %1$tr [%4$s] %5$s%6$s%n
-java.util.logging.FileHandler.pattern=%h/.MusicPlayer/MusicPlayer.log
-java.util.logging.FileHandler.formatter=java.util.logging.SimpleFormatter
-```
-
-Then, when starting the application, I can specify a value for the `java.util.logging.config.file` system property:
-
-```shell
-$ java -Djava.util.logging.config.file=/home/scorbett/.MusicPlayer/logging.properties -jar musicplayer-2.5.jar
+$ java -Djava.util.logging.config.file=/path/to/wherever/logging.properties -jar musicplayer-2.6.jar
 ```
 
 Great! Now I can see my log file get created every time I start up the application, so if something bad happens,

@@ -33,14 +33,13 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-2.5.jar
+java -jar musicplayer-2.6.jar
 ```
 
 ## User guide
 
 - [Customizing the UI](docs/user_guide_ui.md) 
 - [Controlling log output](docs/user_guide_logging.md)
-- [Controlling where properties live](docs/user_guide_properties.md)
 
 ## Developer guide
 

@@ -58,7 +58,7 @@ public class Main {
         }
 
         // Otherwise, see if we can spot a logging.properties file in the application dir:
-        File propsFile = new File(Version.APP_HOME, "logging.properties");
+        File propsFile = new File(Version.APPLICATION_DIR, "logging.properties");
         if (propsFile.exists() && propsFile.canRead()) {
             System.setProperty("java.util.logging.config.file", propsFile.getAbsolutePath());
             //System.out.println("Using auto-detected log file: " + propsFile.getAbsolutePath());

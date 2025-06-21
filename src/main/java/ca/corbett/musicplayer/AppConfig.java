@@ -126,14 +126,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     // need to read it in this static initializer block on startup so we're
     // ready to go if it's somewhere other than the default location.
     static {
-        File f;
-        if (System.getProperty("ca.corbett.musicplayer.props.file") != null) {
-            f = new File(System.getProperty("ca.corbett.musicplayer.props.file"));
-        }
-        else {
-            f = new File(Version.APP_HOME, "MusicPlayer.props");
-        }
-        PROPS_FILE = f;
+        PROPS_FILE = new File(Version.APPLICATION_DIR, "MusicPlayer.props");
     }
 
     protected AppConfig() {

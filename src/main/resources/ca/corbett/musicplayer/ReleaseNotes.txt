@@ -1,6 +1,11 @@
 MusicPlayer Release Notes
 Author: Steve Corbett
 
+Version 2.6 [TODO] - Maintenance release
+  #19 Clean up the output lib directory a bit.
+  #20 Standardize the location of application home and extensions.
+  #21 Add make-installer support to the project.
+
 Version 2.5 [2025-06-10] - Maintenance release
   #17 Default props/config directory should be adjusted
   #13 Upgrade to swing-extras 2.1.1 for minor extension changes

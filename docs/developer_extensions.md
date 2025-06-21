@@ -161,7 +161,7 @@ supplied features will re-appear.
 
 ## How are extensions loaded?
 
-The system property `ca.corbett.musicplayer.extensions.dir` is checked on startup to see if it
+The system property `EXTENSIONS_DIR` is checked on startup to see if it
 specifies a readable directory. If so, that directory is scanned for compatible jar files. Any that
 are found are loaded as viable extensions.
 
@@ -171,7 +171,7 @@ Since there is no default value, you have to manually specify the location to be
 want to put extension jars in ~/.MusicPlayer/extensionJars :
 
 ```shell
-java -Dca.corbett.musicplayer.extensions.dir=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-2.5.jar
+java -DEXTENSIONS_DIR=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-2.6.jar
 ```
 
 On startup, we should see some log output describing what happened:
