@@ -1,5 +1,7 @@
 # Experimental for 2.6 release
 # This is for the make-installer script to autogenerate our installer package.
+# ALL PATHS ARE RELATIVE TO PROJECT ROOT
+# It's assumed you've run a mvn package first...
 
 # Currently we are limited to "tarball" (.tar.gz)
 # In future, may support RPM or DEB package generation.
@@ -13,7 +15,9 @@ VERSION=2.6
 JAVAMEM=
 
 # The application jar file:
-JAR=musicplayer-2.5.jar
+JAR=target/musicplayer-${VERSION}.jar
 
 # Space-separated list of files and dirs to include:
-TO_COPY="lib"
+TO_COPY="target/lib"
+TO_COPY="${TO_COPY} src/main/resources/ca/corbett/musicplayer/ReleaseNotes.txt"
+TO_COPY="${TO_COPY} src/main/resources/ca/corbett/musicplayer/images/logo.png"
