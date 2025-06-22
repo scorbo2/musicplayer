@@ -11,9 +11,3 @@ VERSION=2.6
 
 # Extra memory settings like Xmx and Xms can be specified here:
 JAVAMEM=
-
-# Application settings will be stored in this directory in user's home dir:
-APPLICATION_HOME=.MusicPlayer
-
-# Extensions will be stored in this directory in user's home dir:
-EXTENSIONS_DIR=.MusicPlayer/extensions
