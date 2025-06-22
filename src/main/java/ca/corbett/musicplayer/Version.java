@@ -35,7 +35,7 @@ public final class Version {
             APPLICATION_DIR.mkdirs();
         }
 
-        String extDir = System.getProperty("EXTENSIONS_DIR", appDir + File.separator + "extensions");
+        String extDir = System.getProperty("EXTENSIONS_DIR", new File(APPLICATION_DIR, "extensions").getAbsolutePath());
         EXTENSIONS_DIR = new File(extDir);
         if (!EXTENSIONS_DIR.exists()) {
             EXTENSIONS_DIR.mkdirs();
