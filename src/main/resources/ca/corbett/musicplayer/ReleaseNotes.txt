@@ -1,4 +1,5 @@
 MusicPlayer Release Notes
+https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
 Version 2.6 [TODO] - Maintenance release
