@@ -11,3 +11,9 @@ VERSION=2.6
 
 # Extra memory settings like Xmx and Xms can be specified here:
 JAVAMEM=
+
+# The application jar file:
+JAR=musicplayer-2.5.jar
+
+# Space-separated list of files and dirs to include:
+TO_COPY="lib"
