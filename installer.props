@@ -5,17 +5,20 @@
 
 # Currently we are limited to "tarball" (.tar.gz)
 # In future, may support RPM or DEB package generation.
-FORMAT=tarball
+FORMAT="tarball"
 
 # Application name/version will also be used for the jar file name.
-APPLICATION=MusicPlayer
-VERSION=2.6
+APPLICATION="MusicPlayer"
+VERSION="2.6"
+
+# An optional project URL to put into a README:
+PROJECT_URL="https://github.com/scorbo2/musicplayer"
 
 # Extra memory settings like Xmx and Xms can be specified here:
 JAVAMEM=
 
 # The application jar file:
-JAR=target/musicplayer-${VERSION}.jar
+JAR="target/musicplayer-${VERSION}.jar"
 
 # Space-separated list of files and dirs to include:
 TO_COPY="target/lib"
