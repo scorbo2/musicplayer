@@ -2,7 +2,7 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
-Version 2.6 [TODO] - Maintenance release
+Version 2.6 [2025-06-23] - Maintenance release
   #19 Clean up the output lib directory a bit.
   #20 Standardize the location of application home and extensions.
   #21 Add make-installer support to the project.
