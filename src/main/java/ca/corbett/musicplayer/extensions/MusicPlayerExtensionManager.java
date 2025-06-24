@@ -34,7 +34,6 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
 
     private static final Logger logger = Logger.getLogger(MusicPlayerExtensionManager.class.getName());
 
-    public static final String SCAN_DIR_PROP = "ca.corbett.musicplayer.extensions.dir";
     private static MusicPlayerExtensionManager instance;
 
     protected MusicPlayerExtensionManager() {
@@ -45,20 +44,19 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         addExtension(new QuickLoadExtension(), true);
 
         // Let's try to scan for dynamically loaded extensions:
-        String scanDir = System.getProperty(SCAN_DIR_PROP);
-        if (scanDir != null) {
-            File extensionDir = new File(scanDir);
-            if (extensionDir.exists() && extensionDir.canRead() && extensionDir.isDirectory()) {
-                int count = getLoadedExtensionCount();
-                loadExtensions(extensionDir, MusicPlayerExtension.class, Version.NAME, Version.VERSION);
-                if (getLoadedExtensionCount() > count) {
-                    logger.info("Successfully loaded " + (getLoadedExtensionCount() - count) + " dynamic extensions");
-                } else {
-                    logger.info("Extension manager: found no dynamic extensions in extension dir: " + extensionDir.getAbsolutePath());
-                }
-            } else {
-                logger.warning("Supplied extension scan dir does not exist or is not readable: " + extensionDir.getAbsolutePath());
+        File extDir = Version.EXTENSIONS_DIR;
+        if (extDir.exists() && extDir.canRead() && extDir.isDirectory()) {
+            int count = getLoadedExtensionCount();
+            loadExtensions(extDir, MusicPlayerExtension.class, Version.NAME, Version.VERSION);
+            if (getLoadedExtensionCount() > count) {
+                logger.info("Successfully loaded " + (getLoadedExtensionCount() - count) + " dynamic extensions");
             }
+            else {
+                logger.info("Extension manager: found no extensions in extension dir: " + extDir.getAbsolutePath());
+            }
+        }
+        else {
+            logger.warning("Supplied extension dir does not exist or is not readable: " + extDir.getAbsolutePath());
         }
     }
 
@@ -101,12 +99,13 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         List<AbstractProperty> props = super.getAllEnabledExtensionProperties();
 
         props.add(LabelProperty.createLabel("Extensions.Configuration.label1", "The following directory will be scanned for extension jars:"));
-        props.add(new LabelProperty("Extensions.Configuration.scanDir", System.getProperty(SCAN_DIR_PROP) == null ? "(not set)" : System.getProperty(SCAN_DIR_PROP), new Font(Font.MONOSPACED, Font.BOLD, 12)));
+        props.add(new LabelProperty("Extensions.Configuration.scanDir", Version.EXTENSIONS_DIR.getAbsolutePath(),
+                                    new Font(Font.MONOSPACED, Font.BOLD, 12)));
         props.add(LabelProperty.createLabel("Extensions.Configuration.label2",
                 "<html>If the directory exists and is readable, it is scanned at startup<br>" +
-                        "automatically. You can set it using the following system property,<br>" +
-                        "but it requires an application restart!<br><br>" +
-                        "<pre>" + SCAN_DIR_PROP + "</pre></html>"));
+                    "automatically. You can set it using the following system property,<br>" +
+                    "but it requires an application restart!<br><br>" +
+                    "<pre>EXTENSIONS_DIR</pre></html>"));
         return props;
     }
 
