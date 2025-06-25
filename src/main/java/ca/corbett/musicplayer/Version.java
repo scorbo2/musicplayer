@@ -9,7 +9,7 @@ public final class Version {
     private static final AboutInfo aboutInfo;
 
     public static String NAME = "MusicPlayer";
-    public static String VERSION = "2.6";
+    public static String VERSION = "2.7";
     public static String FULL_NAME = NAME + " " + VERSION;
     public static String COPYRIGHT = "Copyright © 2017 Steve Corbett";
     public static String PROJECT_URL = "https://github.com/scorbo2/musicplayer";
@@ -29,7 +29,8 @@ public final class Version {
         aboutInfo.logoImageLocation = "/ca/corbett/musicplayer/images/logo_wide.jpg";
         aboutInfo.shortDescription = "Extensible music player with cool visualizations!";
 
-        String appDir = System.getProperty("APPLICATION_HOME", System.getProperty("user.home") + "." + NAME);
+        String appDir = System.getProperty("APPLICATION_HOME",
+                                           new File(System.getProperty("user.home"), "." + NAME).getAbsolutePath());
         APPLICATION_DIR = new File(appDir);
         if (!APPLICATION_DIR.exists()) {
             APPLICATION_DIR.mkdirs();
