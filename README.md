@@ -33,7 +33,7 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-2.6.jar
+java -jar musicplayer-2.7.jar
 ```
 
 ## User guide

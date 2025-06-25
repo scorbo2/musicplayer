@@ -9,7 +9,7 @@ FORMAT="tarball"
 
 # Application name/version will also be used for the jar file name.
 APPLICATION="MusicPlayer"
-VERSION="2.6"
+VERSION="2.7"
 
 # An optional project URL to put into a README:
 PROJECT_URL="https://github.com/scorbo2/musicplayer"
