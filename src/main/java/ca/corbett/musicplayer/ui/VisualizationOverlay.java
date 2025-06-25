@@ -350,6 +350,7 @@ public final class VisualizationOverlay implements UIReloadable {
         progressBarRight = valueX + valueWidth - (int) (trackTimeWidth * 0.2);
 
         // Create our buffer with the computed size:
+        graphics.dispose();
         buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
