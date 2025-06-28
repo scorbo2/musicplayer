@@ -12,6 +12,7 @@ import javax.swing.JRootPane;
 import javax.swing.SwingUtilities;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.DisplayMode;
 import java.awt.Graphics;
 import java.awt.GraphicsDevice;
@@ -65,6 +66,7 @@ public class VisualizationWindow implements UIReloadable {
     private int monitorCount;
     private InactivityListener inactivityListener;
     private JFrame visFrame = null;
+    int fullScreenModeSwitchDelay = 25;
 
     private VisualizationWindow() {
         initializeDisplay();
@@ -77,6 +79,8 @@ public class VisualizationWindow implements UIReloadable {
     @Override
     public void reloadUI() {
         initializeDisplay();
+        fullScreenModeSwitchDelay = AppConfig.getInstance().getVisualizerOldHardwareDelay();
+        ;
     }
 
     /**
@@ -146,8 +150,6 @@ public class VisualizationWindow implements UIReloadable {
             graphicsDevice = env.getScreenDevices()[AppConfig.getInstance().getPreferredVisualizationDisplay().monitorIndex];
             DisplayMode displayMode = graphicsDevice.getDisplayMode();
             thread.setSize(displayMode.getWidth(), displayMode.getHeight());
-            graphicsDevice.setFullScreenWindow(visFrame);
-            visFrame.createBufferStrategy(2);
         } else {
             visFrame.setVisible(true);
         }
@@ -156,7 +158,14 @@ public class VisualizationWindow implements UIReloadable {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(100); // just hang on a tick, window still initializing
+                    graphicsDevice.setFullScreenWindow(visFrame);
+
+                    // Wait a bit! setFullScreenWindow takes a while to complete on older hardware.
+                    // You can modify this delay in app properties based on your hardware.
+                    // If you set it too low, you get: https://github.com/scorbo2/musicplayer/issues/23
+                    Thread.sleep(fullScreenModeSwitchDelay);
+
+                    visFrame.createBufferStrategy(2);
                     new Thread(thread).start();
                 }
                 catch (InterruptedException ignored) { }
@@ -245,6 +254,7 @@ public class VisualizationWindow implements UIReloadable {
                 }
             }
         };
+        window.setBackground(Color.BLACK);
         window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         window.setIconImage(MainWindow.loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
         DisplayMode displayMode = graphicsDevice.getDisplayMode();
