@@ -9,7 +9,9 @@ import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
+import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
+import ca.corbett.musicplayer.ui.UIReloadable;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 import ca.corbett.musicplayer.ui.VisualizationTrackInfo;
 
@@ -30,7 +32,7 @@ import java.util.logging.Logger;
  * @author scorbo2
  * @since 2017 or so for most of these
  */
-public class ExtraVisualizers extends MusicPlayerExtension {
+public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadable {
     private final AppExtensionInfo info;
 
     private final RollingWaveVisualizer rollingWaves;
@@ -68,11 +70,18 @@ public class ExtraVisualizers extends MusicPlayerExtension {
     }
 
     @Override
+    public void reloadUI() {
+        albumArtVisualizer.reloadUI();
+    }
+
+    @Override
     public void onActivate() {
+        ReloadUIAction.getInstance().registerReloadable(this);
     }
 
     @Override
     public void onDeactivate() {
+        ReloadUIAction.getInstance().unregisterReloadable(this);
     }
 
     @Override
@@ -297,7 +306,7 @@ public class ExtraVisualizers extends MusicPlayerExtension {
      * @author scorbo2
      * @since 2024-04-03
      */
-    public static class AlbumArtVisualizer extends VisualizationManager.Visualizer {
+    public static class AlbumArtVisualizer extends VisualizationManager.Visualizer implements UIReloadable {
 
         private static final Logger logger = Logger.getLogger(AlbumArtVisualizer.class.getName());
 
@@ -354,13 +363,24 @@ public class ExtraVisualizers extends MusicPlayerExtension {
         private float zoomFactor;
         private int xOffset;
         private int yOffset;
-        private int xDelta;
-        private int yDelta;
+        private float xDelta;
+        private float yDelta;
+        private int xDirection = -1; // -1 for left, +1 for right
+        private int yDirection = -1; // -1 for up, +1 for down
         private boolean scaleCalculationsDone;
         private volatile boolean isLoadInProgress;
+        private ScrollSpeed scrollSpeed;
+        private OversizeHandling oversizeHandling;
+
+        // Configuration for bounce behavior
+        private float bounceZoneRatio = 0.04f; // What fraction of the scrollable area is the "bounce zone" - this should really be an app property
+        private float minSpeedRatio = 0.1f;   // Minimum speed as a ratio of max speed (0.0 = complete stop, 1.0 = no slowdown)
+        private float easingPower = 2.0f;     // Power for easing curve (1.0 = linear, 2.0 = quadratic, 3.0 = cubic, etc.)
 
         public AlbumArtVisualizer() {
             super(NAME);
+            scrollSpeed = ScrollSpeed.SLOW;
+            oversizeHandling = OversizeHandling.SCALE_TO_FIT;
         }
 
         @Override
@@ -373,6 +393,34 @@ public class ExtraVisualizers extends MusicPlayerExtension {
 
             this.width = width;
             this.height = height;
+            reloadUI();
+        }
+
+        // Not currently using these setters, but we could wire them up with AppProperties maybe...
+        public void setBounceZoneRatio(float ratio) {
+            this.bounceZoneRatio = Math.max(0.01f, Math.min(0.5f, ratio));
+        }
+
+        public void setMinSpeedRatio(float ratio) {
+            this.minSpeedRatio = Math.max(0.0f, Math.min(1.0f, ratio));
+        }
+
+        public void setEasingPower(float power) {
+            this.easingPower = Math.max(0.5f, power);
+        }
+
+        @Override
+        public void reloadUI() {
+            AbstractProperty oversizedProp = AppConfig.getInstance().getPropertiesManager().getProperty(OVERSIZE_PROP);
+            AbstractProperty scrollProp = AppConfig.getInstance().getPropertiesManager().getProperty(SPEED_PROP);
+            if (!(oversizedProp instanceof EnumProperty) ||
+                !(scrollProp instanceof EnumProperty)) {
+                logger.warning("AlbumArtVisualizer: our properties are of the wrong type!");
+                return;
+            }
+            // We can't use instanceof to pre-check these class casts because of type erasure, but eh, it'll be fine.
+            oversizeHandling = ((EnumProperty<OversizeHandling>)oversizedProp).getSelectedItem();
+            scrollSpeed = ((EnumProperty<ScrollSpeed>)scrollProp).getSelectedItem();
         }
 
         public List<AbstractProperty> getProperties() {
@@ -384,8 +432,8 @@ public class ExtraVisualizers extends MusicPlayerExtension {
                             "Try putting an album.png or album.jpg in your music folder!<br>" +
                             "Or, an image file with the same name as an audio track.<br>" +
                             "  Example: some_track.mp3 and some_track.png</html>"));
-            props.add(new EnumProperty<OversizeHandling>(OVERSIZE_PROP, "Oversized images:", OversizeHandling.SCALE_TO_FIT));
-            props.add(new EnumProperty<ScrollSpeed>(SPEED_PROP, "Scroll speed:", ScrollSpeed.SLOW));
+            props.add(new EnumProperty<OversizeHandling>(OVERSIZE_PROP, "Oversized images:", oversizeHandling));
+            props.add(new EnumProperty<ScrollSpeed>(SPEED_PROP, "Scroll speed:", scrollSpeed));
             return props;
         }
 
@@ -437,9 +485,6 @@ public class ExtraVisualizers extends MusicPlayerExtension {
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, width, height);
 
-            OversizeHandling oversized = ((EnumProperty<OversizeHandling>) AppConfig.getInstance().getPropertiesManager().getProperty(OVERSIZE_PROP)).getSelectedItem();
-            ScrollSpeed scrollSpeed = ((EnumProperty<ScrollSpeed>) AppConfig.getInstance().getPropertiesManager().getProperty(SPEED_PROP)).getSelectedItem();
-
             // Has the source file changed since our last render?
             if (trackInfo != null && !Objects.equals(sourceFile, trackInfo.getSourceFile())) {
                 reset();
@@ -449,17 +494,18 @@ public class ExtraVisualizers extends MusicPlayerExtension {
             // If we have an image, render it:
             if (image != null) {
                 // If the image dimensions are very small, just ignore it:
+                // (see asyncImageLoad below for details... this is a bit goofy but handles image load issues)
                 if (image.getWidth() < 5 && image.getHeight() < 5) {
                     return;
                 }
 
                 // If we're set to stretch the image, do it:
-                if (oversized == OversizeHandling.STRETCH_TO_FIT) {
+                if (oversizeHandling == OversizeHandling.STRETCH_TO_FIT) {
                     g.drawImage(image, 0, 0, width, height, null);
                 }
 
                 // Otherwise, check to see if a scale is necessary:
-                else if (oversized == OversizeHandling.SCALE_TO_FIT || (image.getWidth() <= width && image.getHeight() <= height)) {
+                else if (oversizeHandling == OversizeHandling.SCALE_TO_FIT || (image.getWidth() <= width && image.getHeight() <= height)) {
                     if (!scaleCalculationsDone) {
                         scaleCalculationsDone = true;
                         float imgAspect = (float) image.getWidth() / (float) image.getHeight();
@@ -494,6 +540,8 @@ public class ExtraVisualizers extends MusicPlayerExtension {
                 // Otherwise, we're slowly panning an oversized image:
                 else {
                     if (!scaleCalculationsDone) {
+                        xOffset = 0;
+                        yOffset = 0;
                         scaleCalculationsDone = true;
                         boolean isPortrait = image.getHeight() > image.getWidth();
                         zoomFactor = isPortrait ? (float) width / image.getWidth() : (float) height / image.getHeight();
@@ -501,9 +549,9 @@ public class ExtraVisualizers extends MusicPlayerExtension {
                             zoomFactor = 1;
                         }
                         if (isPortrait) {
-                            yDelta = -scrollSpeed.getSpeed();
+                            yDirection = -1; // start scrolling up
                         } else {
-                            xDelta = -scrollSpeed.getSpeed();
+                            xDirection = -1; // start scrolling left
                         }
                         int imgWidth = (int) (image.getWidth() * zoomFactor);
                         int imgHeight = (int) (image.getHeight() * zoomFactor);
@@ -521,33 +569,62 @@ public class ExtraVisualizers extends MusicPlayerExtension {
                     int imgHeight = (int) (image.getHeight() * zoomFactor);
                     g.drawImage(image, xOffset, yOffset, imgWidth, imgHeight, null);
 
-                    // Scroll speed can be adjusted on the fly, so re-read it every loop:
-                    scrollSpeed = ((EnumProperty<ScrollSpeed>) AppConfig.getInstance().getPropertiesManager().getProperty(SPEED_PROP)).getSelectedItem();
-                    if (xDelta < 0) {
-                        xDelta = -scrollSpeed.getSpeed();
-                    } else if (xDelta > 0) {
-                        xDelta = scrollSpeed.getSpeed();
-                    }
-                    if (yDelta < 0) {
-                        yDelta = -scrollSpeed.getSpeed();
-                    } else if (yDelta > 0) {
-                        yDelta = scrollSpeed.getSpeed();
+                    // Calculate base speed
+                    float baseSpeed = scrollSpeed.getSpeed();
+
+                    // Update horizontal movement
+                    if (imgWidth > width) {
+                        float speedMultiplier = calculateSpeedMultiplier(xOffset, width - imgWidth, width);
+                        xDelta = xDirection * baseSpeed * speedMultiplier;
+
+                        // Ensure minimum movement of 1 pixel to prevent animation from getting stuck
+                        if (xDirection == -1 && xDelta > -1) {
+                            xDelta = -1;
+                        }
+                        else if (xDirection == 1 && xDelta < 1) {
+                            xDelta = 1;
+                        }
+
+                        xOffset += (int)xDelta;
+
+                        // Check bounds and reverse direction if needed
+                        if (xOffset >= 0) {
+                            xOffset = 0;
+                            xDirection = -1;
+                        }
+                        else if (xOffset <= (width - imgWidth)) {
+                            xOffset = width - imgWidth;
+                            xDirection = 1;
+                        }
                     }
 
-                    // Apply the delta:
-                    xOffset += xDelta;
-                    yOffset += yDelta;
+                    // Update vertical movement
+                    if (imgHeight > height) {
+                        float speedMultiplier = calculateSpeedMultiplier(yOffset, height - imgHeight, height);
+                        yDelta = yDirection * baseSpeed * speedMultiplier;
 
-                    // Bounds check and bounce if necessary:
-                    if (xDelta > 0 && xOffset >= 0) {
-                        xDelta = -xDelta;
-                    } else if (xDelta < 0 && xOffset <= (width - imgWidth)) {
-                        xDelta = -xDelta;
-                    }
-                    if (yDelta > 0 && yOffset >= 0) {
-                        yDelta = -yDelta;
-                    } else if (yDelta < 0 && yOffset <= (height - imgHeight)) {
-                        yDelta = -yDelta;
+                        // Ensure minimum movement of 1 pixel to prevent animation from getting stuck
+                        if (yDirection == -1 && yDelta > -1) {
+                            yDelta = -1;
+                        }
+                        else if (yDirection == 1 && yDelta < 1) {
+                            yDelta = 1;
+                        }
+
+                        yOffset += (int)yDelta;
+
+                        // Check bounds and reverse direction if needed
+                        logger.info("" + yOffset);
+                        if (yOffset >= 0) {
+                            logger.info("bounce! now heading up");
+                            yOffset = 0;
+                            yDirection = -1;
+                        }
+                        else if (yOffset <= (height - imgHeight)) {
+                            logger.info("bounce! now heading down");
+                            yOffset = height - imgHeight;
+                            yDirection = 1;
+                        }
                     }
                 }
             }
@@ -598,6 +675,47 @@ public class ExtraVisualizers extends MusicPlayerExtension {
                     thisVisualizer.setImageData(image);
                 }
             }).start();
+        }
+
+        /**
+         * Calculates speed multiplier based on distance from bounce points
+         *
+         * @param currentPos Current position (xOffset or yOffset)
+         * @param minPos     Minimum position (boundary)
+         * @param screenSize Screen dimension (width or height)
+         * @return Speed multiplier between minSpeedRatio and 1.0
+         */
+        private float calculateSpeedMultiplier(int currentPos, int minPos, int screenSize) {
+            // Calculate total scrollable distance
+            int totalDistance = Math.abs(minPos);
+            if (totalDistance == 0) { return 1.0f; }
+
+            // Calculate bounce zone size
+            int bounceZoneSize = (int)(totalDistance * bounceZoneRatio);
+            if (bounceZoneSize == 0) { return 1.0f; }
+
+            // Distance from top boundary (0)
+            int distanceFromTop = Math.abs(currentPos);
+
+            // Distance from bottom boundary
+            int distanceFromBottom = Math.abs(currentPos - minPos);
+
+            // Find the minimum distance to any boundary
+            int distanceFromNearestBound = Math.min(distanceFromTop, distanceFromBottom);
+
+            // If we're outside the bounce zone, use full speed
+            if (distanceFromNearestBound >= bounceZoneSize) {
+                return 1.0f;
+            }
+
+            // Calculate easing factor (0.0 at boundary, 1.0 at edge of bounce zone)
+            float easingFactor = (float)distanceFromNearestBound / bounceZoneSize;
+
+            // Apply easing curve
+            easingFactor = (float)Math.pow(easingFactor, easingPower);
+
+            // Interpolate between minimum and maximum speed
+            return minSpeedRatio + (1.0f - minSpeedRatio) * easingFactor;
         }
 
         @Override
