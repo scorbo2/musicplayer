@@ -15,7 +15,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Objects;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,7 +59,6 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private ImagePanel imagePanel;
     private JFrame visFrame;
     private volatile boolean isRenderingPaused;
-    private volatile AtomicLong frame; // TODO remove me... debugging
 
     /**
      * Creates a new VisualizationThread with values taken from AppConfig.
@@ -169,22 +167,6 @@ public class VisualizationThread implements Runnable, UIReloadable {
         // TODO did I mean to do something in here? I can't remember why I implemented this interface here
     }
 
-    public void debugDump() {
-        if (visFrame == null) {
-            logger.info("visFrame is null!");
-        }
-        else {
-            logger.info("visFrame: " + visFrame.getWidth() + "x" + visFrame.getHeight());
-        }
-        logger.info("isRenderingPaused: " + isRenderingPaused);
-        if (frame == null) {
-            logger.info("No frame info.");
-        }
-        else {
-            logger.info("frame: " + frame.get());
-        }
-    }
-
     /**
      * Reports whether this thread is currently running (animating) or not. You can use
      * stop() to stop and kill the thread.
@@ -217,7 +199,6 @@ public class VisualizationThread implements Runnable, UIReloadable {
     @Override
     public void run() {
         running = true;
-        frame = new AtomicLong(0);
 
         // Get a handle on the buffer strategy (created by VisualizationWindow):
         BufferStrategy strategy = visFrame.getBufferStrategy();
@@ -355,13 +336,10 @@ public class VisualizationThread implements Runnable, UIReloadable {
             } catch (InterruptedException ignored) {
                 stop();
             }
-
-            frame.set(frame.incrementAndGet());
         }
 
         effectiveVisualizer.stop();
         effectiveVisualizer = null;
-        frame.set(0);
     }
 
     /**

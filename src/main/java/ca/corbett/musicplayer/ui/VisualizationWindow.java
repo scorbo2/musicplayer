@@ -200,28 +200,6 @@ public class VisualizationWindow implements UIReloadable {
     }
 
     /**
-     * This is temp code until I can find out why the visualization window very occasionally fails
-     * to load. There's some kind of rare edge case condition that causes the visualization window
-     * to come up completely blank. You have to close it and restart it to get it to work, and I'm
-     * not sure why. Hit X to dump this debug information to the log, maybe it'll be useful.
-     */
-    public void debugDump() {
-        logger.info("Visualization debug dump begins");
-        logger.info("Thread running: " + thread.isRunning());
-        logger.info(
-            "Display mode: " + graphicsDevice.getDisplayMode().getWidth()
-                + "x"
-                + graphicsDevice.getDisplayMode().getHeight()
-                + " (bit depth:"
-                + graphicsDevice.getDisplayMode().getBitDepth()
-                + ", refreshRate:"
-                + graphicsDevice.getDisplayMode().getRefreshRate()
-                + ")");
-        thread.debugDump();
-        logger.info("Debug dump complete.");
-    }
-
-    /**
      * Invoked internally to build the actual visualization window and return it.
      * We used to pre-create one instance of this and re-use it, but there are some
      * interesting scenarios there, particularly if the user goes into settings and
