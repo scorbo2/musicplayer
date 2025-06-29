@@ -4,6 +4,7 @@ import ca.corbett.extensions.AppExtensionInfo;
 import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.ColorProperty;
+import ca.corbett.extras.properties.DecimalProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.LabelProperty;
@@ -313,6 +314,8 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
         private static final String NAME = "Album art";
         private static final String OVERSIZE_PROP = NAME + ".General.oversizeImage";
         private static final String SPEED_PROP = NAME + ".General.scrollSpeed";
+        private static final String BOUNCE_ZONE_PROP = NAME + ".Slow scroll options.bounceZone";
+        private static final String BOUNCE_EASING_STRENGTH_PROP = NAME + ".Slow scroll options.easingStrength";
 
         public enum OversizeHandling {
             SCALE_TO_FIT("Scale to fit screen"),
@@ -356,6 +359,29 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
             }
         }
 
+        public enum EasingStrength {
+            LINEAR("Linear", 1.0f),
+            QUADRATIC("Quadratic", 2.0f),
+            CUBIC("Cubic", 3.0f);
+
+            private final String label;
+            private final float value;
+
+            EasingStrength(String label, float value) {
+                this.label = label;
+                this.value = value;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+
+            public float getValue() {
+                return value;
+            }
+        }
+
         private BufferedImage image;
         private File sourceFile;
         int width;
@@ -373,7 +399,7 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
         private OversizeHandling oversizeHandling;
 
         // Configuration for bounce behavior
-        private float bounceZoneRatio = 0.04f; // What fraction of the scrollable area is the "bounce zone" - this should really be an app property
+        private float bounceZoneRatio = 0.06f; // What fraction of the scrollable area is the "bounce zone" - this should really be an app property
         private float minSpeedRatio = 0.1f;   // Minimum speed as a ratio of max speed (0.0 = complete stop, 1.0 = no slowdown)
         private float easingPower = 2.0f;     // Power for easing curve (1.0 = linear, 2.0 = quadratic, 3.0 = cubic, etc.)
 
@@ -413,14 +439,25 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
         public void reloadUI() {
             AbstractProperty oversizedProp = AppConfig.getInstance().getPropertiesManager().getProperty(OVERSIZE_PROP);
             AbstractProperty scrollProp = AppConfig.getInstance().getPropertiesManager().getProperty(SPEED_PROP);
+            AbstractProperty zoneProp = AppConfig.getInstance().getPropertiesManager().getProperty(BOUNCE_ZONE_PROP);
+            AbstractProperty easingProp = AppConfig.getInstance().getPropertiesManager()
+                                                   .getProperty(BOUNCE_EASING_STRENGTH_PROP);
             if (!(oversizedProp instanceof EnumProperty) ||
-                !(scrollProp instanceof EnumProperty)) {
+                !(scrollProp instanceof EnumProperty) ||
+                !(zoneProp instanceof DecimalProperty) ||
+                !(easingProp instanceof EnumProperty)) {
                 logger.warning("AlbumArtVisualizer: our properties are of the wrong type!");
                 return;
             }
+
             // We can't use instanceof to pre-check these class casts because of type erasure, but eh, it'll be fine.
+            //noinspection unchecked
             oversizeHandling = ((EnumProperty<OversizeHandling>)oversizedProp).getSelectedItem();
+            //noinspection unchecked
             scrollSpeed = ((EnumProperty<ScrollSpeed>)scrollProp).getSelectedItem();
+            setBounceZoneRatio((float)((DecimalProperty)zoneProp).getValue());
+            //noinspection unchecked
+            setEasingPower(((EnumProperty<EasingStrength>)easingProp).getSelectedItem().getValue());
         }
 
         public List<AbstractProperty> getProperties() {
@@ -434,6 +471,17 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                             "  Example: some_track.mp3 and some_track.png</html>"));
             props.add(new EnumProperty<OversizeHandling>(OVERSIZE_PROP, "Oversized images:", oversizeHandling));
             props.add(new EnumProperty<ScrollSpeed>(SPEED_PROP, "Scroll speed:", scrollSpeed));
+
+            AbstractProperty prop = new DecimalProperty(BOUNCE_ZONE_PROP, "Bounce zone size:", bounceZoneRatio, 0.01,
+                                                        0.49, 0.01);
+            prop.setHelpText(
+                "<html>Percentage of image width/height to<br>use as the \"bounce zone\"<br>(For acceleration/deceleration)</html>");
+            props.add(prop);
+            prop = new EnumProperty<EasingStrength>(BOUNCE_EASING_STRENGTH_PROP, "Easing strength:",
+                                                    EasingStrength.QUADRATIC);
+            prop.setHelpText("Strength of acceleration/deceleration");
+            props.add(prop);
+
             return props;
         }
 
@@ -616,12 +664,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                         // Check bounds and reverse direction if needed
                         logger.info("" + yOffset);
                         if (yOffset >= 0) {
-                            logger.info("bounce! now heading up");
                             yOffset = 0;
                             yDirection = -1;
                         }
                         else if (yOffset <= (height - imgHeight)) {
-                            logger.info("bounce! now heading down");
                             yOffset = height - imgHeight;
                             yDirection = 1;
                         }
