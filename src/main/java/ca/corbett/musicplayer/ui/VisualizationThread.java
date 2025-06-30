@@ -13,6 +13,8 @@ import java.awt.Toolkit;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.logging.Level;
@@ -47,10 +49,38 @@ public class VisualizationThread implements Runnable, UIReloadable {
         }
     }
 
+    public enum VisualizerRotation {
+        NEVER("Never", 0),
+        ONE("1 minute", 1),
+        TWO("2 minutes", 2),
+        FIVE("5 minutes", 5),
+        TEN("10 minutes", 10),
+        FIFTEEN("15 minutes", 15),
+        THIRTY("30 minutes", 30);
+
+        private final String label;
+        private final int minutes;
+
+        VisualizerRotation(String label, int minutes) {
+            this.label = label;
+            this.minutes = minutes;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+
+        public int getMinutes() {
+            return minutes;
+        }
+    }
+
     private volatile boolean running;
     private final AnimationSpeed animationSpeed;
     private VisualizationTrackInfo trackInfo;
     private VisualizationManager.Visualizer effectiveVisualizer;
+    private List<VisualizationManager.Visualizer> visualizerRotation;
     private File currentSongFile;
     private int width;
     private int height;
@@ -59,6 +89,8 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private ImagePanel imagePanel;
     private JFrame visFrame;
     private volatile boolean isRenderingPaused;
+    private boolean isFileTriggerActive;
+    private int interruptedVisualizerIndex; // for file triggers
 
     /**
      * Creates a new VisualizationThread with values taken from AppConfig.
@@ -69,7 +101,8 @@ public class VisualizationThread implements Runnable, UIReloadable {
         isRenderingPaused = false;
         currentSongFile = null;
         textOverlayEnabled = AppConfig.getInstance().isVisualizerOverlayEnabled();
-        effectiveVisualizer = AppConfig.getInstance().getVisualizer();
+        effectiveVisualizer = null;
+        visualizerRotation = new ArrayList<>();
         ReloadUIAction.getInstance().registerReloadable(this);
         width = 1920; // completely arbitrary default
         height = 1080; // caller will override this with actual values
@@ -122,13 +155,18 @@ public class VisualizationThread implements Runnable, UIReloadable {
             // based on the new song file:
             boolean wasSwapped = false;
             for (VisualizationManager.Visualizer visualizer : MusicPlayerExtensionManager.getInstance().getCustomVisualizers()) {
-                if (visualizer != effectiveVisualizer && visualizer.hasOverride(trackInfo)) {
+                if (visualizer == effectiveVisualizer || !visualizer.isSupportsFileTriggers()) {
+                    continue;
+                }
+                if (visualizer.hasOverride(trackInfo)) {
                     if (effectiveVisualizer != null) {
                         pauseRendering();
                         effectiveVisualizer.stop();
                     }
+                    interruptedVisualizerIndex = getCurrentVisualizerIndex();
                     effectiveVisualizer = visualizer;
                     effectiveVisualizer.initialize(width, height);
+                    isFileTriggerActive = true;
                     wasSwapped = true;
                     logger.info("Swapping out default visualizer for " + ((effectiveVisualizer == null) ? "null" : effectiveVisualizer.getName()));
                     break; // note we pick the first visualizer that volunteers, so load order matters here
@@ -137,8 +175,11 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
             // If no one volunteered, then see if we need to switch back to the user-selected one:
             // (i.e. the previous track had an override but this one doesn't):
-            if (!wasSwapped) {
-                VisualizationManager.Visualizer defaultVisualizer = AppConfig.getInstance().getVisualizer();
+            if (!wasSwapped && isFileTriggerActive) {
+                if (interruptedVisualizerIndex == -1 || interruptedVisualizerIndex >= visualizerRotation.size()) {
+                    interruptedVisualizerIndex = 0;
+                }
+                VisualizationManager.Visualizer defaultVisualizer = visualizerRotation.get(interruptedVisualizerIndex);
                 if (effectiveVisualizer != defaultVisualizer) {
                     logger.info("Restoring default visualizer");
                     if (effectiveVisualizer != null) {
@@ -147,6 +188,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
                     }
                     effectiveVisualizer = defaultVisualizer;
                     effectiveVisualizer.initialize(width, height);
+                    isFileTriggerActive = false;
                 }
             }
 
@@ -224,6 +266,33 @@ public class VisualizationThread implements Runnable, UIReloadable {
         // See setTrackInfo.
         effectiveVisualizer = AppConfig.getInstance().getVisualizer();
         effectiveVisualizer.initialize(width, height);
+
+        // Populate the list of Visualizers to rotate:
+        visualizerRotation.clear();
+        boolean excludeStandard = AppConfig.getInstance().isExcludeBlankVisualizerFromRotation();
+        for (VisualizationManager.Visualizer vis : VisualizationManager.getAll()) {
+            if (excludeStandard && (vis instanceof VisualizationManager.StandardVisualizer)) {
+                continue;
+            }
+            if (vis.isSupportsFileTriggers()) {
+                continue;
+            }
+            visualizerRotation.add(vis);
+        }
+        long lastVisualizerRotationMS = System.currentTimeMillis();
+        int visualizerRotationIntervalMS = AppConfig.getInstance().getVisualizerRotation().getMinutes() * 60 * 1000;
+        boolean visualizerRotationEnabled = AppConfig.getInstance().getVisualizerRotation() != VisualizerRotation.NEVER;
+        if (visualizerRotationEnabled && visualizerRotation.size() > 1) {
+            logger.info("Will rotate visualizers every " + AppConfig.getInstance().getVisualizerRotation());
+        }
+        else {
+            if (visualizerRotation.size() == 1) {
+                logger.info("Visualizer rotation disabled as there's only one visualizer.");
+            }
+            else {
+                logger.info("Visualizer rotation disabled in app settings.");
+            }
+        }
 
         // we want to re-render the text overlay every 1s or so (if it's enabled):
         Random rand = new Random();
@@ -336,10 +405,40 @@ public class VisualizationThread implements Runnable, UIReloadable {
             } catch (InterruptedException ignored) {
                 stop();
             }
+
+            // Handle visualizer rotation if enabled:
+            if (visualizerRotationEnabled && visualizerRotation.size() > 1 && !isFileTriggerActive) {
+                long now = System.currentTimeMillis();
+                if ((now - lastVisualizerRotationMS) > visualizerRotationIntervalMS) {
+                    lastVisualizerRotationMS = now;
+                    logger.info("Rotating to next visualizer");
+                    int index = getCurrentVisualizerIndex() + 1;
+                    if (index >= visualizerRotation.size()) {
+                        index = 0;
+                    }
+                    effectiveVisualizer.stop();
+                    effectiveVisualizer = visualizerRotation.get(index);
+                    effectiveVisualizer.initialize(width, height);
+                }
+            }
         }
 
         effectiveVisualizer.stop();
         effectiveVisualizer = null;
+    }
+
+    /**
+     * Returns the index of the effective visualizer, or -1 if not found in the rotation.
+     */
+    private int getCurrentVisualizerIndex() {
+        int index = -1;
+        for (int i = 0; i < visualizerRotation.size(); i++) {
+            if (visualizerRotation.get(i) == effectiveVisualizer) {
+                index = i;
+                break;
+            }
+        }
+        return index;
     }
 
     /**

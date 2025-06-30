@@ -97,6 +97,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
     private ComboProperty visualizerType;
+    private EnumProperty<VisualizationThread.VisualizerRotation> visualizerRotation;
+    private BooleanProperty excludeBlankVisualizerFromRotation;
     private BooleanProperty visualizerScreensaverPrevention;
     private BooleanProperty stopVisualizerOnFocusLost;
     private BooleanProperty allowVisualizerOverride;
@@ -273,6 +275,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return VisualizationManager.getVisualizer(visualizerType.getSelectedItem());
     }
 
+    public VisualizationThread.VisualizerRotation getVisualizerRotation() {
+        return visualizerRotation.getSelectedItem();
+    }
+
+    public boolean isExcludeBlankVisualizerFromRotation() {
+        return excludeBlankVisualizerFromRotation.getValue();
+    }
+
     public VisualizationWindow.DISPLAY getPreferredVisualizationDisplay() {
         return visualizerDisplay.getSelectedItem();
     }
@@ -386,6 +396,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         applicationTheme = buildCombo("UI.Theme.theme", "Theme:", getAppThemeChoices(), true);
 
         visualizerType = buildCombo("Visualization.General.visualizer", "Visualizer:", getVisualizerChoices(), true);
+        visualizerRotation = new EnumProperty<>("Visualization.General.visualizerRotation", "Rotate visualizers:",
+                                                VisualizationThread.VisualizerRotation.NEVER);
+        excludeBlankVisualizerFromRotation = new BooleanProperty(
+            "Visualization.General.excludeBlankVisualizerFromRotation",
+            "Exclude blank screen visualizer from rotation",
+            true);
         visualizerScreensaverPrevention = new BooleanProperty("Visualization.General.screensaverPrevention",
                                                               "Prevent screensaver during visualization (requires Robot)",
                                                               true);
@@ -460,6 +476,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        windowHeight,
                        lastBrowseDir,
                        visualizerType,
+                       visualizerRotation,
+                       excludeBlankVisualizerFromRotation,
                        visualizerScreensaverPrevention,
                        stopVisualizerOnFocusLost,
                        allowVisualizerOverride,
@@ -581,7 +599,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private List<String> getVisualizerChoices() {
         List<String> options = new ArrayList<>();
         for (VisualizationManager.Visualizer visualizer : VisualizationManager.getAll()) {
-            options.add(visualizer.getName());
+            if (!visualizer.isSupportsFileTriggers()) {
+                options.add(visualizer.getName());
+            }
         }
         return options;
     }

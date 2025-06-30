@@ -498,7 +498,7 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
         }
 
         @Override
-        public boolean reserveBottomGutter() {
+        public boolean isSupportsFileTriggers() {
             return true;
         }
 
@@ -662,7 +662,6 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                         yOffset += (int)yDelta;
 
                         // Check bounds and reverse direction if needed
-                        logger.info("" + yOffset);
                         if (yOffset >= 0) {
                             yOffset = 0;
                             yDirection = -1;
@@ -688,13 +687,13 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                 image.flush();
                 image = null;
                 sourceFile = null;
-                zoomFactor = 0f;
-                xOffset = 0;
-                yOffset = 0;
-                xDelta = 0;
-                yDelta = 0;
-                scaleCalculationsDone = false;
             }
+            zoomFactor = 0f;
+            xOffset = 0;
+            yOffset = 0;
+            xDelta = 0;
+            yDelta = 0;
+            scaleCalculationsDone = false;
         }
 
         private void asyncImageLoad(File imageFile) {
