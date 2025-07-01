@@ -287,7 +287,7 @@ public class VisualizationWindow implements UIReloadable {
                 switch (e.getKeyCode()) {
                     // I for track info on/off:
                     case KeyEvent.VK_I:
-                        thread.setTextOverlayEnabled(!thread.isTextOverlayEnabled());
+                        toggleTextOverlayEnabled();
                         break;
 
                     case KeyEvent.VK_ESCAPE:
@@ -319,5 +319,9 @@ public class VisualizationWindow implements UIReloadable {
         });
 
         return window;
+    }
+
+    public void toggleTextOverlayEnabled() {
+        thread.setTextOverlayEnabled(!thread.isTextOverlayEnabled());
     }
 }
