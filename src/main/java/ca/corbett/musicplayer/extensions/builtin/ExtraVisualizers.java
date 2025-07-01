@@ -101,11 +101,11 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
     public static class RollingWaveVisualizer extends VisualizationManager.Visualizer {
 
         public static final String NAME = "Rolling waves";
-        private static final String startColorPropName = NAME + ".General.startColor";
-        private static final String endColorPropName = NAME + ".General.endColor";
-        private static final String directionPropName = NAME + ".General.direction";
-        private static final String wavelengthPropName = NAME + ".General.wavelength";
-        private static final String waveSpeedPropName = NAME + ".General.waveSpeed";
+        private static final String startColorPropName = "Visualizers.Rolling Waves.General.startColor";
+        private static final String endColorPropName = "Visualizers.Rolling Waves.endColor";
+        private static final String directionPropName = "Visualizers.Rolling Waves.direction";
+        private static final String wavelengthPropName = "Visualizers.Rolling Waves.wavelength";
+        private static final String waveSpeedPropName = "Visualizers.Rolling Waves.waveSpeed";
 
         private Color startColor;
         private Color endColor;
@@ -140,7 +140,7 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
 
         public List<AbstractProperty> getProperties() {
             List<AbstractProperty> props = new ArrayList<>();
-            props.add(LabelProperty.createLabel(NAME + ".General.label",
+            props.add(LabelProperty.createLabel("Visualizers.Rolling Waves.label",
                     "<html>The " + NAME + " visualizer shows a gently rolling wave of<br>" +
                             "color gradients, moving either horizontally or vertically.</html>"
             ));
@@ -312,10 +312,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
         private static final Logger logger = Logger.getLogger(AlbumArtVisualizer.class.getName());
 
         private static final String NAME = "Album art";
-        private static final String OVERSIZE_PROP = NAME + ".General.oversizeImage";
-        private static final String SPEED_PROP = NAME + ".General.scrollSpeed";
-        private static final String BOUNCE_ZONE_PROP = NAME + ".Slow scroll options.bounceZone";
-        private static final String BOUNCE_EASING_STRENGTH_PROP = NAME + ".Slow scroll options.easingStrength";
+        private static final String OVERSIZE_PROP = "Visualizers.Album Art.oversizeImage";
+        private static final String SPEED_PROP = "Visualizers.Album Art.scrollSpeed";
+        private static final String BOUNCE_ZONE_PROP = "Visualizers.Album Art.bounceZone";
+        private static final String BOUNCE_EASING_STRENGTH_PROP = "Visualizers.Album Art.easingStrength";
 
         public enum OversizeHandling {
             SCALE_TO_FIT("Scale to fit screen"),
@@ -462,7 +462,7 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
 
         public List<AbstractProperty> getProperties() {
             List<AbstractProperty> props = new ArrayList<>();
-            props.add(LabelProperty.createLabel(NAME + ".General.label",
+            props.add(LabelProperty.createLabel("Visualizers.Album Art.label",
                     "<html>The " + NAME + " visualizer looks for a an image file<br>" +
                             "for the current track or the current album. If it finds<br>" +
                             "one, the image is displayed for visualization.<br><br>" +
