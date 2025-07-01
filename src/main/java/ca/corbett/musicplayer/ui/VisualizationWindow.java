@@ -324,4 +324,8 @@ public class VisualizationWindow implements UIReloadable {
     public void toggleTextOverlayEnabled() {
         thread.setTextOverlayEnabled(!thread.isTextOverlayEnabled());
     }
+
+    public boolean isTextOverlayEnabled() {
+        return thread.isTextOverlayEnabled();
+    }
 }
