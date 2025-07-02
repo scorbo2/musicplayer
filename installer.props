@@ -1,4 +1,3 @@
-# Experimental for 2.6 release
 # This is for the make-installer script to autogenerate our installer package.
 # ALL PATHS ARE RELATIVE TO PROJECT ROOT
 # It's assumed you've run a mvn package first...
