@@ -146,7 +146,14 @@ public class AudioUtil {
         }
         AudioInputStream convertedStream = AudioSystem.getAudioInputStream(targetFormat, inStream);
         File tmpFile = File.createTempFile("mp_", ".wav");
-        AudioSystem.write(convertedStream, AudioFileFormat.Type.WAVE, tmpFile);
+        try {
+            AudioSystem.write(convertedStream, AudioFileFormat.Type.WAVE, tmpFile);
+        }
+        catch (ArrayIndexOutOfBoundsException oobe) {
+            // Some older mp3 files throw this - it doesn't happen very often, but it does
+            // happen on some corrupt files.
+            throw new IOException("Failed to load audio stream - file is corrupt.", oobe);
+        }
         return tmpFile;
     }
 }

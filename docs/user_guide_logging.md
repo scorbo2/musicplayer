@@ -6,7 +6,7 @@ If you started musicplayer using the command line, you probably noticed a few lo
 to the console:
 
 ```shell
-$ java -jar musicplayer-2.6.jar 
+$ java -jar musicplayer-2.7.jar 
 2025-04-06 03:54:52 P.M. [INFO] Extension manager initialized with 4 active extensions.
 2025-04-06 03:54:52 P.M. [INFO] Visualizer initialized on display 0
 2025-04-06 03:54:52 P.M. [INFO] isFullscreenSupported: true
@@ -29,7 +29,7 @@ Option 2 is to explicitly find a home for `logging.properties` and specify it as
 For example:
 
 ```shell
-$ java -Djava.util.logging.config.file=/path/to/wherever/logging.properties -jar musicplayer-2.6.jar
+$ java -Djava.util.logging.config.file=/path/to/wherever/logging.properties -jar musicplayer-2.7.jar
 ```
 
 Great! Now I can see my log file get created every time I start up the application, so if something bad happens,

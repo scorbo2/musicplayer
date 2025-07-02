@@ -5,6 +5,7 @@ import ca.corbett.musicplayer.ui.MainWindow;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
  * The entry point for the application. There are no command line parameters,
@@ -34,6 +35,7 @@ import java.util.logging.LogManager;
 public class Main {
     public static void main(String[] args) {
         configureLogging();
+        checkJavaRuntime();
         AppConfig.getInstance().loadWithoutUIReload();
         MainWindow.getInstance().setVisible(true);
     }
@@ -72,5 +74,70 @@ public class Main {
         } catch (IOException ioe) {
             System.out.println("WARN: Unable to load log configuration: " + ioe.getMessage());
         }
+    }
+
+    /**
+     * Not all JREs are created equally! Query the current JRE vendor, and show a warning
+     * if it's one of the ones that have animation problems (screen flicker).
+     * See <A HREF="https://github.com/scorbo2/musicplayer/issues/18">Issue 18</A> for details.
+     */
+    private static void checkJavaRuntime() {
+
+//        System.out.println("java.vendor: " + System.getProperty("java.vendor"));
+//        System.out.println("java.vm.specification.version: " + System.getProperty("java.vm.specification.version"));
+//        System.out.println("java.vm.specification.vendor: " + System.getProperty("java.vm.specification.vendor"));
+//        System.out.println("java.vm.specification.name: " + System.getProperty("java.vm.specification.name"));
+//        System.out.println("java.vm.vendor: " + System.getProperty("java.vm.vendor"));
+//        System.out.println("java.runtime.name: " + System.getProperty("java.runtime.name"));
+//        System.out.println("java.specification.vendor: " + System.getProperty("java.specification.vendor"));
+//        System.out.println("java.specification.name: " + System.getProperty("java.specification.name"));
+
+        String vendor = detectJREDistribution();
+        Logger logger = Logger.getLogger(Main.class.getName());
+        if (vendor.toLowerCase().contains("openjdk") ||
+            vendor.toLowerCase().contains("azul")) {
+            logger.warning("Your JRE vendor \"" + vendor + "\" may have problems with full-screen animation." +
+                               " If you experience screen flicker or poor performance, consider switching to " +
+                               "Amazon Corretto or Eclipse Temurin.");
+        }
+    }
+
+    private static String detectJREDistribution() {
+        String vendor = System.getProperty("java.vendor", "").toLowerCase();
+        String vmName = System.getProperty("java.vm.name", "").toLowerCase();
+        String javaRuntimeName = System.getProperty("java.runtime.name", "").toLowerCase();
+
+        // Amazon Corretto
+        if (vendor.contains("amazon") || javaRuntimeName.contains("corretto")) {
+            return "Amazon Corretto";
+        }
+
+        // Azul Zulu
+        if (vendor.contains("azul") || vmName.contains("zulu")) {
+            return "Azul Zulu";
+        }
+
+        // Eclipse Temurin (formerly AdoptOpenJDK)
+        if (vendor.contains("eclipse") || javaRuntimeName.contains("temurin")) {
+            return "Eclipse Temurin";
+        }
+
+        // Oracle JDK vs Oracle's OpenJDK builds
+        if (vendor.contains("oracle")) {
+            // Oracle JDK typically has "Java(TM)" in the runtime name
+            if (javaRuntimeName.contains("java(tm)")) {
+                return "Oracle JDK";
+            }
+            else {
+                return "Oracle OpenJDK";
+            }
+        }
+
+        // Generic OpenJDK (other distributions)
+        if (javaRuntimeName.contains("openjdk")) {
+            return "OpenJDK (Generic)";
+        }
+
+        return "Unknown: " + vendor;
     }
 }

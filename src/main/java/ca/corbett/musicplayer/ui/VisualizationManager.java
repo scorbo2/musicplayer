@@ -95,6 +95,16 @@ public class VisualizationManager {
         public abstract void initialize(int width, int height);
 
         /**
+         * Reports whether or not this Visualizer supports the concept of file trigger overrides.
+         * If true, this Visualizer will be queried on each track change to see if it wants to
+         * interrupt the current Visualizer. See hasOverride(VisualizationTrackInfo) for details.
+         * This returns false by default as most Visualizers won't do this.
+         */
+        public boolean isSupportsFileTriggers() {
+            return false;
+        }
+
+        /**
          * For the given audio file, the visualization manager will ask each extension if
          * they have an "override" for that file. That is, can we interrupt whatever visualizer
          * was selected by the user in application settings in order to activate this visualizer

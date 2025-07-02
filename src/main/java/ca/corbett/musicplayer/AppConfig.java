@@ -97,6 +97,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
     private ComboProperty visualizerType;
+    private EnumProperty<VisualizationThread.VisualizerRotation> visualizerRotation;
+    private BooleanProperty excludeBlankVisualizerFromRotation;
     private BooleanProperty visualizerScreensaverPrevention;
     private BooleanProperty stopVisualizerOnFocusLost;
     private BooleanProperty allowVisualizerOverride;
@@ -115,6 +117,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ColorProperty visualizerOverlayHeaderColor;
     private ColorProperty visualizerOverlayProgressBackground;
     private ColorProperty visualizerOverlayProgressForeground;
+    private ComboProperty visualizerOldHardwareDelay;
 
     /**
      * This is only used for setting default waveform prefs.
@@ -272,6 +275,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return VisualizationManager.getVisualizer(visualizerType.getSelectedItem());
     }
 
+    public VisualizationThread.VisualizerRotation getVisualizerRotation() {
+        return visualizerRotation.getSelectedItem();
+    }
+
+    public boolean isExcludeBlankVisualizerFromRotation() {
+        return excludeBlankVisualizerFromRotation.getValue();
+    }
+
     public VisualizationWindow.DISPLAY getPreferredVisualizationDisplay() {
         return visualizerDisplay.getSelectedItem();
     }
@@ -344,6 +355,22 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return visualizerScreensaverPrevention.getValue();
     }
 
+    /**
+     * Older or less capable graphics hardware needs 100-200 milliseconds to effect a
+     * display mode switch (switching to fullscreen mode) - that means we sometimes
+     * have to wait a little bit before attempting to create our BufferStrategy, otherwise
+     * the switch to fullscreen mode will simply fail.
+     * See <a href="https://github.com/scorbo2/musicplayer/issues/23">issue 23</a>
+     * for more details.
+     * <p>Newer or more capable hardware can set this number down low as the mode
+     * switch is much faster.</p>
+     *
+     * @return A count of milliseconds to wait after requesting a display mode switch.
+     */
+    public int getVisualizerOldHardwareDelay() {
+        return getOldHardwareDelayFromStringOption(visualizerOldHardwareDelay.getSelectedItem());
+    }
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         buttonSize = new EnumProperty<>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
@@ -369,6 +396,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         applicationTheme = buildCombo("UI.Theme.theme", "Theme:", getAppThemeChoices(), true);
 
         visualizerType = buildCombo("Visualization.General.visualizer", "Visualizer:", getVisualizerChoices(), true);
+        visualizerRotation = new EnumProperty<>("Visualization.General.visualizerRotation", "Rotate visualizers:",
+                                                VisualizationThread.VisualizerRotation.NEVER);
+        excludeBlankVisualizerFromRotation = new BooleanProperty(
+            "Visualization.General.excludeBlankVisualizerFromRotation",
+            "Exclude blank screen visualizer from rotation",
+            true);
         visualizerScreensaverPrevention = new BooleanProperty("Visualization.General.screensaverPrevention",
                                                               "Prevent screensaver during visualization (requires Robot)",
                                                               true);
@@ -382,6 +415,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                                                VisualizationWindow.DISPLAY.PRIMARY);
         visualizerSpeed = new EnumProperty<>("Visualization.General.animationSpeed", "Animation speed:",
                                              VisualizationThread.AnimationSpeed.HIGH);
+        visualizerOldHardwareDelay = buildCombo("Visualization.General.oldHardwareDelay", "Fullscreen delay:",
+                                                getOldHardwareDelayChoices(), false);
+        visualizerOldHardwareDelay.setHelpText("Increase this delay if fullscreen mode loads to a blank screen");
 
         visualizerOverlayEnabled = new BooleanProperty("Visualization.Overlay.enabled",
                                                        "Enable visualizer overlay for current track info",
@@ -440,11 +476,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        windowHeight,
                        lastBrowseDir,
                        visualizerType,
+                       visualizerRotation,
+                       excludeBlankVisualizerFromRotation,
                        visualizerScreensaverPrevention,
                        stopVisualizerOnFocusLost,
                        allowVisualizerOverride,
                        visualizerDisplay,
                        visualizerSpeed,
+                       visualizerOldHardwareDelay,
                        visualizerOverlayEnabled,
                        visualizerOverlayHeaderFont,
                        visualizerOverlayTrackFont,
@@ -560,9 +599,38 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private List<String> getVisualizerChoices() {
         List<String> options = new ArrayList<>();
         for (VisualizationManager.Visualizer visualizer : VisualizationManager.getAll()) {
-            options.add(visualizer.getName());
+            if (!visualizer.isSupportsFileTriggers()) {
+                options.add(visualizer.getName());
+            }
         }
         return options;
+    }
+
+    private List<String> getOldHardwareDelayChoices() {
+        List<String> options = new ArrayList<>();
+        options.add("None - my hardware is awesome");
+        options.add("Small - my hardware is a bit old");
+        options.add("Medium - my hardware is not so good");
+        options.add("Large - my hardware is pretty bad");
+        options.add("XLarge - my hardware is ancient");
+        return options;
+    }
+
+    private int getOldHardwareDelayFromStringOption(String option) {
+        switch (option) {
+            case "None - my hardware is awesome":
+                return 25;
+            case "Small - my hardware is a bit old":
+                return 50;
+            case "Medium - my hardware is not so good":
+                return 75;
+            case "Large - my hardware is pretty bad":
+                return 150;
+            case "XLarge - my hardware is ancient":
+                return 250;
+            default:
+                return 25;
+        }
     }
 
 
