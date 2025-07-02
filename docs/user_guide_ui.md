@@ -54,7 +54,7 @@ constantly in the background, with some customizable visualization being display
 
 Let's go back to the Preferences dialog and look at the Visualization tab:
 
-![Config - Visualization](screenshots/config-visualization.jpg "Config - Visualization")
+![Config - Visualization](screenshots/config_visualization.jpg "Config - Visualization")
 
 We can see that there are quite a few general options we can set here. Let's look at some of these:
 
@@ -73,40 +73,36 @@ get something like this:
 
 <img src="screenshots/vis_rollingwaves.jpg" WIDTH="640">
 
-### Further options for "rolling waves"
+### Further options for "rolling waves" and "album art" visualizers
+
+MusicPlayer comes with a couple of neat visualizers built-in. You can configure the settings for these
+visualizers on the "Visualizers" tab:
+
+![Config - built-in visualizers](screenshots/config_builtin_visualizers.jpg)
 
 The Rolling Waves visualizer pictured above was actually the very first visualizer I wrote for MusicPlayer 1.0 back
-in 2017. It gets its own tab on the Preferences dialog so you can customize it a bit further:
-
-![Config - Rolling Waves](screenshots/config-rollingwaves.jpg)
-
-Here we can set some options regarding the wave size and direction, and of course the color gradient that it 
+in 2017. Here we can set some options regarding the wave size and direction, and of course the color gradient that it 
 uses. Personally, I quite like blue to black, but whatever works for you.
 
-### Using the album art visualizer
-
 The Album Art visualizer is one of the visualizers that can "override" the currently selected visualizer
-when certain conditions are met. The lyrics sheet visualizer and the commentary visualizer also do this,
+when certain conditions are met (namely, if it detects an album image or a track image in the same directory
+as whatever track is currently playing). The lyrics sheet visualizer and the commentary visualizer also do this,
 but Album Art is a pretty good example of how this works.
 
-In the Preferences dialog, we can take a look at the Album Art tab to see what options we have:
-
-![Config - Album art](screenshots/config_albumart.jpg)
-
-Basically, this visualizer looks for an `album.png` or `album.jpg` in the same directory as the currently
+This visualizer looks for an `album.png` or `album.jpg` in the same directory as the currently
 playing track. If not found, it will look for an image with the same base filename as the currently playing
 track. For example, if the current track is `track01.mp3`, then the visualizer will look for `track01.jpg`
 or `track01.png`. If both a track image and an album image are present, the track image (the more specific
 one) will be used. If both a png and a jpg are present, the png will be used (because it's lossless).
 If neither are found, then the visualizer will simply display a black screen.
 
-But! There's a nicer way to use this visualizer, and that is to NOT select it as the current visualizer
-on the Visualizer tab. Just make sure `allow override of selected visualizer` is selected, and you can
-stick with Rolling Waves or whatever you like as your primary visualizer. Whenever the current track changes
-to play the next track, the Album Art visualizer will quickly check to see if it needs to step in, and 
-if a track or album image is present, it will automatically override the selected visualizer and activate
-itself. If the subsequent track does not have a track or album image, then the Album Art visualizer will
-yield to whichever other visualizer was selected as the current visualizer. Pretty neat!
+In order for this visualizer to be invoked, you have to make sure `allow override of selected visualizer` 
+is selected, and you can stick with Rolling Waves or whatever you like as your primary visualizer. 
+Whenever the current track changes to play the next track, the Album Art visualizer will quickly
+check to see if it needs to step in, and if a track or album image is present, it will automatically 
+override the selected visualizer and activate itself. If the subsequent track does not have a track 
+or album image, then the Album Art visualizer will yield to whichever other visualizer was 
+selected as the current visualizer. Pretty neat!
 
 ## Writing your own!
 
