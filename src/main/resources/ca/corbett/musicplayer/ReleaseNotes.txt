@@ -2,6 +2,9 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
+Version 2.8 [TODO] - Maintenance release
+  #32 Include Jackson dependency for json parsing
+
 Version 2.7 [2025-07-01] - Maintenance release
   #18 Visualizer overlay is flickering
   #23 Visualizer blank screen bug is back
