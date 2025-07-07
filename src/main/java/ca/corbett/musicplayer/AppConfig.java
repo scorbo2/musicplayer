@@ -125,7 +125,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private static final WaveformConfig defaultWaveform = new WaveformConfig();
 
     static {
-        PROPS_FILE = new File(Version.APPLICATION_DIR, "MusicPlayer.props");
+        PROPS_FILE = new File(Version.SETTINGS_DIR, "MusicPlayer.props");
     }
 
     protected AppConfig() {

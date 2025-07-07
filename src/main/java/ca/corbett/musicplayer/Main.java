@@ -4,6 +4,7 @@ import ca.corbett.musicplayer.ui.MainWindow;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -35,6 +36,10 @@ import java.util.logging.Logger;
 public class Main {
     public static void main(String[] args) {
         configureLogging();
+        Logger logger = Logger.getLogger(Main.class.getName());
+        logger.log(Level.INFO,
+                   Version.FULL_NAME + " starting up: installDir={0}, settingsDir={1}, extensionsDir={2}",
+                   new Object[]{Version.INSTALL_DIR, Version.SETTINGS_DIR, Version.EXTENSIONS_DIR});
         checkJavaRuntime();
         AppConfig.getInstance().loadWithoutUIReload();
         MainWindow.getInstance().setVisible(true);
@@ -60,7 +65,7 @@ public class Main {
         }
 
         // Otherwise, see if we can spot a logging.properties file in the application dir:
-        File propsFile = new File(Version.APPLICATION_DIR, "logging.properties");
+        File propsFile = new File(Version.SETTINGS_DIR, "logging.properties");
         if (propsFile.exists() && propsFile.canRead()) {
             System.setProperty("java.util.logging.config.file", propsFile.getAbsolutePath());
             //System.out.println("Using auto-detected log file: " + propsFile.getAbsolutePath());
