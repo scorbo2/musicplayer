@@ -5,6 +5,7 @@ Author: Steve Corbett
 Version 2.8 [TODO] - Maintenance release
   #32 Include Jackson dependency for json parsing
   #34 Minor change to startup env vars
+  #35 Allow extensions to peek property config values
 
 Version 2.7 [2025-07-01] - Maintenance release
   #18 Visualizer overlay is flickering
