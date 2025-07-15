@@ -9,7 +9,6 @@ import ca.corbett.extras.properties.ComboProperty;
 import ca.corbett.extras.properties.DecimalProperty;
 import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
-import ca.corbett.extras.properties.FileBasedProperties;
 import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.PropertiesDialog;
@@ -36,10 +35,8 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static ca.corbett.extras.properties.ColorProperty.ColorType;
@@ -192,16 +189,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
      * @return The raw value in String form as it exists in the props file at the time of this call. May be empty.
      */
     public static String peek(String propName) {
-        String result = "";
-        try {
-            FileBasedProperties tempProps = new FileBasedProperties(PROPS_FILE);
-            tempProps.load();
-            result = tempProps.getString(propName, result);
-        }
-        catch (IOException ioe) {
-            logger.log(Level.WARNING, "AppConfig.peek(): encountered IOException: " + ioe.getMessage(), ioe);
-        }
-        return result;
+        return AppProperties.peek(PROPS_FILE, propName);
     }
 
     public ButtonSize getButtonSize() {
