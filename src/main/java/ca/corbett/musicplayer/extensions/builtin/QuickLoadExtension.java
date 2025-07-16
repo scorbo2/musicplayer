@@ -58,7 +58,7 @@ public class QuickLoadExtension extends MusicPlayerExtension {
     }
 
     @Override
-    public List<AbstractProperty> getConfigProperties() {
+    protected List<AbstractProperty> createConfigProperties() {
         List<AbstractProperty> props = new ArrayList<>();
 
         props.add(LabelProperty.createLabel("Quickload.General.label",
@@ -75,14 +75,6 @@ public class QuickLoadExtension extends MusicPlayerExtension {
 
     public static File getQuickDir() {
         return ((DirectoryProperty) AppConfig.getInstance().getPropertiesManager().getProperty(QuickLoadExtension.DIR_PROP)).getDirectory();
-    }
-
-    @Override
-    public void onActivate() {
-    }
-
-    @Override
-    public void onDeactivate() {
     }
 
     @Override
