@@ -48,6 +48,7 @@ java -jar musicplayer-2.8.jar
 - [Making use of `app-extensions` to customize the app](docs/developer_extensions.md)
 - [Exercise1: let's write a custom extension!](docs/developer_exercise1.md)
 - [Exercise2: let's write a custom visualizer!](docs/developer_exercise2.md)
+- [Exercise3: a non-trivial visualizer](docs/developer_exercise3.md)
 
 ## License
 
