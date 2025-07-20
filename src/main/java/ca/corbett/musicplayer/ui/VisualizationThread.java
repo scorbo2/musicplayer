@@ -176,17 +176,28 @@ public class VisualizationThread implements Runnable, UIReloadable {
             // If no one volunteered, then see if we need to switch back to the user-selected one:
             // (i.e. the previous track had an override but this one doesn't):
             if (!wasSwapped && isFileTriggerActive) {
-                if (interruptedVisualizerIndex == -1 || interruptedVisualizerIndex >= visualizerRotation.size()) {
-                    interruptedVisualizerIndex = 0;
+
+                // If visualizer rotation is enabled, figure out which one we need to return to:
+                boolean visualizerRotationEnabled = AppConfig.getInstance()
+                                                             .getVisualizerRotation() != VisualizerRotation.NEVER;
+                VisualizationManager.Visualizer visualizerToRestore;
+                if (visualizerRotationEnabled) {
+                    if (interruptedVisualizerIndex == -1 || interruptedVisualizerIndex >= visualizerRotation.size()) {
+                        interruptedVisualizerIndex = 0;
+                    }
+                    visualizerToRestore = visualizerRotation.get(interruptedVisualizerIndex);
                 }
-                VisualizationManager.Visualizer defaultVisualizer = visualizerRotation.get(interruptedVisualizerIndex);
-                if (effectiveVisualizer != defaultVisualizer) {
+                else {
+                    visualizerToRestore = AppConfig.getInstance().getVisualizer();
+                }
+
+                if (effectiveVisualizer != visualizerToRestore) {
                     logger.info("Restoring default visualizer");
                     if (effectiveVisualizer != null) {
                         pauseRendering();
                         effectiveVisualizer.stop();
                     }
-                    effectiveVisualizer = defaultVisualizer;
+                    effectiveVisualizer = visualizerToRestore;
                     effectiveVisualizer.initialize(width, height);
                     isFileTriggerActive = false;
                 }
@@ -433,7 +444,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private int getCurrentVisualizerIndex() {
         int index = -1;
         for (int i = 0; i < visualizerRotation.size(); i++) {
-            if (visualizerRotation.get(i) == effectiveVisualizer) {
+            if (visualizerRotation.get(i).name.equals(effectiveVisualizer.name)) {
                 index = i;
                 break;
             }
