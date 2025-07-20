@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.extensions.builtin;
 
 import ca.corbett.extensions.AppExtensionInfo;
 import ca.corbett.extras.image.ImageUtil;
+import ca.corbett.extras.image.animation.ImageScroller;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.ColorProperty;
 import ca.corbett.extras.properties.DecimalProperty;
@@ -331,105 +332,66 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
             }
         }
 
-        public enum ScrollSpeed {
-            VERY_SLOW("Very slow", 1),
-            SLOW("Slow", 2),
-            MEDIUM("Medium", 3),
-            FAST("Fast", 4),
-            VERY_FAST("Very fast", 5);
-
-            private final String label;
-            private final int speed;
-
-            ScrollSpeed(String label, int speed) {
-                this.label = label;
-                this.speed = speed;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
-
-            public int getSpeed() {
-                return speed;
-            }
-        }
-
-        public enum EasingStrength {
-            LINEAR("Linear", 1.0f),
-            QUADRATIC("Quadratic", 2.0f),
-            CUBIC("Cubic", 3.0f);
-
-            private final String label;
-            private final float value;
-
-            EasingStrength(String label, float value) {
-                this.label = label;
-                this.value = value;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
-
-            public float getValue() {
-                return value;
-            }
-        }
-
-        private BufferedImage image;
         private File sourceFile;
         int width;
         int height;
-        private float zoomFactor;
-        private int xOffset;
-        private int yOffset;
-        private float xDelta;
-        private float yDelta;
-        private int xDirection = -1; // -1 for left, +1 for right
-        private int yDirection = -1; // -1 for up, +1 for down
-        private boolean scaleCalculationsDone;
-        private volatile boolean isLoadInProgress;
-        private ScrollSpeed scrollSpeed;
         private OversizeHandling oversizeHandling;
-
-        // Configuration for bounce behavior
-        private float bounceZoneRatio = 0.06f; // What fraction of the scrollable area is the "bounce zone" - this should really be an app property
-        private float minSpeedRatio = 0.1f;   // Minimum speed as a ratio of max speed (0.0 = complete stop, 1.0 = no slowdown)
-        private float easingPower = 2.0f;     // Power for easing curve (1.0 = linear, 2.0 = quadratic, 3.0 = cubic, etc.)
+        BufferedImage image;
+        private ImageScroller imageScroller;
+        private volatile boolean isLoadInProgress;
 
         public AlbumArtVisualizer() {
             super(NAME);
-            scrollSpeed = ScrollSpeed.SLOW;
             oversizeHandling = OversizeHandling.SCALE_TO_FIT;
         }
 
         @Override
         public void initialize(int width, int height) {
             // We won't get image details until we get a renderFrame() message, so just blank out for now:
+            if (imageScroller == null) {
+                imageScroller = new ImageScroller(createBlankImage(width, height), width, height);
+            }
             if (image != null) {
                 reset();
                 isLoadInProgress = false;
             }
-
             this.width = width;
             this.height = height;
             reloadUI();
         }
 
+        private BufferedImage createBlankImage(int w, int h) {
+            BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = img.createGraphics();
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, w, h);
+            g.dispose();
+            return img;
+        }
+
         // Not currently using these setters, but we could wire them up with AppProperties maybe...
         public void setBounceZoneRatio(float ratio) {
-            this.bounceZoneRatio = Math.max(0.01f, Math.min(0.5f, ratio));
+            if (imageScroller != null) {
+                imageScroller.setBounceZoneRatio(Math.max(0.01f, Math.min(0.5f, ratio)));
+            }
         }
 
         public void setMinSpeedRatio(float ratio) {
-            this.minSpeedRatio = Math.max(0.0f, Math.min(1.0f, ratio));
+            if (imageScroller != null) {
+                imageScroller.setMinSpeedRatio(Math.max(0.0f, Math.min(1.0f, ratio)));
+            }
         }
 
-        public void setEasingPower(float power) {
-            this.easingPower = Math.max(0.5f, power);
+        public void setEasingPower(ImageScroller.EasingStrength strength) {
+            if (imageScroller != null) {
+                imageScroller.setEasingStrength(strength);
+            }
+        }
+
+        public void setScrollSpeed(ImageScroller.ScrollSpeed speed) {
+            if (imageScroller != null) {
+                imageScroller.setScrollSpeed(speed);
+            }
         }
 
         @Override
@@ -451,10 +413,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
             //noinspection unchecked
             oversizeHandling = ((EnumProperty<OversizeHandling>)oversizedProp).getSelectedItem();
             //noinspection unchecked
-            scrollSpeed = ((EnumProperty<ScrollSpeed>)scrollProp).getSelectedItem();
+            setScrollSpeed(((EnumProperty<ImageScroller.ScrollSpeed>)scrollProp).getSelectedItem());
             setBounceZoneRatio((float)((DecimalProperty)zoneProp).getValue());
             //noinspection unchecked
-            setEasingPower(((EnumProperty<EasingStrength>)easingProp).getSelectedItem().getValue());
+            setEasingPower(((EnumProperty<ImageScroller.EasingStrength>)easingProp).getSelectedItem());
         }
 
         public List<AbstractProperty> getProperties() {
@@ -467,15 +429,16 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                             "Or, an image file with the same name as an audio track.<br>" +
                             "  Example: some_track.mp3 and some_track.png</html>"));
             props.add(new EnumProperty<OversizeHandling>(OVERSIZE_PROP, "Oversized images:", oversizeHandling));
-            props.add(new EnumProperty<ScrollSpeed>(SPEED_PROP, "Scroll speed:", scrollSpeed));
+            props.add(new EnumProperty<ImageScroller.ScrollSpeed>(SPEED_PROP, "Scroll speed:",
+                                                                  ImageScroller.ScrollSpeed.SLOW));
 
-            AbstractProperty prop = new DecimalProperty(BOUNCE_ZONE_PROP, "Bounce zone size:", bounceZoneRatio, 0.01,
+            AbstractProperty prop = new DecimalProperty(BOUNCE_ZONE_PROP, "Bounce zone size:", 0.06, 0.01,
                                                         0.49, 0.01);
             prop.setHelpText(
                 "<html>Percentage of image width/height to<br>use as the \"bounce zone\"<br>(For acceleration/deceleration)</html>");
             props.add(prop);
-            prop = new EnumProperty<EasingStrength>(BOUNCE_EASING_STRENGTH_PROP, "Easing strength:",
-                                                    EasingStrength.QUADRATIC);
+            prop = new EnumProperty<ImageScroller.EasingStrength>(BOUNCE_EASING_STRENGTH_PROP, "Easing strength:",
+                                                                  ImageScroller.EasingStrength.QUADRATIC);
             prop.setHelpText("Strength of acceleration/deceleration");
             props.add(prop);
 
@@ -489,9 +452,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
          * @param image The loaded image.
          */
         private void setImageData(BufferedImage image) {
-            this.isLoadInProgress = false;
             reset();
+            this.isLoadInProgress = false;
             this.image = image;
+            imageScroller.setImage(image);
         }
 
         @Override
@@ -536,7 +500,6 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                 sourceFile = trackInfo.getSourceFile();
             }
 
-            // If we have an image, render it:
             if (image != null) {
                 // If the image dimensions are very small, just ignore it:
                 // (see asyncImageLoad below for details... this is a bit goofy but handles image load issues)
@@ -546,32 +509,33 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
 
                 // If we're set to stretch the image, do it:
                 if (oversizeHandling == OversizeHandling.STRETCH_TO_FIT) {
-                    g.drawImage(image, 0, 0, width, height, null);
+                    g.drawImage(imageScroller.getImage(), 0, 0, width, height, null);
                 }
 
                 // Otherwise, check to see if a scale is necessary:
                 else if (oversizeHandling == OversizeHandling.SCALE_TO_FIT || (image.getWidth() <= width && image.getHeight() <= height)) {
-                    if (!scaleCalculationsDone) {
-                        scaleCalculationsDone = true;
-                        float imgAspect = (float) image.getWidth() / (float) image.getHeight();
-                        float myAspect = (float) width / (float) height;
-                        if (imgAspect >= 1.0) {
-                            if (myAspect >= imgAspect) {
-                                zoomFactor = (float) height / image.getHeight();
-                            } else {
-                                zoomFactor = (float) width / image.getWidth();
-                            }
-                        } else {
-                            if (myAspect <= imgAspect) {
-                                zoomFactor = (float) width / image.getWidth();
-                            } else {
-                                zoomFactor = (float) height / image.getHeight();
-                            }
+                    float zoomFactor;
+                    float imgAspect = (float)image.getWidth() / (float)image.getHeight();
+                    float myAspect = (float)width / (float)height;
+                    if (imgAspect >= 1.0) {
+                        if (myAspect >= imgAspect) {
+                            zoomFactor = (float)height / image.getHeight();
                         }
+                        else {
+                            zoomFactor = (float)width / image.getWidth();
+                        }
+                    }
+                    else {
+                        if (myAspect <= imgAspect) {
+                            zoomFactor = (float)width / image.getWidth();
+                        }
+                        else {
+                            zoomFactor = (float)height / image.getHeight();
+                        }
+                    }
 
-                        if (zoomFactor <= 0.0) {
-                            zoomFactor = 1;
-                        }
+                    if (zoomFactor <= 0.0) {
+                        zoomFactor = 1;
                     }
 
                     // Figure out our actual image dimensions:
@@ -582,92 +546,9 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                     g.drawImage(image, centerX, centerY, imgWidth, imgHeight, null);
                 }
 
-                // Otherwise, we're slowly panning an oversized image:
+                // Otherwise, scale and scroll:
                 else {
-                    if (!scaleCalculationsDone) {
-                        xOffset = 0;
-                        yOffset = 0;
-                        scaleCalculationsDone = true;
-                        boolean isPortrait = image.getHeight() > image.getWidth();
-                        zoomFactor = isPortrait ? (float) width / image.getWidth() : (float) height / image.getHeight();
-                        if (zoomFactor <= 0.0) {
-                            zoomFactor = 1;
-                        }
-                        if (isPortrait) {
-                            yDirection = -1; // start scrolling up
-                        } else {
-                            xDirection = -1; // start scrolling left
-                        }
-                        int imgWidth = (int) (image.getWidth() * zoomFactor);
-                        int imgHeight = (int) (image.getHeight() * zoomFactor);
-
-                        // Wonky case: if we scale it down and it ends up fitting inside the screen,
-                        // we can't scroll around inside it, so just center it instead:
-                        if (imgWidth <= width && imgHeight <= height) {
-                            xDelta = 0;
-                            yDelta = 0;
-                            xOffset = (width / 2) - (imgWidth / 2);
-                            yOffset = (height / 2) - (imgHeight / 2);
-                        }
-                    }
-                    int imgWidth = (int) (image.getWidth() * zoomFactor);
-                    int imgHeight = (int) (image.getHeight() * zoomFactor);
-                    g.drawImage(image, xOffset, yOffset, imgWidth, imgHeight, null);
-
-                    // Calculate base speed
-                    float baseSpeed = scrollSpeed.getSpeed();
-
-                    // Update horizontal movement
-                    if (imgWidth > width) {
-                        float speedMultiplier = calculateSpeedMultiplier(xOffset, width - imgWidth, width);
-                        xDelta = xDirection * baseSpeed * speedMultiplier;
-
-                        // Ensure minimum movement of 1 pixel to prevent animation from getting stuck
-                        if (xDirection == -1 && xDelta > -1) {
-                            xDelta = -1;
-                        }
-                        else if (xDirection == 1 && xDelta < 1) {
-                            xDelta = 1;
-                        }
-
-                        xOffset += (int)xDelta;
-
-                        // Check bounds and reverse direction if needed
-                        if (xOffset >= 0) {
-                            xOffset = 0;
-                            xDirection = -1;
-                        }
-                        else if (xOffset <= (width - imgWidth)) {
-                            xOffset = width - imgWidth;
-                            xDirection = 1;
-                        }
-                    }
-
-                    // Update vertical movement
-                    if (imgHeight > height) {
-                        float speedMultiplier = calculateSpeedMultiplier(yOffset, height - imgHeight, height);
-                        yDelta = yDirection * baseSpeed * speedMultiplier;
-
-                        // Ensure minimum movement of 1 pixel to prevent animation from getting stuck
-                        if (yDirection == -1 && yDelta > -1) {
-                            yDelta = -1;
-                        }
-                        else if (yDirection == 1 && yDelta < 1) {
-                            yDelta = 1;
-                        }
-
-                        yOffset += (int)yDelta;
-
-                        // Check bounds and reverse direction if needed
-                        if (yOffset >= 0) {
-                            yOffset = 0;
-                            yDirection = -1;
-                        }
-                        else if (yOffset <= (height - imgHeight)) {
-                            yOffset = height - imgHeight;
-                            yDirection = 1;
-                        }
-                    }
+                    imageScroller.renderFrame(g);
                 }
             }
 
@@ -685,12 +566,6 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                 image = null;
                 sourceFile = null;
             }
-            zoomFactor = 0f;
-            xOffset = 0;
-            yOffset = 0;
-            xDelta = 0;
-            yDelta = 0;
-            scaleCalculationsDone = false;
         }
 
         private void asyncImageLoad(File imageFile) {
@@ -717,47 +592,6 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                     thisVisualizer.setImageData(image);
                 }
             }).start();
-        }
-
-        /**
-         * Calculates speed multiplier based on distance from bounce points
-         *
-         * @param currentPos Current position (xOffset or yOffset)
-         * @param minPos     Minimum position (boundary)
-         * @param screenSize Screen dimension (width or height)
-         * @return Speed multiplier between minSpeedRatio and 1.0
-         */
-        private float calculateSpeedMultiplier(int currentPos, int minPos, int screenSize) {
-            // Calculate total scrollable distance
-            int totalDistance = Math.abs(minPos);
-            if (totalDistance == 0) { return 1.0f; }
-
-            // Calculate bounce zone size
-            int bounceZoneSize = (int)(totalDistance * bounceZoneRatio);
-            if (bounceZoneSize == 0) { return 1.0f; }
-
-            // Distance from top boundary (0)
-            int distanceFromTop = Math.abs(currentPos);
-
-            // Distance from bottom boundary
-            int distanceFromBottom = Math.abs(currentPos - minPos);
-
-            // Find the minimum distance to any boundary
-            int distanceFromNearestBound = Math.min(distanceFromTop, distanceFromBottom);
-
-            // If we're outside the bounce zone, use full speed
-            if (distanceFromNearestBound >= bounceZoneSize) {
-                return 1.0f;
-            }
-
-            // Calculate easing factor (0.0 at boundary, 1.0 at edge of bounce zone)
-            float easingFactor = (float)distanceFromNearestBound / bounceZoneSize;
-
-            // Apply easing curve
-            easingFactor = (float)Math.pow(easingFactor, easingPower);
-
-            // Interpolate between minimum and maximum speed
-            return minSpeedRatio + (1.0f - minSpeedRatio) * easingFactor;
         }
 
         @Override
