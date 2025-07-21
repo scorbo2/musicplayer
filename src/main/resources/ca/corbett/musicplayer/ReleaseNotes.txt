@@ -2,10 +2,15 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
-Version 2.8 [TODO] - Maintenance release
+Version 2.8 [2025-07-20] - Maintenance release
+  #31 Mention ext-mp-scenery in the README
   #32 Include Jackson dependency for json parsing
   #34 Minor change to startup env vars
   #35 Allow extensions to peek property config values
+  #36 Upgrade to swing-extras 2.3
+  #37 Properties form code cleanup
+  #38 Album Art visualizer code cleanup
+  #39 Fix minor bug in visualizer rotation
 
 Version 2.7 [2025-07-01] - Maintenance release
   #18 Visualizer overlay is flickering
