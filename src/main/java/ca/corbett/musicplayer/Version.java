@@ -9,12 +9,40 @@ public final class Version {
     private static final AboutInfo aboutInfo;
 
     public static String NAME = "MusicPlayer";
-    public static String VERSION = "2.7";
+    public static String VERSION = "2.8";
     public static String FULL_NAME = NAME + " " + VERSION;
     public static String COPYRIGHT = "Copyright © 2017 Steve Corbett";
     public static String PROJECT_URL = "https://github.com/scorbo2/musicplayer";
     public static String LICENSE = "https://opensource.org/license/mit";
-    public static final File APPLICATION_DIR;
+
+    /**
+     * The directory where MusicPlayer was installed -
+     * caution, this might be null! We can't guess a
+     * value for this property, it has to be supplied
+     * by the launcher script, but the launcher script
+     * might have been modified by the user, or the user
+     * might have started the app without using the launcher.
+     * <p>
+     * The installer script for linux defaults this
+     * to /opt/MusicPlayer, but the user can override that.
+     * </p>
+     */
+    public static final File INSTALL_DIR;
+
+    /**
+     * The directory where application configuration and
+     * log files can go. If not given to us explicitly by
+     * the launcher script, we default it a directory named
+     * .MusicPlayer in the user's home directory.
+     */
+    public static final File SETTINGS_DIR;
+
+    /**
+     * The directory to scan for extension jars at startup.
+     * If not given to us explicitly by the launcher script,
+     * we default it to a directory called "extensions"
+     * inside of SETTINGS_DIR.
+     */
     public static final File EXTENSIONS_DIR;
 
     static {
@@ -29,14 +57,17 @@ public final class Version {
         aboutInfo.logoImageLocation = "/ca/corbett/musicplayer/images/logo_wide.jpg";
         aboutInfo.shortDescription = "Extensible music player with cool visualizations!";
 
-        String appDir = System.getProperty("APPLICATION_HOME",
+        String installDir = System.getProperty("INSTALL_DIR", null);
+        INSTALL_DIR = installDir == null ? null : new File(installDir);
+
+        String appDir = System.getProperty("SETTINGS_DIR",
                                            new File(System.getProperty("user.home"), "." + NAME).getAbsolutePath());
-        APPLICATION_DIR = new File(appDir);
-        if (!APPLICATION_DIR.exists()) {
-            APPLICATION_DIR.mkdirs();
+        SETTINGS_DIR = new File(appDir);
+        if (!SETTINGS_DIR.exists()) {
+            SETTINGS_DIR.mkdirs();
         }
 
-        String extDir = System.getProperty("EXTENSIONS_DIR", new File(APPLICATION_DIR, "extensions").getAbsolutePath());
+        String extDir = System.getProperty("EXTENSIONS_DIR", new File(SETTINGS_DIR, "extensions").getAbsolutePath());
         EXTENSIONS_DIR = new File(extDir);
         if (!EXTENSIONS_DIR.exists()) {
             EXTENSIONS_DIR.mkdirs();

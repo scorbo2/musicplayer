@@ -171,7 +171,7 @@ Since there is no default value, you have to manually specify the location to be
 want to put extension jars in ~/.MusicPlayer/extensionJars :
 
 ```shell
-java -DEXTENSIONS_DIR=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-2.7.jar
+java -DEXTENSIONS_DIR=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-2.8.jar
 ```
 
 On startup, we should see some log output describing what happened:

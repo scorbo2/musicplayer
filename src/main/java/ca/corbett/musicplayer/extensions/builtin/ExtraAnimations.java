@@ -52,16 +52,8 @@ public class ExtraAnimations extends MusicPlayerExtension {
     }
 
     @Override
-    public List<AbstractProperty> getConfigProperties() {
+    protected List<AbstractProperty> createConfigProperties() {
         return List.of();
-    }
-
-    @Override
-    public void onActivate() {
-    }
-
-    @Override
-    public void onDeactivate() {
     }
 
     @Override

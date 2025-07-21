@@ -24,7 +24,7 @@ import java.util.List;
  * @author scorbo2
  * @since 2025-03-26
  */
-public abstract class MusicPlayerExtension implements AppExtension {
+public abstract class MusicPlayerExtension extends AppExtension {
 
     /**
      * Override this method if your extension provides custom

@@ -4,6 +4,7 @@ import ca.corbett.extensions.AppExtensionInfo;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -12,6 +13,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AudioPanelIdleAnimationTest {
+
+    @BeforeAll
+    public static void setup() {
+        // Don't load extensions for unit tests!!!
+        System.setProperty("EXTENSIONS_DIR", "/tmp");
+    }
 
     @Test
     public void getAll_withNoExtensions_shouldReturnBuiltInAnimations() {
@@ -54,16 +61,8 @@ class AudioPanelIdleAnimationTest {
         }
 
         @Override
-        public List<AbstractProperty> getConfigProperties() {
+        protected List<AbstractProperty> createConfigProperties() {
             return List.of();
-        }
-
-        @Override
-        public void onActivate() {
-        }
-
-        @Override
-        public void onDeactivate() {
         }
 
         @Override

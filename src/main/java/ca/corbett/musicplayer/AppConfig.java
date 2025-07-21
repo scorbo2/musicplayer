@@ -11,12 +11,9 @@ import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
-import ca.corbett.extras.properties.PropertiesDialog;
 import ca.corbett.extras.properties.PropertiesManager;
-import ca.corbett.forms.FormPanel;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
-import ca.corbett.forms.fields.FormField;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
@@ -28,19 +25,15 @@ import ca.corbett.musicplayer.ui.VisualizationManager;
 import ca.corbett.musicplayer.ui.VisualizationThread;
 import ca.corbett.musicplayer.ui.VisualizationWindow;
 
-import javax.swing.AbstractAction;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
 import static ca.corbett.extras.properties.ColorProperty.ColorType;
-import static ca.corbett.extras.properties.PropertiesManager.findFormField;
 import static ca.corbett.musicplayer.ui.AudioPanel.WaveformResolution;
 import static ca.corbett.musicplayer.ui.ControlPanel.ButtonSize;
 import static ca.corbett.musicplayer.ui.ControlPanel.ControlAlignment;
@@ -125,7 +118,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private static final WaveformConfig defaultWaveform = new WaveformConfig();
 
     static {
-        PROPS_FILE = new File(Version.APPLICATION_DIR, "MusicPlayer.props");
+        PROPS_FILE = new File(Version.SETTINGS_DIR, "MusicPlayer.props");
     }
 
     protected AppConfig() {
@@ -176,6 +169,20 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         }
 
         return instance;
+    }
+
+    /**
+     * Offers a peek directly into the props file without going through the usual loading mechanism.
+     * This allows direct access to properties (in String form only) exactly as they currently
+     * exist in the props file. This can be useful in rare cases where an extension needs to know
+     * a property value in order to initialize some other property value.
+     * If the value does not exist or an error occurs while reading the props file, empty string is returned.
+     *
+     * @param propName The fully qualified name of the property in question.
+     * @return The raw value in String form as it exists in the props file at the time of this call. May be empty.
+     */
+    public static String peek(String propName) {
+        return AppProperties.peek(PROPS_FILE, propName);
     }
 
     public ButtonSize getButtonSize() {
@@ -381,6 +388,16 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         overrideAppThemeWaveform = buildCombo("Waveform.Waveform graphics.override", "Waveform:",
                                               getOverrideThemeWaveformChoices(), false);
 
+        // Make sure we respond to change events properly, to enable or disable the override fields:
+        overrideAppThemeWaveform.addFormFieldChangeListener(event -> {
+            boolean shouldEnable = ((ComboField)event.getFormField()).getSelectedIndex() == 1;
+            event.getFormPanel().getFormField(waveformBgColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.getFormPanel().getFormField(waveformFillColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.getFormPanel().getFormField(waveformOutlineColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.getFormPanel().getFormField(waveformOutlineThickness.getFullyQualifiedName())
+                 .setEnabled(shouldEnable);
+        });
+
         waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor", "Background:", ColorType.SOLID,
                                             defaultWaveform.getBgColor());
         waveformFillColor = new ColorProperty("Waveform.Waveform graphics.fillColor", "Fill:", ColorType.SOLID,
@@ -432,6 +449,24 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         visualizerOverlayOverrideTheme = new BooleanProperty("Visualization.Overlay.overrideTheme",
                                                              "Override app theme and use the following colors:",
                                                              false);
+
+        // Make sure we enable or disable the overlay fields based on the override checkbox:
+        visualizerOverlayOverrideTheme.addFormFieldChangeListener(event -> {
+            boolean isOverride = ((CheckBoxField)event.getFormField()).isChecked();
+            event.getFormPanel().getFormField(visualizerOverlayBackground.getFullyQualifiedName())
+                 .setEnabled(isOverride);
+            event.getFormPanel().getFormField(visualizerOverlayTrackColor.getFullyQualifiedName())
+                 .setEnabled(isOverride);
+            event.getFormPanel().getFormField(visualizerOverlayHeaderColor.getFullyQualifiedName())
+                 .setEnabled(isOverride);
+            event.getFormPanel().getFormField(visualizerOverlayBorderColor.getFullyQualifiedName())
+                 .setEnabled(isOverride);
+            event.getFormPanel().getFormField(visualizerOverlayProgressBackground.getFullyQualifiedName())
+                 .setEnabled(isOverride);
+            event.getFormPanel().getFormField(visualizerOverlayProgressForeground.getFullyQualifiedName())
+                 .setEnabled(isOverride);
+        });
+
         visualizerOverlayBackground = new ColorProperty("Visualization.Overlay.bgColor", "Overlay background:",
                                                         ColorType.SOLID, Color.BLACK);
         visualizerOverlayBorderColor = new ColorProperty("Visualization.Overlay.borderColor", "Overlay border:",
@@ -500,31 +535,36 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     /**
-     * Overridden here so we can add custom logic to our properties form before
-     * it gets rendered. Setting certain action listeners and the initial state
-     * of controls needs to be done before the form is rendered. Fortunately,
-     * the PropertiesManager class provides a way for us to do that somewhat easily.
+     * Overridden here so we can add override the default size of the properties dialog,
+     * and also so that we can set the initial state of certain fields based upon
+     * the values of our properties.
      *
      * @param owner The owning Frame (so we can make the dialog modal to that Frame).
      * @return true if the user OK'd the dialog with changes.
      */
     @Override
     public boolean showPropertiesDialog(Frame owner) {
-        List<FormPanel> formPanels = propsManager.generateUnrenderedFormPanels(FormPanel.Alignment.TOP_LEFT, 24);
+        // We need a slightly larger dialog than the default value:
+        propertiesDialogMinimumWidth = propertiesDialogInitialWidth = 660;
+        propertiesDialogMinimumHeight = propertiesDialogInitialHeight = 480;
 
-        // Our custom form logic goes here:
-        addWaveformOverrideFormBehaviour(formPanels);
-        addOverlayOverrideFormBehaviour(formPanels);
+        // Set initial state of waveform fields based on the value of overrideAppThemeWaveform:
+        boolean isWaveformOverride = overrideAppThemeWaveform.getSelectedIndex() == 1;
+        waveformBgColor.setInitiallyEditable(isWaveformOverride);
+        waveformFillColor.setInitiallyEditable(isWaveformOverride);
+        waveformOutlineColor.setInitiallyEditable(isWaveformOverride);
+        waveformOutlineThickness.setInitiallyEditable(isWaveformOverride);
 
-        PropertiesDialog dialog = new PropertiesDialog(propsManager, owner, Version.NAME + " properties", formPanels);
-        dialog.setSize(660, 480);
-        dialog.setMinimumSize(new Dimension(660, 480));
-        dialog.setVisible(true);
-        if (dialog.wasOkayed()) {
-            save();
-        }
+        // Set initial state of overlay fields based on visualizerOverlayOverrideTheme:
+        boolean isOverlayOverride = visualizerOverlayOverrideTheme.getValue();
+        visualizerOverlayBackground.setInitiallyEditable(isOverlayOverride);
+        visualizerOverlayTrackColor.setInitiallyEditable(isOverlayOverride);
+        visualizerOverlayHeaderColor.setInitiallyEditable(isOverlayOverride);
+        visualizerOverlayBorderColor.setInitiallyEditable(isOverlayOverride);
+        visualizerOverlayProgressBackground.setInitiallyEditable(isOverlayOverride);
+        visualizerOverlayProgressForeground.setInitiallyEditable(isOverlayOverride);
 
-        return dialog.wasOkayed();
+        return super.showPropertiesDialog(owner);
     }
 
     /**
@@ -631,88 +671,5 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
             default:
                 return 25;
         }
-    }
-
-
-    /**
-     * Adds custom logic to enable/disable the waveform cosmetic properties depending on the value
-     * of the override combo box, and sets the initial state of all relevant components.
-     * This can only be done before the form panel is rendered.
-     *
-     * @param formPanels A list of unrendered FormPanels.
-     */
-    private void addWaveformOverrideFormBehaviour(List<FormPanel> formPanels) {
-        final ComboField combo = (ComboField)findFormField(overrideAppThemeWaveform.getFullyQualifiedName(),
-                                                           formPanels);
-        final FormField bgColorField = findFormField(waveformBgColor.getFullyQualifiedName(), formPanels);
-        final FormField fillColorField = findFormField(waveformFillColor.getFullyQualifiedName(), formPanels);
-        final FormField outlineColorField = findFormField(waveformOutlineColor.getFullyQualifiedName(), formPanels);
-        final FormField outlineWidthField = findFormField(waveformOutlineThickness.getFullyQualifiedName(), formPanels);
-        if (combo == null || bgColorField == null || fillColorField == null || outlineColorField == null || outlineWidthField == null) {
-            logger.severe("addWaveformOverrideFormBehaviour: unable to locate required form fields! Internal error.");
-            return;
-        }
-
-        // Set initial state for these fields:
-        bgColorField.setEnabled(combo.getSelectedIndex() == 1);
-        fillColorField.setEnabled(combo.getSelectedIndex() == 1);
-        outlineColorField.setEnabled(combo.getSelectedIndex() == 1);
-        outlineWidthField.setEnabled(combo.getSelectedIndex() == 1);
-
-        // Now allow it to change based on the override combo box value:
-        combo.addValueChangedAction(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                boolean shouldEnable = combo.getSelectedIndex() == 1;
-                bgColorField.setEnabled(shouldEnable);
-                fillColorField.setEnabled(shouldEnable);
-                outlineColorField.setEnabled(shouldEnable);
-                outlineWidthField.setEnabled(shouldEnable);
-            }
-        });
-    }
-
-    /**
-     * Adds custom logic to enable/disable the waveform cosmetic properties depending on the value
-     * of the override combo box, and sets the initial state of all relevant components.
-     * This can only be done before the form panel is rendered.
-     *
-     * @param formPanels A list of unrendered FormPanels.
-     */
-    private void addOverlayOverrideFormBehaviour(List<FormPanel> formPanels) {
-        CheckBoxField allowOverride = (CheckBoxField)findFormField(
-            visualizerOverlayOverrideTheme.getFullyQualifiedName(), formPanels);
-        FormField overlayBg = findFormField(visualizerOverlayBackground.getFullyQualifiedName(), formPanels);
-        FormField overlayFg = findFormField(visualizerOverlayTrackColor.getFullyQualifiedName(), formPanels);
-        FormField headerFg = findFormField(visualizerOverlayHeaderColor.getFullyQualifiedName(), formPanels);
-        FormField borderColor = findFormField(visualizerOverlayBorderColor.getFullyQualifiedName(), formPanels);
-        FormField progressBg = findFormField(visualizerOverlayProgressBackground.getFullyQualifiedName(), formPanels);
-        FormField progressFg = findFormField(visualizerOverlayProgressForeground.getFullyQualifiedName(), formPanels);
-        if (allowOverride == null || overlayBg == null || overlayFg == null ||
-            headerFg == null || progressFg == null || progressBg == null || borderColor == null) {
-            logger.severe("addOverlayOverrideFormBehaviour: unable to locate required form fields! Internal error.");
-            return;
-        }
-
-        // set initial state for these fields:
-        overlayBg.setEnabled(allowOverride.isChecked());
-        overlayFg.setEnabled(allowOverride.isChecked());
-        headerFg.setEnabled(allowOverride.isChecked());
-        borderColor.setEnabled(allowOverride.isChecked());
-        progressBg.setEnabled(allowOverride.isChecked());
-        progressFg.setEnabled(allowOverride.isChecked());
-
-        // now allow it to change based on the override checkbox:
-        allowOverride.addValueChangedAction(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                overlayBg.setEnabled(allowOverride.isChecked());
-                overlayFg.setEnabled(allowOverride.isChecked());
-                headerFg.setEnabled(allowOverride.isChecked());
-                borderColor.setEnabled(allowOverride.isChecked());
-                progressBg.setEnabled(allowOverride.isChecked());
-                progressFg.setEnabled(allowOverride.isChecked());
-            }
-        });
     }
 }
