@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.properties.PropertiesDialog;
+import ca.corbett.forms.Alignment;
 import ca.corbett.forms.FormPanel;
 import ca.corbett.forms.fields.LabelField;
 
@@ -22,12 +23,11 @@ public class TrackInfoDialog extends JFrame {
         this.trackFile = trackFile;
 
         setLayout(new BorderLayout());
-        FormPanel formPanel = new FormPanel(FormPanel.Alignment.CENTER);
-        formPanel.addFormField(new LabelField("File name:", trimString(trackFile.getName(), 199)));
-        formPanel.addFormField(new LabelField("File size:", getSizeString(trackFile.length())));
-        formPanel.addFormField(
+        FormPanel formPanel = new FormPanel(Alignment.CENTER);
+        formPanel.add(new LabelField("File name:", trimString(trackFile.getName(), 199)));
+        formPanel.add(new LabelField("File size:", getSizeString(trackFile.length())));
+        formPanel.add(
                 new LabelField("Location:", trimString(trackFile.getParentFile().getAbsolutePath(), 199)));
-        formPanel.render();
         add(PropertiesDialog.buildScrollPane(formPanel), BorderLayout.CENTER);
     }
 
