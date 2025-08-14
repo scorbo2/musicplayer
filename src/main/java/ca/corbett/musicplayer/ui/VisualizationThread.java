@@ -152,9 +152,14 @@ public class VisualizationThread implements Runnable, UIReloadable {
             currentSongFile = songFile;
 
             // Check our visualizers to see if any of them want to override the current one,
-            // based on the new song file:
+            // based on the new song file. We traverse the list backwards because load order matters!
+            // We want user-supplied visualizers (loaded last) to be able to override the
+            // built-in ones (loaded first), and not the other way around.
             boolean wasSwapped = false;
-            for (VisualizationManager.Visualizer visualizer : MusicPlayerExtensionManager.getInstance().getCustomVisualizers()) {
+            List<VisualizationManager.Visualizer> visualizers = MusicPlayerExtensionManager.getInstance()
+                                                                                           .getCustomVisualizers();
+            for (int i = visualizers.size() - 1; i >= 0; i--) {
+                VisualizationManager.Visualizer visualizer = visualizers.get(i);
                 if (visualizer == effectiveVisualizer || !visualizer.isSupportsFileTriggers()) {
                     continue;
                 }
