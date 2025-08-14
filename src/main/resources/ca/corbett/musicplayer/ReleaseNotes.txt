@@ -4,6 +4,7 @@ Author: Steve Corbett
 
 Version 2.9 [TODO] - Maintenance release
   #43 Upgrade Java 11 to Java 17
+  #42 Allow Ctrl+Q to quit the application
   #41 Upgrade to swing-extras 2.4
 
 Version 2.8 [2025-07-20] - Maintenance release
