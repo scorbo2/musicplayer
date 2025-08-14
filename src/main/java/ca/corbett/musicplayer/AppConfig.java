@@ -74,22 +74,22 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private static AppConfig instance;
     public static final File PROPS_FILE;
 
-    private ComboProperty idleAnimation;
+    private ComboProperty<String> idleAnimation;
     private EnumProperty<ButtonSize> buttonSize;
     private EnumProperty<ControlAlignment> controlAlignment;
-    private ComboProperty overrideAppThemeWaveform;
+    private ComboProperty<String> overrideAppThemeWaveform;
     private ColorProperty waveformBgColor;
     private ColorProperty waveformFillColor;
     private ColorProperty waveformOutlineColor;
     private IntegerProperty waveformOutlineThickness;
     private EnumProperty<WaveformResolution> waveformResolution;
-    private ComboProperty applicationTheme;
+    private ComboProperty<String> applicationTheme;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
     private IntegerProperty windowWidth;
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
-    private ComboProperty visualizerType;
+    private ComboProperty<String> visualizerType;
     private EnumProperty<VisualizationThread.VisualizerRotation> visualizerRotation;
     private BooleanProperty excludeBlankVisualizerFromRotation;
     private BooleanProperty visualizerScreensaverPrevention;
@@ -110,7 +110,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ColorProperty visualizerOverlayHeaderColor;
     private ColorProperty visualizerOverlayProgressBackground;
     private ColorProperty visualizerOverlayProgressForeground;
-    private ComboProperty visualizerOldHardwareDelay;
+    private ComboProperty<String> visualizerOldHardwareDelay;
 
     /**
      * This is only used for setting default waveform prefs.
@@ -390,11 +390,11 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         // Make sure we respond to change events properly, to enable or disable the override fields:
         overrideAppThemeWaveform.addFormFieldChangeListener(event -> {
-            boolean shouldEnable = ((ComboField)event.getFormField()).getSelectedIndex() == 1;
-            event.getFormPanel().getFormField(waveformBgColor.getFullyQualifiedName()).setEnabled(shouldEnable);
-            event.getFormPanel().getFormField(waveformFillColor.getFullyQualifiedName()).setEnabled(shouldEnable);
-            event.getFormPanel().getFormField(waveformOutlineColor.getFullyQualifiedName()).setEnabled(shouldEnable);
-            event.getFormPanel().getFormField(waveformOutlineThickness.getFullyQualifiedName())
+            boolean shouldEnable = ((ComboField<String>)event.formField()).getSelectedIndex() == 1;
+            event.formPanel().getFormField(waveformBgColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.formPanel().getFormField(waveformFillColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.formPanel().getFormField(waveformOutlineColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.formPanel().getFormField(waveformOutlineThickness.getFullyQualifiedName())
                  .setEnabled(shouldEnable);
         });
 
@@ -452,18 +452,18 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         // Make sure we enable or disable the overlay fields based on the override checkbox:
         visualizerOverlayOverrideTheme.addFormFieldChangeListener(event -> {
-            boolean isOverride = ((CheckBoxField)event.getFormField()).isChecked();
-            event.getFormPanel().getFormField(visualizerOverlayBackground.getFullyQualifiedName())
+            boolean isOverride = ((CheckBoxField)event.formField()).isChecked();
+            event.formPanel().getFormField(visualizerOverlayBackground.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayTrackColor.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayTrackColor.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayHeaderColor.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayHeaderColor.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayBorderColor.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayBorderColor.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayProgressBackground.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayProgressBackground.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayProgressForeground.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayProgressForeground.getFullyQualifiedName())
                  .setEnabled(isOverride);
         });
 
@@ -578,12 +578,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
      * @param prefer2nd If true, index 1 will be preselected instead of 0 (if more than one option is present)
      * @return A ComboProperty.
      */
-    private ComboProperty buildCombo(String fieldName, String label, List<String> options, boolean prefer2nd) {
+    private ComboProperty<String> buildCombo(String fieldName, String label, List<String> options, boolean prefer2nd) {
         int selectedIndex = 0;
         if (prefer2nd && options.size() > 1) {
             selectedIndex = 1;
         }
-        return new ComboProperty(fieldName, label, options, selectedIndex, false);
+        return new ComboProperty<>(fieldName, label, options, selectedIndex, false);
     }
 
     /**

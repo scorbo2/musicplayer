@@ -6,6 +6,7 @@ import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
+import ca.corbett.musicplayer.actions.StopAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 
 import javax.swing.JFrame;
@@ -156,6 +157,7 @@ public class MainWindow extends JFrame {
                  */
                 @Override
                 public void windowClosing(WindowEvent e) {
+                    new StopAction().actionPerformed(null);
                     VisualizationWindow.getInstance().stopFullScreen();
                     MusicPlayerExtensionManager.getInstance().deactivateAll();
                     logger.info("Application windowClosing(): finished cleanup.");
