@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer.extensions.builtin;
 
 import ca.corbett.extensions.AppExtensionInfo;
+import ca.corbett.extras.gradient.ColorSelectionType;
 import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.image.animation.ImageScroller;
 import ca.corbett.extras.properties.AbstractProperty;
@@ -142,8 +143,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
                     "<html>The " + NAME + " visualizer shows a gently rolling wave of<br>" +
                             "color gradients, moving either horizontally or vertically.</html>"
             ));
-            props.add(new ColorProperty(startColorPropName, "Start color:", ColorProperty.ColorType.SOLID, Color.BLACK));
-            props.add(new ColorProperty(endColorPropName, "End color:", ColorProperty.ColorType.SOLID, Color.BLUE));
+            props.add(new ColorProperty(startColorPropName, "Start color:", ColorSelectionType.SOLID)
+                          .setSolidColor(Color.BLACK));
+            props.add(new ColorProperty(endColorPropName, "End color:", ColorSelectionType.SOLID)
+                          .setSolidColor(Color.BLUE));
             props.add(new EnumProperty<>(directionPropName, "Direction:", RollingWaveVisualizer.DIRECTION.HORIZONTAL));
             props.add(new IntegerProperty(wavelengthPropName, "Wavelength:", 500, 10, 16000, 10));
             props.add(new IntegerProperty(waveSpeedPropName, "Wave speed:", 2, 1, 8, 1));
@@ -157,8 +160,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
             this.height = height;
 
             // Precompute the gradient colours to save time during the animation loop:
-            startColor = ((ColorProperty) AppConfig.getInstance().getPropertiesManager().getProperty(startColorPropName)).getColor();
-            endColor = ((ColorProperty) AppConfig.getInstance().getPropertiesManager().getProperty(endColorPropName)).getColor();
+            startColor = ((ColorProperty)AppConfig.getInstance().getPropertiesManager()
+                                                  .getProperty(startColorPropName)).getSolidColor();
+            endColor = ((ColorProperty)AppConfig.getInstance().getPropertiesManager()
+                                                .getProperty(endColorPropName)).getSolidColor();
             direction = ((EnumProperty<DIRECTION>) AppConfig.getInstance().getPropertiesManager().getProperty(directionPropName)).getSelectedItem();
             wavelength = ((IntegerProperty) AppConfig.getInstance().getPropertiesManager().getProperty(wavelengthPropName)).getValue();
             waveSpeed = ((IntegerProperty) AppConfig.getInstance().getPropertiesManager().getProperty(waveSpeedPropName)).getValue();

@@ -1,7 +1,8 @@
 package ca.corbett.musicplayer.extensions.builtin;
 
 import ca.corbett.extensions.AppExtensionInfo;
-import ca.corbett.extras.gradient.GradientConfig;
+import ca.corbett.extras.gradient.Gradient;
+import ca.corbett.extras.gradient.GradientType;
 import ca.corbett.extras.gradient.GradientUtil;
 import ca.corbett.extras.image.ImageTextUtil;
 import ca.corbett.extras.properties.AbstractProperty;
@@ -92,14 +93,12 @@ public class ExtraAnimations extends MusicPlayerExtension {
         public void run() {
             isRunning = true;
             AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
-            GradientConfig gradient1 = new GradientConfig();
-            gradient1.setColor1(theme.getNormalBgColor());
-            gradient1.setColor2(theme.getNormalFgColor());
-            gradient1.setGradientType(GradientUtil.GradientType.HORIZONTAL_LINEAR);
-            GradientConfig gradient2 = new GradientConfig();
-            gradient2.setColor1(theme.getNormalFgColor());
-            gradient2.setColor2(theme.getNormalBgColor());
-            gradient2.setGradientType(GradientUtil.GradientType.HORIZONTAL_LINEAR);
+            Gradient gradient1 = new Gradient(GradientType.HORIZONTAL_LINEAR,
+                                              theme.getNormalBgColor(),
+                                              theme.getNormalFgColor());
+            Gradient gradient2 = new Gradient(GradientType.HORIZONTAL_LINEAR,
+                                              theme.getNormalFgColor(),
+                                              theme.getNormalBgColor());
             while (isRunning) {
                 BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D graphics = image.createGraphics();

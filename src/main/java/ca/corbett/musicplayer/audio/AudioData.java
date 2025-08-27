@@ -165,13 +165,13 @@ public class AudioData {
         int maxY1 = 0;
         int maxY2 = 0;
         for (int i = 0; i < audioData[0].length; i++) {
-            int sample1 = Math.abs(audioData[topChannelIndex][i] / config.getYScale());
-            int sample2 = Math.abs(audioData[btmChannelIndex][i] / config.getYScale());
+            int sample1 = Math.abs(audioData[topChannelIndex][i] / config.getCompression().getYValue());
+            int sample2 = Math.abs(audioData[btmChannelIndex][i] / config.getCompression().getYValue());
 
             averagedSample1 += sample1;
             averagedSample2 += sample2;
             averagedSampleCount++;
-            if (averagedSampleCount > config.getXScale()) {
+            if (averagedSampleCount > config.getCompression().getXValue()) {
                 averagedSample1 /= averagedSampleCount;
                 averagedSample2 /= averagedSampleCount;
 
@@ -184,13 +184,13 @@ public class AudioData {
         }
 
         // We can now create a blank image of the appropriate size based on this scale:
-        int xScale = config.getXScale();
-        int width = audioData[0].length / config.getXScale();
-        if (width > config.getXLimit()) {
-            width = config.getXLimit();
-            xScale = audioData[0].length / config.getXLimit();
+        int xScale = config.getCompression().getXValue();
+        int width = audioData[0].length / config.getCompression().getXValue();
+        if (width > config.getWidthLimit().getLimit()) {
+            width = config.getWidthLimit().getLimit();
+            xScale = audioData[0].length / config.getWidthLimit().getLimit();
             logger.log(Level.INFO, "AudioUtil: scaling waveform image down to fit X limit of {2} (you can change this in settings).",
-                    new Object[]{config.getXScale(), xScale, config.getXLimit()});
+                       new Object[]{config.getCompression().getXValue(), xScale, config.getWidthLimit().getLimit()});
         }
         int height = maxY1 + maxY2;
         height = (height <= 0) ? 100 : height; // height can be zero if there's no audio data.
@@ -208,8 +208,8 @@ public class AudioData {
         int previousSample2 = 0;
         int x = 0;
         for (int sample = 0; sample < audioData[0].length; sample++) {
-            averagedSample1 += Math.abs(audioData[topChannelIndex][sample] / config.getYScale());
-            averagedSample2 += Math.abs(audioData[btmChannelIndex][sample] / config.getYScale());
+            averagedSample1 += Math.abs(audioData[topChannelIndex][sample] / config.getCompression().getYValue());
+            averagedSample2 += Math.abs(audioData[btmChannelIndex][sample] / config.getCompression().getYValue());
             averagedSampleCount++;
 
             if (averagedSampleCount > xScale) {
@@ -265,13 +265,13 @@ public class AudioData {
         if (AppConfig.getInstance().useWaveformFromAppTheme()) {
             AppTheme.Theme theme = AppConfig.getInstance().getAppTheme();
             config = theme.getWaveformConfig() == null ? new WaveformConfig() : theme.getWaveformConfig();
-            config.setXLimit(AppConfig.getInstance().getWaveformResolution().getXLimit());
         }
 
         // User wants to override the current app theme with custom settings:
         else {
             config = new WaveformConfig();
-            config.setXLimit(AppConfig.getInstance().getWaveformResolution().getXLimit());
+            config.setCompression(AppConfig.getInstance().getWaveformResolution());
+            config.setWidthLimit(AppConfig.getInstance().getWaveformWidthLimit());
             config.setBgColor(AppConfig.getInstance().getWaveformBgColor());
             config.setFillColor(AppConfig.getInstance().getWaveformFillColor());
             config.setOutlineColor(AppConfig.getInstance().getWaveformOutlineColor());
