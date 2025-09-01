@@ -394,6 +394,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         // Make sure we respond to change events properly, to enable or disable the override fields:
         overrideAppThemeWaveform.addFormFieldChangeListener(event -> {
+            //noinspection unchecked
             boolean shouldEnable = ((ComboField<String>)event.formField()).getSelectedIndex() == 1;
             event.formPanel().getFormField(waveformBgColor.getFullyQualifiedName()).setEnabled(shouldEnable);
             event.formPanel().getFormField(waveformFillColor.getFullyQualifiedName()).setEnabled(shouldEnable);

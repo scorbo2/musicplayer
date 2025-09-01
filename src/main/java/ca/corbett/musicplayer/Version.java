@@ -11,7 +11,7 @@ public final class Version {
     public static String NAME = "MusicPlayer";
     public static String VERSION = "2.9";
     public static String FULL_NAME = NAME + " " + VERSION;
-    public static String COPYRIGHT = "Copyright © 2017 Steve Corbett";
+    public static String COPYRIGHT = "Copyright © 2017-2025 Steve Corbett";
     public static String PROJECT_URL = "https://github.com/scorbo2/musicplayer";
     public static String LICENSE = "https://opensource.org/license/mit";
 
@@ -56,6 +56,7 @@ public final class Version {
         aboutInfo.releaseNotesLocation = "/ca/corbett/musicplayer/ReleaseNotes.txt";
         aboutInfo.logoImageLocation = "/ca/corbett/musicplayer/images/logo_wide.jpg";
         aboutInfo.shortDescription = "Extensible music player with cool visualizations!";
+        aboutInfo.logoDisplayMode = AboutInfo.LogoDisplayMode.STRETCH;
 
         String installDir = System.getProperty("INSTALL_DIR", null);
         INSTALL_DIR = installDir == null ? null : new File(installDir);
