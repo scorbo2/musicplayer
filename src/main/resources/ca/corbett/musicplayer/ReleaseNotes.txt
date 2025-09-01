@@ -2,7 +2,7 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
-Version 2.9 [TODO] - Maintenance release
+Version 2.9 [2025-09-01] - Maintenance release
   #43 Upgrade Java 11 to Java 17
   #42 Allow Ctrl+Q to quit the application
   #41 Upgrade to swing-extras 2.4
