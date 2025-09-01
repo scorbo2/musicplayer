@@ -13,6 +13,7 @@ import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 
 /**
  * Utility class for handling global application keyboard shortcuts.
@@ -42,6 +43,7 @@ public final class KeyboardManager {
                     return false;
                 }
 
+                boolean wasHandled = false;
                 if (e.getID() == KeyEvent.KEY_PRESSED) {
 
                     switch (e.getKeyCode()) {
@@ -49,11 +51,13 @@ public final class KeyboardManager {
                         // Left for "previous track":
                         case KeyEvent.VK_LEFT:
                             new PrevAction().actionPerformed(null);
+                            wasHandled = true;
                             break;
 
                         // Right for "next track":
                         case KeyEvent.VK_RIGHT:
                             new NextAction().actionPerformed(null);
+                            wasHandled = true;
                             break;
 
                         // Space can mean either "play" or "pause:
@@ -65,16 +69,19 @@ public final class KeyboardManager {
                                 AudioPanel.getInstance().play();
                             }
                         }
+                        wasHandled = true;
                         break;
 
                         // V for Vendetta... uh, I mean "Visualization"
                         case KeyEvent.VK_V:
                             new FullScreenAction().actionPerformed(null);
+                            wasHandled = true;
                             break;
 
                         // ESC stops visualizer if it was running
                         case KeyEvent.VK_ESCAPE:
                             VisualizationWindow.getInstance().stopFullScreen();
+                            wasHandled = true;
                             break;
 
                         // Ctrl+P for Preferences
@@ -82,6 +89,7 @@ public final class KeyboardManager {
                             if ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0) {
                                 new SettingsAction().actionPerformed(null);
                             }
+                            wasHandled = true;
                             break;
 
                         // Ctrl+A for About
@@ -89,6 +97,7 @@ public final class KeyboardManager {
                             if ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0) {
                                 new AboutAction().actionPerformed(null);
                             }
+                            wasHandled = true;
                             break;
 
                         // Ctrl+O for Playlist open
@@ -96,6 +105,16 @@ public final class KeyboardManager {
                             if ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0) {
                                 new PlaylistOpenAction().actionPerformed(null);
                             }
+                            wasHandled = true;
+                            break;
+
+                        // Ctrl+Q for quit
+                        case KeyEvent.VK_Q:
+                            if ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0) {
+                                MainWindow.getInstance().dispatchEvent(
+                                    new WindowEvent(MainWindow.getInstance(), WindowEvent.WINDOW_CLOSING));
+                            }
+                            wasHandled = true;
                             break;
 
                         // Ctrl+S for Playlist save
@@ -103,6 +122,7 @@ public final class KeyboardManager {
                             if ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0) {
                                 new PlaylistSaveAction().actionPerformed(null);
                             }
+                            wasHandled = true;
                             break;
 
                         default:
@@ -113,8 +133,8 @@ public final class KeyboardManager {
                     MusicPlayerExtensionManager.getInstance().handleKeyEvent(e);
                 }
 
-                //Allow the event to be redispatched
-                return false;
+                // Allow the event to be redispatched if we didn't handle it:
+                return wasHandled;
             }
         });
     }

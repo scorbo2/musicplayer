@@ -2,6 +2,8 @@ package ca.corbett.musicplayer;
 
 import ca.corbett.extensions.AppProperties;
 import ca.corbett.extras.audio.WaveformConfig;
+import ca.corbett.extras.audio.WaveformConfigField;
+import ca.corbett.extras.gradient.ColorSelectionType;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.BooleanProperty;
 import ca.corbett.extras.properties.ColorProperty;
@@ -18,7 +20,6 @@ import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.AppTheme;
-import ca.corbett.musicplayer.ui.AudioPanel;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 import ca.corbett.musicplayer.ui.MainWindow;
 import ca.corbett.musicplayer.ui.VisualizationManager;
@@ -33,8 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static ca.corbett.extras.properties.ColorProperty.ColorType;
-import static ca.corbett.musicplayer.ui.AudioPanel.WaveformResolution;
 import static ca.corbett.musicplayer.ui.ControlPanel.ButtonSize;
 import static ca.corbett.musicplayer.ui.ControlPanel.ControlAlignment;
 import static ca.corbett.musicplayer.ui.MainWindow.DEFAULT_WIDTH;
@@ -74,22 +73,23 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private static AppConfig instance;
     public static final File PROPS_FILE;
 
-    private ComboProperty idleAnimation;
+    private ComboProperty<String> idleAnimation;
     private EnumProperty<ButtonSize> buttonSize;
     private EnumProperty<ControlAlignment> controlAlignment;
-    private ComboProperty overrideAppThemeWaveform;
+    private ComboProperty<String> overrideAppThemeWaveform;
     private ColorProperty waveformBgColor;
     private ColorProperty waveformFillColor;
     private ColorProperty waveformOutlineColor;
     private IntegerProperty waveformOutlineThickness;
-    private EnumProperty<WaveformResolution> waveformResolution;
-    private ComboProperty applicationTheme;
+    private EnumProperty<WaveformConfigField.Compression> waveformResolution;
+    private EnumProperty<WaveformConfigField.WidthLimit> waveformWidthLimit;
+    private ComboProperty<String> applicationTheme;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
     private IntegerProperty windowWidth;
     private IntegerProperty windowHeight;
     private DirectoryProperty lastBrowseDir;
-    private ComboProperty visualizerType;
+    private ComboProperty<String> visualizerType;
     private EnumProperty<VisualizationThread.VisualizerRotation> visualizerRotation;
     private BooleanProperty excludeBlankVisualizerFromRotation;
     private BooleanProperty visualizerScreensaverPrevention;
@@ -110,7 +110,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ColorProperty visualizerOverlayHeaderColor;
     private ColorProperty visualizerOverlayProgressBackground;
     private ColorProperty visualizerOverlayProgressForeground;
-    private ComboProperty visualizerOldHardwareDelay;
+    private ComboProperty<String> visualizerOldHardwareDelay;
 
     /**
      * This is only used for setting default waveform prefs.
@@ -194,23 +194,27 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     public Color getWaveformBgColor() {
-        return waveformBgColor.getColor();
+        return waveformBgColor.getSolidColor();
     }
 
     public Color getWaveformFillColor() {
-        return waveformFillColor.getColor();
+        return waveformFillColor.getSolidColor();
     }
 
     public Color getWaveformOutlineColor() {
-        return waveformOutlineColor.getColor();
+        return waveformOutlineColor.getSolidColor();
     }
 
     public int getWaveformOutlineWidth() {
         return waveformOutlineThickness.getValue();
     }
 
-    public WaveformResolution getWaveformResolution() {
+    public WaveformConfigField.Compression getWaveformResolution() {
         return waveformResolution.getSelectedItem();
+    }
+
+    public WaveformConfigField.WidthLimit getWaveformWidthLimit() {
+        return waveformWidthLimit.getSelectedItem();
     }
 
     public AppTheme.Theme getAppTheme() {
@@ -331,27 +335,27 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     public Color getVisualizerOverlayBackground() {
-        return visualizerOverlayBackground.getColor();
+        return visualizerOverlayBackground.getSolidColor();
     }
 
     public Color getVisualizerOverlayBorderColor() {
-        return visualizerOverlayBorderColor.getColor();
+        return visualizerOverlayBorderColor.getSolidColor();
     }
 
     public Color getVisualizerOverlayTrackColor() {
-        return visualizerOverlayTrackColor.getColor();
+        return visualizerOverlayTrackColor.getSolidColor();
     }
 
     public Color getVisualizerOverlayHeaderColor() {
-        return visualizerOverlayHeaderColor.getColor();
+        return visualizerOverlayHeaderColor.getSolidColor();
     }
 
     public Color getVisualizerOverlayProgressBackground() {
-        return visualizerOverlayProgressBackground.getColor();
+        return visualizerOverlayProgressBackground.getSolidColor();
     }
 
     public Color getVisualizerOverlayProgressForeground() {
-        return visualizerOverlayProgressForeground.getColor();
+        return visualizerOverlayProgressForeground.getSolidColor();
     }
 
     public boolean isStopVisualizerOnFocusLost() {
@@ -390,25 +394,33 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         // Make sure we respond to change events properly, to enable or disable the override fields:
         overrideAppThemeWaveform.addFormFieldChangeListener(event -> {
-            boolean shouldEnable = ((ComboField)event.getFormField()).getSelectedIndex() == 1;
-            event.getFormPanel().getFormField(waveformBgColor.getFullyQualifiedName()).setEnabled(shouldEnable);
-            event.getFormPanel().getFormField(waveformFillColor.getFullyQualifiedName()).setEnabled(shouldEnable);
-            event.getFormPanel().getFormField(waveformOutlineColor.getFullyQualifiedName()).setEnabled(shouldEnable);
-            event.getFormPanel().getFormField(waveformOutlineThickness.getFullyQualifiedName())
+            //noinspection unchecked
+            boolean shouldEnable = ((ComboField<String>)event.formField()).getSelectedIndex() == 1;
+            event.formPanel().getFormField(waveformBgColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.formPanel().getFormField(waveformFillColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.formPanel().getFormField(waveformOutlineColor.getFullyQualifiedName()).setEnabled(shouldEnable);
+            event.formPanel().getFormField(waveformOutlineThickness.getFullyQualifiedName())
                  .setEnabled(shouldEnable);
         });
 
-        waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor", "Background:", ColorType.SOLID,
-                                            defaultWaveform.getBgColor());
-        waveformFillColor = new ColorProperty("Waveform.Waveform graphics.fillColor", "Fill:", ColorType.SOLID,
-                                              defaultWaveform.getFillColor());
-        waveformOutlineColor = new ColorProperty("Waveform.Waveform graphics.outlineColor", "Outline:", ColorType.SOLID,
-                                                 defaultWaveform.getOutlineColor());
+        waveformBgColor = new ColorProperty("Waveform.Waveform graphics.bgColor",
+                                            "Background:",
+                                            ColorSelectionType.SOLID);
+        waveformBgColor.setSolidColor(defaultWaveform.getBgColor());
+        waveformFillColor = new ColorProperty("Waveform.Waveform graphics.fillColor",
+                                              "Fill:",
+                                              ColorSelectionType.SOLID);
+        waveformFillColor.setSolidColor(defaultWaveform.getFillColor());
+        waveformOutlineColor = new ColorProperty("Waveform.Waveform graphics.outlineColor", "Outline:",
+                                                 ColorSelectionType.SOLID);
+        waveformOutlineColor.setSolidColor(defaultWaveform.getOutlineColor());
         waveformOutlineThickness = new IntegerProperty("Waveform.Waveform graphics.outlineWidth", "Outline width:",
                                                        defaultWaveform.getOutlineThickness(), 0, 24, 1);
 
         waveformResolution = new EnumProperty<>("Waveform.Resolution.resolution", "Resolution:",
-                                                AudioPanel.WaveformResolution.HIGH);
+                                                WaveformConfigField.Compression.HIGH);
+        waveformWidthLimit = new EnumProperty<>("Waveform.Resolution.widthLimit", "Width limit:",
+                                                WaveformConfigField.WidthLimit.LARGE);
 
         applicationTheme = buildCombo("UI.Theme.theme", "Theme:", getAppThemeChoices(), true);
 
@@ -452,36 +464,44 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         // Make sure we enable or disable the overlay fields based on the override checkbox:
         visualizerOverlayOverrideTheme.addFormFieldChangeListener(event -> {
-            boolean isOverride = ((CheckBoxField)event.getFormField()).isChecked();
-            event.getFormPanel().getFormField(visualizerOverlayBackground.getFullyQualifiedName())
+            boolean isOverride = ((CheckBoxField)event.formField()).isChecked();
+            event.formPanel().getFormField(visualizerOverlayBackground.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayTrackColor.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayTrackColor.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayHeaderColor.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayHeaderColor.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayBorderColor.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayBorderColor.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayProgressBackground.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayProgressBackground.getFullyQualifiedName())
                  .setEnabled(isOverride);
-            event.getFormPanel().getFormField(visualizerOverlayProgressForeground.getFullyQualifiedName())
+            event.formPanel().getFormField(visualizerOverlayProgressForeground.getFullyQualifiedName())
                  .setEnabled(isOverride);
         });
 
-        visualizerOverlayBackground = new ColorProperty("Visualization.Overlay.bgColor", "Overlay background:",
-                                                        ColorType.SOLID, Color.BLACK);
-        visualizerOverlayBorderColor = new ColorProperty("Visualization.Overlay.borderColor", "Overlay border:",
-                                                         ColorType.SOLID, Color.WHITE);
-        visualizerOverlayHeaderColor = new ColorProperty("Visualization.Overlay.headerColor", "Header text:",
-                                                         ColorType.SOLID, Color.WHITE);
-        visualizerOverlayTrackColor = new ColorProperty("Visualization.Overlay.trackColor", "Info text:",
-                                                        ColorType.SOLID, Color.LIGHT_GRAY);
+        visualizerOverlayBackground = new ColorProperty("Visualization.Overlay.bgColor",
+                                                        "Overlay background:",
+                                                        ColorSelectionType.SOLID);
+        visualizerOverlayBackground.setSolidColor(Color.BLACK);
+        visualizerOverlayBorderColor = new ColorProperty("Visualization.Overlay.borderColor",
+                                                         "Overlay border:",
+                                                         ColorSelectionType.SOLID);
+        visualizerOverlayBorderColor.setSolidColor(Color.WHITE);
+        visualizerOverlayHeaderColor = new ColorProperty("Visualization.Overlay.headerColor",
+                                                         "Header text:",
+                                                         ColorSelectionType.SOLID);
+        visualizerOverlayHeaderColor.setSolidColor(Color.WHITE);
+        visualizerOverlayTrackColor = new ColorProperty("Visualization.Overlay.trackColor",
+                                                        "Info text:",
+                                                        ColorSelectionType.SOLID);
+        visualizerOverlayTrackColor.setSolidColor(Color.LIGHT_GRAY);
 
         visualizerOverlayProgressBackground = new ColorProperty("Visualization.Overlay.progressBg",
-                                                                "Progress background:", ColorType.SOLID,
-                                                                Color.DARK_GRAY);
+                                                                "Progress background:", ColorSelectionType.SOLID);
+        visualizerOverlayProgressBackground.setSolidColor(Color.DARK_GRAY);
         visualizerOverlayProgressForeground = new ColorProperty("Visualization.Overlay.progressFg",
-                                                                "Progress foreground:", ColorType.SOLID,
-                                                                Color.BLUE);
+                                                                "Progress foreground:", ColorSelectionType.SOLID);
+        visualizerOverlayProgressForeground.setSolidColor(Color.BLUE);
 
         // Add our internal hidden properties (not exposed to the user but available to the code):
         shuffleEnabled = new BooleanProperty("hidden.props.shuffleEnabled", "shuffleEnabled");
@@ -504,6 +524,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        waveformOutlineColor,
                        waveformOutlineThickness,
                        waveformResolution,
+                       waveformWidthLimit,
                        applicationTheme,
                        shuffleEnabled,
                        repeatEnabled,
@@ -578,12 +599,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
      * @param prefer2nd If true, index 1 will be preselected instead of 0 (if more than one option is present)
      * @return A ComboProperty.
      */
-    private ComboProperty buildCombo(String fieldName, String label, List<String> options, boolean prefer2nd) {
+    private ComboProperty<String> buildCombo(String fieldName, String label, List<String> options, boolean prefer2nd) {
         int selectedIndex = 0;
         if (prefer2nd && options.size() > 1) {
             selectedIndex = 1;
         }
-        return new ComboProperty(fieldName, label, options, selectedIndex, false);
+        return new ComboProperty<>(fieldName, label, options, selectedIndex, false);
     }
 
     /**
