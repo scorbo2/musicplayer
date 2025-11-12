@@ -32,6 +32,10 @@ public class ExtraThemes extends MusicPlayerExtension {
     }
 
     @Override
+    public void loadJarResources() {
+    }
+
+    @Override
     public AppExtensionInfo getInfo() {
         return info;
     }

@@ -55,8 +55,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
 
         rollingWaves = new RollingWaveVisualizer();
         albumArtVisualizer = new AlbumArtVisualizer();
-        configProperties.addAll(rollingWaves.getProperties());
-        configProperties.addAll(albumArtVisualizer.getProperties());
+    }
+
+    @Override
+    public void loadJarResources() {
     }
 
     @Override
@@ -66,7 +68,10 @@ public class ExtraVisualizers extends MusicPlayerExtension implements UIReloadab
 
     @Override
     protected List<AbstractProperty> createConfigProperties() {
-        return null; // we'll fill it in at end of constructor.
+        List<AbstractProperty> props = new ArrayList<>();
+        props.addAll(rollingWaves.getProperties());
+        props.addAll(albumArtVisualizer.getProperties());
+        return props;
     }
 
     @Override
