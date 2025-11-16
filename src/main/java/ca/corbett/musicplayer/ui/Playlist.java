@@ -321,6 +321,7 @@ public class Playlist extends JPanel implements UIReloadable {
         }
 
         MultiProgressDialog progress = new MultiProgressDialog(MainWindow.getInstance(), "Loading audio data...");
+        progress.setInitialShowDelayMS(AppConfig.getInstance().getLoadProgressBarShowDelayMS());
         progress.runWorker(new AudioLoadThread(selected), true);
     }
 
