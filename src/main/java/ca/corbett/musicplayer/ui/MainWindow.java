@@ -3,11 +3,15 @@ package ca.corbett.musicplayer.ui;
 import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.audio.PlaybackThread;
 import ca.corbett.extras.image.ImageUtil;
+import ca.corbett.extras.io.FileSystemUtil;
 import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.StopAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
+import ca.corbett.updates.UpdateSources;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -44,6 +48,7 @@ public class MainWindow extends JFrame {
     private static MainWindow instance;
     private MessageUtil messageUtil;
     private final Timer resizeTimer;
+    private UpdateSources updateSources;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -82,6 +87,7 @@ public class MainWindow extends JFrame {
             AudioPanelIdleAnimation.getInstance().go();
             VisualizationWindow.getInstance(); // forces initialization of fullscreen stuff so it's ready to go later.
             LogConsole.getInstance().setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
+            parseUpdateSources();
         }
     }
 
@@ -130,6 +136,10 @@ public class MainWindow extends JFrame {
         });
     }
 
+    public UpdateSources getUpdateSources() {
+        return updateSources;
+    }
+
     private void saveWindowState() {
         AppConfig.getInstance().setWindowWidth(getWidth());
         AppConfig.getInstance().setWindowHeight(getHeight());
@@ -138,6 +148,26 @@ public class MainWindow extends JFrame {
 
     private void loadWindowState() {
         setSize(new Dimension(AppConfig.getInstance().getWindowWidth(), AppConfig.getInstance().getWindowHeight()));
+    }
+
+    private void parseUpdateSources() {
+        if (Version.UPDATE_SOURCES_FILE != null) {
+            try {
+                Gson gson = new GsonBuilder().create();
+                updateSources = gson.fromJson(FileSystemUtil.readFileToString(Version.UPDATE_SOURCES_FILE),
+                                              UpdateSources.class);
+                logger.info("Update sources provided. Dynamic extension discovery is enabled.");
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE,
+                           "Unable to parse update sources. Extension download will not be available. Error: "
+                               + e.getMessage(),
+                           e);
+            }
+        }
+        else {
+            logger.log(Level.INFO, "No update sources provided. Dynamic extension discovery disabled.");
+        }
     }
 
     public static MainWindow getInstance() {

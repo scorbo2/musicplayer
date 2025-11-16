@@ -9,7 +9,8 @@ import java.awt.event.ActionEvent;
 public class ExtensionsManagerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (AppConfig.getInstance().showExtensionDialog(MainWindow.getInstance())) {
+        if (AppConfig.getInstance().showExtensionDialog(MainWindow.getInstance(),
+                                                        MainWindow.getInstance().getUpdateSources())) {
             // User OK'd the dialog, reinitialize AppConfig:
             // (this will force a properties reload and then a UI reload):
             AppConfig.getInstance().reinitialize();
