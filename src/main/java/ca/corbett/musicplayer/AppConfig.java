@@ -402,7 +402,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         LabelProperty label = new LabelProperty("UI.General.progressBarDelayMSLabel",
                                                 "Optional delay before showing the audio load progress bar:");
         loadProgressBarShowDelayMS = new SliderProperty("UI.General.progressBarDelay", "", 0, 5000, 1000);
-        loadProgressBarShowDelayMS.setColorStops(List.of(Color.BLACK, Color.WHITE));
         loadProgressBarShowDelayMS.setShouldExpand(false);
         loadProgressBarShowDelayMS.setLabels(List.of("no delay", "1s", "2s", "3s", "4s", "5s"), false);
 
