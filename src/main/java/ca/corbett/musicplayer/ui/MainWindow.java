@@ -9,6 +9,7 @@ import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.StopAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
+import ca.corbett.updates.UpdateManager;
 import ca.corbett.updates.UpdateSources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -48,7 +49,7 @@ public class MainWindow extends JFrame {
     private static MainWindow instance;
     private MessageUtil messageUtil;
     private final Timer resizeTimer;
-    private UpdateSources updateSources;
+    private UpdateManager updateManager;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -136,8 +137,8 @@ public class MainWindow extends JFrame {
         });
     }
 
-    public UpdateSources getUpdateSources() {
-        return updateSources;
+    public UpdateManager getUpdateManager() {
+        return updateManager;
     }
 
     private void saveWindowState() {
@@ -154,8 +155,10 @@ public class MainWindow extends JFrame {
         if (Version.UPDATE_SOURCES_FILE != null) {
             try {
                 Gson gson = new GsonBuilder().create();
-                updateSources = gson.fromJson(FileSystemUtil.readFileToString(Version.UPDATE_SOURCES_FILE),
+                UpdateSources updateSources = gson.fromJson(
+                    FileSystemUtil.readFileToString(Version.UPDATE_SOURCES_FILE),
                                               UpdateSources.class);
+                updateManager = new UpdateManager(updateSources);
                 logger.info("Update sources provided. Dynamic extension discovery is enabled.");
             }
             catch (Exception e) {
