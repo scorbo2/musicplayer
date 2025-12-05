@@ -2,8 +2,12 @@
 
 # User guide: configuring logging
 
-If you started musicplayer using the command line, you probably noticed a few log messages getting generated
-to the console:
+**NOTE**: if you installed MusicPlayer using the installer script, you can ignore these configuration
+instructions. The installer script will have created a default logging setup for you, with log output
+being directed to a log file in your ~/.MusicPlayer directory.
+
+However, if you started musicplayer using the command line, then you probably noticed a few log 
+messages getting generated to the console:
 
 ```shell
 $ java -jar musicplayer-2.9.jar 
@@ -14,7 +18,6 @@ $ java -jar musicplayer-2.9.jar
 2025-04-06 03:54:59 P.M. [INFO] VisualizationThread created; rendering at 1,920x1,080
 ```
 
-If you started musicplayer by double-clicking the jar file, however, you probably didn't see any log output.
 This is because, by default, log output goes to stdout only (and also to `LogConsole`, which we'll look at later).
 
 The musicplayer application comes with a built-in `logging.properties`, which you can find in the resources

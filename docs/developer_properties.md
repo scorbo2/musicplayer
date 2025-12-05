@@ -2,7 +2,7 @@
 
 # Developer overview: Using `swing-extras` for application configuration
 
-We start by extending the abstract `AppProperties` class from the `app-extensions` library.
+We start by extending the abstract `AppProperties` class from the `swing-extras` library.
 There is only one abstract method that we need to implement:
 
 ```java

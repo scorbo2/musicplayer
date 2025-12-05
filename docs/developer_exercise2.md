@@ -101,7 +101,7 @@ in our `TestExtension` class:
 
 ```java
 @Override
-public List<AbstractProperty> getConfigProperties() {
+protected List<AbstractProperty> createConfigProperties() {
     List<AbstractProperty> props = new ArrayList<>();
     props.add(new TextProperty("TestExtension.General.text", "Text to render:", "Hello there!", 14, 1));
     props.add(new ColorProperty("TestExtension.General.bgColor", "Background:", ColorProperty.ColorType.SOLID, Color.BLACK));
@@ -239,8 +239,6 @@ to those changes, even if our visualizer is running when those changes are made!
 
 ## Summary
 
-We've barely scratched the surface of what's possible with the `swing-forms`, `swing-extras`, and most especially
-the `app-extension` libraries. But, we have covered the basics, and we've even created a custom visualizer
+We've barely scratched the surface of what's possible with the `swing-extras`, library. 
+But, we have covered the basics, and we've even created a custom visualizer
 that actually works! So, the sky is the limit... go see what you can make!
-
-
