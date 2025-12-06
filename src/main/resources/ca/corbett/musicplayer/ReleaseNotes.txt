@@ -2,10 +2,11 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
-Version 3.0 [TODO] - Dynamic extension discovery
+Version 3.0 [2025-12-06] - Dynamic extension discovery
   #51 Switch underlying Look and Feel to FlatLafLight
   #49 Report extension load errors on startup
   #48 Configurable delay on audio load progress bar
+  #47 Fixed bug in "next" action when playlist is modified
   #46 Upgrade to swing-extras 2.5
 
 Version 2.9 [2025-09-01] - Maintenance release
