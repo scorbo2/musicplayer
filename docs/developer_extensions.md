@@ -1,26 +1,27 @@
 <-- [Back to musicplayer documentation](../README.md)
 
-# Developer overview: Using `app-extensions` to extend the application
+# Developer overview: Using ExtensionManager to extend the application
 
-The abstract `ExtensionManager` class in the `app-extensions` library is deceptively powerful.
+The abstract `ExtensionManager` class in the `swing-extras` library is deceptively powerful.
 This class can scan a given directory for jar files, and then examine those jar files to see
 if they contain an extension class for your application. If so, that class can be loaded dynamically,
 and an instance of the extension that it contains can be provided to your application.
 
 We'll need to create two classes to make use of this:
-  - an implementation of the `AppExtension` interface
+  - an implementation of the `AppExtension` class
   - an implementation of the abstract `ExtensionManager` class
 
 ## Implementing an AppExtension
 
-Let's start by looking at the `AppExtension` interface:
+Let's start by looking at the `AppExtension` class:
 
 ```java
-public interface AppExtension {
+public abstract class AppExtension {
     public AppExtensionInfo getInfo();
-    public List<AbstractProperty> getConfigProperties();
+    protected List<AbstractProperty> createConfigProperties();
     public void onActivate();
     public void onDeactivate();
+    protected void loadJarResources();
 }
 ```
 
@@ -32,10 +33,11 @@ Well, we have to create them!
 
 But first, we deal with the absolute bare minimum required to create a custom `AppExtension`:
 
-- Implement `getInfo()` to return an `AppExtensionInfo` object describing your extension.
-- Implement `getConfigProperties()` to return an optional list of config properties for your extension. (This can be an empty list if your extension doesn't require any).
+- Implement `getInfo()` to return an `AppExtensionInfo` object describing your extension (mandatory!).
+- Implement `createConfigProperties()` to return an optional list of config properties for your extension. (This can be an empty list if your extension doesn't require any).
 - Implement `onActivate()` to do whatever prep work (if any) our extension needs before it gets to work.
 - Implement `onDeactivate()` to do whatever cleanup (if any) our extension needs before it gets shut down.
+- Implement `loadJarResources()` to load whatever jar resources our extension needs (if any)
 
 That's the bare minimum. But, our extension will not be terribly useful if that's all we do. We need to think about
 possible extension points within our application, and write abstract methods here for them.
@@ -124,10 +126,10 @@ of it, and in fact doesn't need to, as long as the extension lives up to the con
 
 Your extension may need to expose some configuration properties to be added to the `PropertiesDialog`, so that
 the user can set options for it. This is not a problem at all. In fact, this is one of the few methods
-that are defined in the `AppExtension` interface:
+that are defined in the `AppExtension` class:
 
 ```java
-public List<AbstractProperty> getConfigProperties();
+protected List<AbstractProperty> createConfigProperties();
 ```
 
 We just have to return a list of `AbstractProperty` instances, and the `AppProperties` class, together
@@ -166,6 +168,9 @@ specifies a readable directory. If so, that directory is scanned for compatible 
 are found are loaded as viable extensions.
 
 ### Specifying the jar directory
+
+(Note: if you ran the installer tarball on a Linux machine, you do not have to manually specify
+this location... the launcher script will do it for you)
 
 Since there is no default value, you have to manually specify the location to be scanned. Let's say we
 want to put extension jars in ~/.MusicPlayer/extensionJars :

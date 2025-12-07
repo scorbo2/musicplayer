@@ -16,12 +16,16 @@ Now, you can create a new project, and add musicplayer as a dependency:
     <dependency>
         <groupId>ca.corbett</groupId>
         <artifactId>musicplayer</artifactId>
-        <version>2.9</version>
+        <version>3.0</version>
+        <scope>provided</scope>
     </dependency>
 </dependencies>
 ```
 
-(At the time of this writing, 2.9 is the latest available version of the musicplayer code)
+(At the time of this writing, 3.0 is the latest available version of the musicplayer code)
+
+Note that we use the `provided` scope here. This tells Maven that our jar will be loaded in an
+environment where the MusicPlayer code is already loaded and running.
 
 Now, we should be able to create our new extension class by extending the `MusicPlayerExtension` base class:
 
@@ -47,7 +51,11 @@ public class TestExtension extends MusicPlayerExtension {
     }
 
     @Override
-    public List<AbstractProperty> getConfigProperties() {
+    protected void loadJarResources() {
+    }
+    
+    @Override
+    protected List<AbstractProperty> createConfigProperties() {
         return List.of(LabelProperty.createLabel("TestExtension.TestExtension.label", "Hello there! This was loaded dynamically!"));
     }
 
@@ -77,7 +85,7 @@ a directory structure that should be unique to your extension. For this example,
   "name": "Test extension",
   "version": "1.0",
   "targetAppName": "MusicPlayer",
-  "targetAppVersion": "2.9",
+  "targetAppVersion": "3.0",
   "author": "Steve Corbett",
   "shortDescription": "A quick test extension",
   "longDescription": "If this shows up, it means the jar was successfully scanned at startup!"
@@ -99,7 +107,7 @@ an extension location. Let's say `~/.MusicPlayer/extensionJars`. Then, we can re
 tell it where to look for extension jars:
 
 ```shell
-java -DEXTENSIONS_DIR=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-2.9.jar
+java -DEXTENSIONS_DIR=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-3.0.jar
 ```
 
 On startup, we should hopefully see some promising log output:

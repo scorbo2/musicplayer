@@ -8,6 +8,8 @@ import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.StopAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
+import ca.corbett.updates.UpdateManager;
+import ca.corbett.updates.UpdateSources;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -44,6 +46,7 @@ public class MainWindow extends JFrame {
     private static MainWindow instance;
     private MessageUtil messageUtil;
     private final Timer resizeTimer;
+    private UpdateManager updateManager;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -82,6 +85,7 @@ public class MainWindow extends JFrame {
             AudioPanelIdleAnimation.getInstance().go();
             VisualizationWindow.getInstance(); // forces initialization of fullscreen stuff so it's ready to go later.
             LogConsole.getInstance().setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
+            parseUpdateSources();
         }
     }
 
@@ -130,6 +134,10 @@ public class MainWindow extends JFrame {
         });
     }
 
+    public UpdateManager getUpdateManager() {
+        return updateManager;
+    }
+
     private void saveWindowState() {
         AppConfig.getInstance().setWindowWidth(getWidth());
         AppConfig.getInstance().setWindowHeight(getHeight());
@@ -138,6 +146,26 @@ public class MainWindow extends JFrame {
 
     private void loadWindowState() {
         setSize(new Dimension(AppConfig.getInstance().getWindowWidth(), AppConfig.getInstance().getWindowHeight()));
+    }
+
+    private void parseUpdateSources() {
+        if (Version.UPDATE_SOURCES_FILE != null) {
+            try {
+                UpdateSources updateSources = UpdateSources.fromFile(Version.UPDATE_SOURCES_FILE);
+                updateManager = new UpdateManager(updateSources);
+                updateManager.registerShutdownHook(MainWindow::cleanup);
+                logger.info("Update sources provided. Dynamic extension discovery is enabled.");
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE,
+                           "Unable to parse update sources. Extension download will not be available. Error: "
+                               + e.getMessage(),
+                           e);
+            }
+        }
+        else {
+            logger.log(Level.INFO, "No update sources provided. Dynamic extension discovery disabled.");
+        }
     }
 
     public static MainWindow getInstance() {
@@ -157,10 +185,7 @@ public class MainWindow extends JFrame {
                  */
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    new StopAction().actionPerformed(null);
-                    VisualizationWindow.getInstance().stopFullScreen();
-                    MusicPlayerExtensionManager.getInstance().deactivateAll();
-                    logger.info("Application windowClosing(): finished cleanup.");
+                    cleanup();
                 }
 
                 /**
@@ -170,13 +195,21 @@ public class MainWindow extends JFrame {
                  */
                 @Override
                 public void windowClosed(WindowEvent e) {
-                    VisualizationWindow.getInstance().stopFullScreen();
-                    MusicPlayerExtensionManager.getInstance().deactivateAll();
-                    logger.info("Application windowClosed(): finished cleanup.");
+                    cleanup();
                 }
             });
         }
         return instance;
+    }
+
+    /**
+     * Performs shutdown and cleanup tasks prior to the application exiting.
+     */
+    private static void cleanup() {
+        new StopAction().actionPerformed(null);
+        VisualizationWindow.getInstance().stopFullScreen();
+        MusicPlayerExtensionManager.getInstance().deactivateAll();
+        logger.info("Application cleanup finished. Exiting normally.");
     }
 
     private MessageUtil getMessageUtil() {

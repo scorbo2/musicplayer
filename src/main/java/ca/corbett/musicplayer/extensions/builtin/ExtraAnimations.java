@@ -48,6 +48,10 @@ public class ExtraAnimations extends MusicPlayerExtension {
     }
 
     @Override
+    public void loadJarResources() {
+    }
+
+    @Override
     public AppExtensionInfo getInfo() {
         return info;
     }

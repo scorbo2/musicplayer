@@ -2,19 +2,18 @@
 
 # Developer overview: general application design
 
-The musicplayer app relies on three of my libraries:
+The musicplayer app relies heavily on my [swing-extras](https://github.com/scorbo2/swing-extras) library,
+which provides a LOT of neat utilities and custom code I've written in the last 15 years or so. This library
+also provides a powerful extension mechanism that allows applications to make themselves highly extensible.
 
-- [swing-forms](https://github.com/scorbo2/swing-forms) - provides a way to very easily generate user input forms in Java Swing.
-- [swing-extras](https://github.com/scorbo2/swing-extras) - provides a LOT of neat utilities and custom code I've written in the last 15 years or so.
-- [app-extensions](https://github.com/scorbo2/app-extensions) - provides an extension mechanism that allows you to write highly extensible applications.
+swing-extras is licensed under the [MIT license](https://opensource.org/license/mit), and the code for it is available on GitHub, 
+so I invite you to check it out. In this developer guide, we're going
+to be looking pretty closely at the extension mechanism supplied by swing-extras, because it's
+very powerful and quite useful.
 
-All of the above are licensed under the [MIT license](https://opensource.org/license/mit), and the code
-for each of them is available on github, so I invite you to check them out. In this developer guide, we're going
-to be looking pretty closely at `app-extensions`, because it has some really neat capabilities.
-
-Specifically, the `AppProperties` class in `app-extensions` is amazingly useful for saving yourself
+Specifically, the `AppProperties` class is amazingly useful for saving yourself
 a LOT of code. The purpose of this abstract class is to join together a `PropertiesManager` class
-(from `swing-extras`) with an `ExtensionManager` class (from `app-extensions`), and have them work
+(from `swing-extras`) with an `ExtensionManager` class (also from `swing-extras`), and have them work
 together to make your application MUCH easier to extend and configure. For example, in the user guide
 for music player, you probably saw at least one screenshot of the Properties dialog:
 
@@ -48,10 +47,10 @@ and its assistant class, `PropertiesDialog`.
 
 ## ExtensionManager is awesome
 
-Meanwhile, let's move over to the `app-extension` library, which also has a lot
-of very pleasant and powerful surprises. Specifically, we have the abstract
-`ExtensionManager` class, which allows us to dynamically scan a directory at
-startup, looking for jar files that contain extension classes for our application.
+Meanwhile, let's move over to the `ExtensionManager` class, which also has a lot
+of very pleasant and powerful surprises. Specifically, we have the ability
+to dynamically scan a directory at startup, looking for jar files that contain 
+extension classes for our application.
 Each extension can supply its own list of configuration properties, which we can
 combine together with our own application's properties to generate one unified
 `PropertiesDialog` that contains everything. The neat part about this is that
@@ -63,7 +62,7 @@ to sort that out - we get it for free.
 
 ## AppProperties is even awesomer
 
-The `app-extensions` library contains one more class that arguably is the best
+The `swing-extras` library contains one more class that arguably is the best
 part of this whole design: `AppProperties`. This abstract class joins a
 `PropertiesManager` together with a custom `ExtensionManager` together into
 one package, and links them up so that they are aware of each other.

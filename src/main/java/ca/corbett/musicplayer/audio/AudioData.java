@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,9 +20,17 @@ import java.util.logging.Logger;
  * Here, we track the original file, the converted file (if conversion was
  * done), the audio data associated with the clip, and metadata that we
  * managed to extract from the clip.
- *
+ * <p>
  * TODO I'm not happy with the wonky "convert from mp3 to wav and then play the wav" approach
- *      It's slow and monstrously memory unfriendly.
+ *      It's slow and monstrously memory unfriendly. Mostly I hate it because it's very slow,
+ *      and results in a long gap of silence between tracks as the next track loads.
+ *      But, without the raw wav data, I can't find a way to generate the audio waveform image,
+ *      which is kind of a neat feature, and which also allows skipping forwards and backwards
+ *      through the track by clicking on the waveform. Surely there's a middle of the road
+ *      option where the application could have the best of both worlds - the speed of being
+ *      able to stream audio directly from an mp3 file, while still being able to calculate
+ *      a waveform image and allow clicking within it?
+ * </p>
  *
  * @author scorbo2
  * @since 2025-03-23
@@ -83,9 +92,10 @@ public class AudioData {
                     String album = (String) properties.get("album");
                     if (title != null) {
                         metadata = new Metadata(title,
-                                author == null ? "" : author,
-                                album == null ? "" : album,
-                                durationSeconds);
+                                                author == null ? "" : author,
+                                                album == null ? "" : album,
+                                                durationSeconds,
+                                                sourceFile);
                     }
                 }
             } catch (NullPointerException npe) {
@@ -109,7 +119,7 @@ public class AudioData {
                 // I'll just leave it blank:
                 String author = "";
 
-                metadata = new Metadata(title, album, author, durationSeconds);
+                metadata = new Metadata(title, album, author, durationSeconds, sourceFile);
             }
         }
 
@@ -325,12 +335,32 @@ public class AudioData {
         public final String author;
         public final String album;
         public final int durationSeconds;
+        public final File sourceFile;
 
         public Metadata(String title, String author, String album, int durationSeconds) {
+            this(title, author, album, durationSeconds, null);
+        }
+
+        public Metadata(String title, String author, String album, int durationSeconds, File sourceFile) {
             this.title = title;
             this.author = author;
             this.album = album;
             this.durationSeconds = durationSeconds;
+            this.sourceFile = sourceFile;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (!(object instanceof Metadata metadata)) { return false; }
+            return durationSeconds == metadata.durationSeconds
+                && Objects.equals(title, metadata.title)
+                && Objects.equals(author, metadata.author)
+                && Objects.equals(album, metadata.album);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(title, author, album, durationSeconds);
         }
     }
 }

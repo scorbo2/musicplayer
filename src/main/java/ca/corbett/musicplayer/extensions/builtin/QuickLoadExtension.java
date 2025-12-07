@@ -53,6 +53,10 @@ public class QuickLoadExtension extends MusicPlayerExtension {
     }
 
     @Override
+    public void loadJarResources() {
+    }
+
+    @Override
     public AppExtensionInfo getInfo() {
         return info;
     }

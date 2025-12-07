@@ -9,7 +9,7 @@ public final class Version {
     private static final AboutInfo aboutInfo;
 
     public static String NAME = "MusicPlayer";
-    public static String VERSION = "2.9";
+    public static String VERSION = "3.0";
     public static String FULL_NAME = NAME + " " + VERSION;
     public static String COPYRIGHT = "Copyright © 2017-2025 Steve Corbett";
     public static String PROJECT_URL = "https://github.com/scorbo2/musicplayer";
@@ -38,6 +38,13 @@ public final class Version {
     public static final File SETTINGS_DIR;
 
     /**
+     * If we were packed with an update sources json file,
+     * it will be located in the application install directory,
+     * with an optional override in the user settings dir.
+     */
+    public static final File UPDATE_SOURCES_FILE;
+
+    /**
      * The directory to scan for extension jars at startup.
      * If not given to us explicitly by the launcher script,
      * we default it to a directory called "extensions"
@@ -58,9 +65,11 @@ public final class Version {
         aboutInfo.shortDescription = "Extensible music player with cool visualizations!";
         aboutInfo.logoDisplayMode = AboutInfo.LogoDisplayMode.STRETCH;
 
+        // See if we were given an installation directory:
         String installDir = System.getProperty("INSTALL_DIR", null);
         INSTALL_DIR = installDir == null ? null : new File(installDir);
 
+        // If a user settings directory was not supplied, we can provide a default in user's home:
         String appDir = System.getProperty("SETTINGS_DIR",
                                            new File(System.getProperty("user.home"), "." + NAME).getAbsolutePath());
         SETTINGS_DIR = new File(appDir);
@@ -68,11 +77,20 @@ public final class Version {
             SETTINGS_DIR.mkdirs();
         }
 
+        // The extensions directory will live under the user settings directory:
         String extDir = System.getProperty("EXTENSIONS_DIR", new File(SETTINGS_DIR, "extensions").getAbsolutePath());
         EXTENSIONS_DIR = new File(extDir);
         if (!EXTENSIONS_DIR.exists()) {
             EXTENSIONS_DIR.mkdirs();
         }
+
+        // We may optionally have been provided an update sources file in user settings dir:
+        File updateSourcesFile = new File(SETTINGS_DIR, "update_sources.json");
+        if (!updateSourcesFile.exists() && INSTALL_DIR != null) {
+            // If it's not in user settings, try again in the installation dir:
+            updateSourcesFile = new File(INSTALL_DIR, "update_sources.json");
+        }
+        UPDATE_SOURCES_FILE = updateSourcesFile.exists() ? updateSourcesFile : null;
     }
 
     public static AboutInfo getAboutInfo() {

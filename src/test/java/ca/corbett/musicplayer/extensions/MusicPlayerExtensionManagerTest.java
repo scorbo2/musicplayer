@@ -60,6 +60,10 @@ class MusicPlayerExtensionManagerTest {
         }
 
         @Override
+        public void loadJarResources() {
+        }
+
+        @Override
         protected List<AbstractProperty> createConfigProperties() {
             return List.of();
         }

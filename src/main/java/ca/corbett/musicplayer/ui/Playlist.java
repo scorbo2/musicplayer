@@ -138,6 +138,26 @@ public class Playlist extends JPanel implements UIReloadable {
     }
 
     /**
+     * Ignoring whatever selection is set in the list, let's search for the index of whatever
+     * track is currently playing, and return its index. Will return -1 if there is no track
+     * playing, or if our list does not contain the currently playing track (which is entirely
+     * possible, if the user removed it).
+     */
+    public int getIndexOfCurrentlyPlayingTrack() {
+        AudioData audioData = AudioPanel.getInstance().getAudioData();
+        if (audioData == null || audioData.getMetadata() == null || audioData.getMetadata().sourceFile == null) {
+            return -1;
+        }
+        String sourcePath = audioData.getMetadata().sourceFile.getAbsolutePath();
+        for (int i = 0; i < fileListModel.size(); i++) {
+            if (sourcePath.equals(fileListModel.get(i).getAbsolutePath())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Returns the "next" item in the playlist. The word "next" is in
      * quotes because it may not be what you expect. Normally, this will
      * simply be the next item after whatever is currently selected. But,
@@ -159,6 +179,13 @@ public class Playlist extends JPanel implements UIReloadable {
 
         // Make note of whatever is currently selected:
         int index = fileList.getSelectedIndex();
+
+        // If there's nothing selected in the list, try to find the
+        // index of whatever's playing right now (user may have manually
+        // unselected it in the list):
+        if (index == -1) {
+            index = getIndexOfCurrentlyPlayingTrack();
+        }
 
         // If "shuffle" is enabled, pick something at random:
         if (AppConfig.getInstance().isShuffleEnabled()) {
@@ -321,6 +348,7 @@ public class Playlist extends JPanel implements UIReloadable {
         }
 
         MultiProgressDialog progress = new MultiProgressDialog(MainWindow.getInstance(), "Loading audio data...");
+        progress.setInitialShowDelayMS(AppConfig.getInstance().getLoadProgressBarShowDelayMS());
         progress.runWorker(new AudioLoadThread(selected), true);
     }
 
