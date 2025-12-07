@@ -8,7 +8,7 @@ FORMAT="tarball"
 
 # Application name/version will also be used for the jar file name.
 APPLICATION="MusicPlayer"
-VERSION="3.0-SNAPSHOT"
+VERSION="3.0"
 
 PROJECT_URL="https://github.com/scorbo2/musicplayer"
 OUTPUT_DIR=target

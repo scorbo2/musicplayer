@@ -23,14 +23,17 @@ also used musicplayer as a testbed for my own app-extensions library
 so I could test out ways to make an application incredibly customizable via dynamically-loaded extensions. I also 
 wanted to prove out the `AppProperties` class from `app-extensions` to really demonstrate how to develop an extremely 
 customizable application while writing surprisingly little UI code (in the case of the properties dialog, and
-the extension manager, almost literally none).
+the extension manager, almost literally none). With version 3.x, I'm also using this application as a testbed
+for the new "dynamic extension discovery and download" feature from my swing-extras library. This allows
+users to download, install, and update extensions right from within the UI of the application, without having
+to clone, build, and install them manually.
 
 ## How do I get it?
 
 You can download an installer tarball for Linux here:
 - [MusicPlayer-3.0.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.0.tar.gz)
-- Size: TODO MB
-- SHA-1: TODO
+- Size: 21MB
+- SHA-1: `6f65304e8a3160782fd8003df15b0f25da15af60`
 
 Alternatively, you can clone the repo and build the project locally:
 
@@ -68,7 +71,4 @@ musicplayer is made available under the MIT license: https://opensource.org/lice
 
 ## Revision history
 
-Originally written in 2017.  
-The 2.0 rewrite happened in March/April 2025.
-
-[Full release notes](src/main/resources/ca/corbett/musicplayer/ReleaseNotes.txt)
+[Full release notes and version history](src/main/resources/ca/corbett/musicplayer/ReleaseNotes.txt)
