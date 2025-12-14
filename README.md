@@ -31,9 +31,9 @@ to clone, build, and install them manually.
 ## How do I get it?
 
 You can download an installer tarball for Linux here:
-- [MusicPlayer-3.0.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.0.tar.gz)
+- [MusicPlayer-3.0.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.0.tar.gz) TODO update link for 3.1
 - Size: 21MB
-- SHA-1: `6f65304e8a3160782fd8003df15b0f25da15af60`
+- SHA-1: `6f65304e8a3160782fd8003df15b0f25da15af60` TODO update sha-1 for 3.1
 
 Alternatively, you can clone the repo and build the project locally:
 
@@ -42,7 +42,7 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-3.0.jar # Launch the application manually
+java -jar musicplayer-3.1.jar # Launch the application manually
 ```
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building
