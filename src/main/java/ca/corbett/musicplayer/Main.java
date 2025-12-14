@@ -44,11 +44,11 @@ public class Main {
                    Version.FULL_NAME + " starting up: installDir={0}, settingsDir={1}, extensionsDir={2}",
                    new Object[]{Version.INSTALL_DIR, Version.SETTINGS_DIR, Version.EXTENSIONS_DIR});
         checkJavaRuntime();
+        LookAndFeelManager.installExtraLafs();
+        AppConfig.getInstance().loadWithoutUIReload();
 
         SwingUtilities.invokeLater(() -> {
-            LookAndFeelManager.installExtraLafs();
             LookAndFeelManager.switchLaf(FlatLightLaf.class.getName());
-            AppConfig.getInstance().loadWithoutUIReload();
             MainWindow.getInstance().setArgs(args);
             MainWindow.getInstance().setVisible(true);
         });
