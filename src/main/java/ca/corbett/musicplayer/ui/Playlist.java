@@ -278,6 +278,13 @@ public class Playlist extends JPanel implements UIReloadable {
     }
 
     /**
+     * Appends the contents of the given playlist to the end of the current playlist.
+     */
+    public void appendPlaylist(File playlistFile) {
+        fileListModel.addAll(PlaylistUtil.loadPlaylist(playlistFile));
+    }
+
+    /**
      * Saves the contents of the current playlist to the target file.
      *
      * @param targetFile a destination save file. Will be overwritten if exists.

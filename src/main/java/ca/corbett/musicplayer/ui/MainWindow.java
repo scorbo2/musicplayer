@@ -7,6 +7,7 @@ import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.StopAction;
+import ca.corbett.musicplayer.audio.AudioUtil;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.updates.UpdateManager;
 import ca.corbett.updates.UpdateSources;
@@ -17,13 +18,23 @@ import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -86,6 +97,7 @@ public class MainWindow extends JFrame {
             VisualizationWindow.getInstance(); // forces initialization of fullscreen stuff so it's ready to go later.
             LogConsole.getInstance().setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
             parseUpdateSources();
+            enableDragAndDrop();
         }
     }
 
@@ -166,6 +178,61 @@ public class MainWindow extends JFrame {
         else {
             logger.log(Level.INFO, "No update sources provided. Dynamic extension discovery disabled.");
         }
+    }
+
+    /**
+     * Enables drag-and-drop of image files from the filesystem onto this window.
+     */
+    private void enableDragAndDrop() {
+        DropTarget dropTarget = new DropTarget(this, new DropTargetAdapter() {
+            @Override
+            public void dragOver(DropTargetDragEvent dtde) {
+                if (isValidFileDrag(dtde)) {
+                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
+                }
+                else {
+                    dtde.rejectDrag();
+                }
+            }
+
+            @Override
+            public void drop(DropTargetDropEvent dtde) {
+                dtde.acceptDrop(DnDConstants.ACTION_COPY);
+
+                Transferable transferable = dtde.getTransferable();
+                if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        List<File> files = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+
+                        for (File file : files) {
+                            if (AudioUtil.isValidAudioFile(file)) {
+                                Playlist.getInstance().addItem(file);
+                            }
+                            else if (AudioUtil.isValidPlaylist(file)) {
+                                Playlist.getInstance().appendPlaylist(file);
+                            }
+                        }
+
+                        revalidate();
+                        repaint();
+                        dtde.dropComplete(true);
+                    }
+                    catch (UnsupportedFlavorException | IOException e) {
+                        logger.warning("Ignoring unsupported drag and drop operation.");
+                    }
+                }
+                else {
+                    dtde.dropComplete(false);
+                }
+            }
+
+            private boolean isValidFileDrag(DropTargetDragEvent dtde) {
+                return dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor);// We'll validate actual files on drop
+            }
+        });
+
+        setDropTarget(dropTarget);
     }
 
     public static MainWindow getInstance() {
