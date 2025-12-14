@@ -58,6 +58,7 @@ public class MainWindow extends JFrame {
     private MessageUtil messageUtil;
     private final Timer resizeTimer;
     private UpdateManager updateManager;
+    private String[] args;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -98,7 +99,17 @@ public class MainWindow extends JFrame {
             LogConsole.getInstance().setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
             parseUpdateSources();
             enableDragAndDrop();
+            processStartArgs();
         }
+    }
+
+    /**
+     * Sets optional startup arguments (typically from the command line). This must be
+     * invoked BEFORE setVisible(true) is invoked for the first time! It is effectively
+     * ignored after the window has been shown.
+     */
+    public void setArgs(String[] args) {
+        this.args = args;
     }
 
     /**
@@ -233,6 +244,33 @@ public class MainWindow extends JFrame {
         });
 
         setDropTarget(dropTarget);
+    }
+
+    private void processStartArgs() {
+        if (args == null || args.length == 0) {
+            return;
+        }
+
+        boolean addedAtLeastOne = false;
+        for (String arg : args) {
+            File candidate = new File(arg);
+            if (AudioUtil.isValidAudioFile(candidate)) {
+                Playlist.getInstance().addItem(candidate);
+                addedAtLeastOne = true;
+            }
+            else if (AudioUtil.isValidPlaylist(candidate)) {
+                Playlist.getInstance().appendPlaylist(candidate);
+                addedAtLeastOne = true;
+            }
+            else {
+                logger.warning("Unable to process start argument: " + arg);
+            }
+        }
+
+        // Auto-play if we got at least one valid one:
+        if (addedAtLeastOne) {
+            AudioPanel.getInstance().next();
+        }
     }
 
     public static MainWindow getInstance() {

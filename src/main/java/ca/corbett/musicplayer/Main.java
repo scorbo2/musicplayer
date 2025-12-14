@@ -4,6 +4,7 @@ import ca.corbett.extras.LookAndFeelManager;
 import ca.corbett.musicplayer.ui.MainWindow;
 import com.formdev.flatlaf.FlatLightLaf;
 
+import javax.swing.SwingUtilities;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -43,10 +44,14 @@ public class Main {
                    Version.FULL_NAME + " starting up: installDir={0}, settingsDir={1}, extensionsDir={2}",
                    new Object[]{Version.INSTALL_DIR, Version.SETTINGS_DIR, Version.EXTENSIONS_DIR});
         checkJavaRuntime();
-        LookAndFeelManager.installExtraLafs();
-        LookAndFeelManager.switchLaf(FlatLightLaf.class.getName());
-        AppConfig.getInstance().loadWithoutUIReload();
-        MainWindow.getInstance().setVisible(true);
+
+        SwingUtilities.invokeLater(() -> {
+            LookAndFeelManager.installExtraLafs();
+            LookAndFeelManager.switchLaf(FlatLightLaf.class.getName());
+            AppConfig.getInstance().loadWithoutUIReload();
+            MainWindow.getInstance().setArgs(args);
+            MainWindow.getInstance().setVisible(true);
+        });
     }
 
     /**

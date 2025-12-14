@@ -4,6 +4,7 @@ Author: Steve Corbett
 
 Version 3.1 [TODO] - Maintenance release
   #60 Bug: no progress bar for files less than 5MB in size
+  #58 Add support for startup arguments (tracks/playlists)
   #57 Add drag and drop support on main window
 
 Version 3.0 [2025-12-06] - Dynamic extension discovery

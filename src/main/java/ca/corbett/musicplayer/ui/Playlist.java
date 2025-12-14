@@ -81,6 +81,8 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public void addItem(File file) {
         fileListModel.addElement(file);
+        revalidate();
+        repaint();
     }
 
     /**
@@ -106,6 +108,9 @@ public class Playlist extends JPanel implements UIReloadable {
             }
 
             fileListModel.removeElementAt(fileList.getSelectedIndex());
+
+            revalidate();
+            repaint();
         }
     }
 
@@ -118,6 +123,8 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public void clear() {
         fileListModel.clear();
+        revalidate();
+        repaint();
 
         // Arbitrary decision: stop and unload any loaded track:
         AudioPanel.getInstance().stop();
@@ -274,6 +281,8 @@ public class Playlist extends JPanel implements UIReloadable {
 
         fileListModel.clear();
         fileListModel.addAll(newTracks);
+        revalidate();
+        repaint();
         AudioPanel.getInstance().next();
     }
 
@@ -282,6 +291,8 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public void appendPlaylist(File playlistFile) {
         fileListModel.addAll(PlaylistUtil.loadPlaylist(playlistFile));
+        revalidate();
+        repaint();
     }
 
     /**
