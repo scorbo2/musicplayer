@@ -34,15 +34,10 @@ public class AudioLoadThread extends MultiProgressWorker {
 
     @Override
     public void run() {
-        final boolean progressProbablyNeeded = sourceFile.length() > (5 * 1024 * 1024); // 5MB arbitrary size
-
         try {
-
-            if (progressProbablyNeeded) {
-                fireProgressBegins(2);
-                fireMajorProgressUpdate(1, 3, "Loading " + sourceFile.getName() + "...");
-                fireMinorProgressUpdate(1, 0, "Converting audio...");
-            }
+            fireProgressBegins(2);
+            fireMajorProgressUpdate(1, 3, "Loading " + sourceFile.getName() + "...");
+            fireMinorProgressUpdate(1, 0, "Converting audio...");
 
             // Convert if necessary from mp3 to wav:
             File convertedFile = null;
@@ -54,23 +49,16 @@ public class AudioLoadThread extends MultiProgressWorker {
                 }
             }
 
-            if (progressProbablyNeeded) {
-                fireMinorProgressUpdate(1, 1, "Parsing converted data...");
-            }
+            fireMinorProgressUpdate(1, 1, "Parsing converted data...");
 
             // Now load this audio stream:
             AudioData audioData = AudioUtil.load(sourceFile, convertedFile);
 
-            if (progressProbablyNeeded) {
-                fireMinorProgressUpdate(1, 2, "Processing audio...");
-            }
+            fireMinorProgressUpdate(1, 2, "Processing audio...");
 
             // If we get this far, set the audio data and play it:
             AudioPanel.getInstance().setAudioData(audioData);
-
-            if (progressProbablyNeeded) {
-                fireProgressComplete();
-            }
+            fireProgressComplete();
             AudioPanel.getInstance().play();
         } catch (Exception e) {
             getMessageUtil().error("Problem loading file: " + e.getMessage(), e);
