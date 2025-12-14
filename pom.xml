@@ -60,6 +60,12 @@
             <version>2.5.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>net.jthink</groupId>
+            <artifactId>jaudiotagger</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
         <!-- Not used here but some extensions want it, so... -->
         <dependency>
             <groupId>org.xerial</groupId>

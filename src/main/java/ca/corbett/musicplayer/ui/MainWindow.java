@@ -192,7 +192,7 @@ public class MainWindow extends JFrame {
     }
 
     /**
-     * Enables drag-and-drop of image files from the filesystem onto this window.
+     * Enables drag-and-drop of audio files or playlists from the filesystem onto this window.
      */
     private void enableDragAndDrop() {
         DropTarget dropTarget = new DropTarget(this, new DropTargetAdapter() {
@@ -231,6 +231,7 @@ public class MainWindow extends JFrame {
                     }
                     catch (UnsupportedFlavorException | IOException e) {
                         logger.warning("Ignoring unsupported drag and drop operation.");
+                        dtde.dropComplete(false);
                     }
                 }
                 else {
