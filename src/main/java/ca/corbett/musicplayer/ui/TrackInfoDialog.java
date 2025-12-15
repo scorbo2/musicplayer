@@ -23,9 +23,16 @@ public class TrackInfoDialog extends JFrame {
 
         setLayout(new BorderLayout());
         FormPanel formPanel = new FormPanel(Alignment.CENTER);
-        formPanel.add(new LabelField("File name:", trimString(trackFile.getName())));
-        formPanel.add(new LabelField("File size:", getSizeString(trackFile.length())));
-        formPanel.add(new LabelField("Location:", trimString(trackFile.getParentFile().getAbsolutePath())));
+        if (trackFile == null) {
+            formPanel.add(new LabelField("File name:", "(no file specified"));
+        }
+        else {
+            formPanel.add(new LabelField("File name:", trimString(trackFile.getName())));
+            formPanel.add(new LabelField("File size:", getSizeString(trackFile.length())));
+        }
+        if (trackFile != null && trackFile.getParentFile() != null) {
+            formPanel.add(new LabelField("Location:", trimString(trackFile.getParentFile().getAbsolutePath())));
+        }
         formPanel.add(new LabelField("Title:", meta.getTitle()));
         formPanel.add(new LabelField("Artist:", meta.getAuthor()));
         formPanel.add(new LabelField("Album:", meta.getAlbum()));
