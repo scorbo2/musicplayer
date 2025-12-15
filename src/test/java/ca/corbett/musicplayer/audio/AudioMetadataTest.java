@@ -39,6 +39,9 @@ class AudioMetadataTest {
 
         // THEN we should see it look nice:
         assertEquals("59:59", formatted);
+
+        // Also make sure invoking getDurationFormatted() multiple times returns the same value:
+        assertEquals("59:59", meta.getDurationFormatted());
     }
 
     @Test
