@@ -3,6 +3,7 @@ https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
 Version 3.1 [TODO] - Maintenance release
+  #62 Show better audio metadata in main playlist
   #60 Bug: no progress bar for files less than 5MB in size
   #58 Add support for startup arguments (tracks/playlists)
   #56 Track info dialog now shows more audio metadata
