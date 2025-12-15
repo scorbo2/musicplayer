@@ -4,6 +4,7 @@ import ca.corbett.extras.properties.PropertiesDialog;
 import ca.corbett.forms.Alignment;
 import ca.corbett.forms.FormPanel;
 import ca.corbett.forms.fields.LabelField;
+import ca.corbett.musicplayer.audio.AudioMetadata;
 
 import javax.swing.JFrame;
 import java.awt.BorderLayout;
@@ -12,23 +13,29 @@ import java.io.File;
 
 public class TrackInfoDialog extends JFrame {
 
-    private final File trackFile;
-
     public TrackInfoDialog(File trackFile) {
         super("Track info");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(new Dimension(375, 140));
-        setResizable(false);
+        setSize(new Dimension(375, 340));
+        setResizable(true);
         setLocationRelativeTo(MainWindow.getInstance());
-        this.trackFile = trackFile;
+        AudioMetadata meta = AudioMetadata.fromFile(trackFile);
 
         setLayout(new BorderLayout());
         FormPanel formPanel = new FormPanel(Alignment.CENTER);
-        formPanel.add(new LabelField("File name:", trimString(trackFile.getName(), 199)));
+        formPanel.add(new LabelField("File name:", trimString(trackFile.getName())));
         formPanel.add(new LabelField("File size:", getSizeString(trackFile.length())));
-        formPanel.add(
-                new LabelField("Location:", trimString(trackFile.getParentFile().getAbsolutePath(), 199)));
+        formPanel.add(new LabelField("Location:", trimString(trackFile.getParentFile().getAbsolutePath())));
+        formPanel.add(new LabelField("Title:", meta.getTitle()));
+        formPanel.add(new LabelField("Artist:", meta.getAuthor()));
+        formPanel.add(new LabelField("Album:", meta.getAlbum()));
+        formPanel.add(new LabelField("Genre:", meta.getGenre()));
+        formPanel.add(new LabelField("Length:", meta.getDurationFormatted()));
         add(PropertiesDialog.buildScrollPane(formPanel), BorderLayout.CENTER);
+    }
+
+    protected static String trimString(String input) {
+        return trimString(input, 199);
     }
 
     protected static String trimString(String input, int lengthLimit) {

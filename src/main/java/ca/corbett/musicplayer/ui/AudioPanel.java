@@ -206,9 +206,9 @@ public class AudioPanel extends JPanel implements UIReloadable {
         NowPlayingPanel.getInstance().setNowPlaying(data);
         trackInfo.reset();
         trackInfo.setSourceFile(data.getSourceFile());
-        trackInfo.setArtist(data.getMetadata().author);
-        trackInfo.setTitle(data.getMetadata().title);
-        trackInfo.setAlbum(data.getMetadata().album);
+        trackInfo.setArtist(data.getMetadata().getAuthor());
+        trackInfo.setTitle(data.getMetadata().getTitle());
+        trackInfo.setAlbum(data.getMetadata().getAlbum());
         trackInfo.setCurrentTimeSeconds(0);
         trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
         fireAudioLoadedEvent(trackInfo);
