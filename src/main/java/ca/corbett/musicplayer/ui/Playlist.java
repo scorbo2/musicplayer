@@ -26,6 +26,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -106,7 +107,7 @@ public class Playlist extends JPanel implements UIReloadable {
             AudioMetadata selectedMeta = fileList.getSelectedValue();
             File selected = (selectedMeta != null) ? selectedMeta.getSourceFile() : null;
             AudioData currentlyLoaded = AudioPanel.getInstance().getAudioData();
-            if (currentlyLoaded != null && currentlyLoaded.getSourceFile().equals(selected)) {
+            if (currentlyLoaded != null && Objects.equals(currentlyLoaded.getSourceFile(), selected)) {
                 AudioPanel.getInstance().stop();
                 AudioPanel.getInstance().setAudioData(null);
             }
