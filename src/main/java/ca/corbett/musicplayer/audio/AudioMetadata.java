@@ -21,10 +21,10 @@ public class AudioMetadata {
 
     public static final AudioMetadata NOTHING_PLAYING;
 
-    private String title;
-    private String author;
-    private String album;
-    private String genre;
+    private String title = "";
+    private String author = "";
+    private String album = "";
+    private String genre = "";
     private int durationSeconds;
     private File sourceFile;
 
@@ -64,10 +64,12 @@ public class AudioMetadata {
 
             // Try to grab meta tags, if available:
             Tag tag = audioFile.getTag();
-            meta.author = tag.getFirst(FieldKey.ARTIST);
-            meta.title = tag.getFirst(FieldKey.TITLE);
-            meta.album = tag.getFirst(FieldKey.ALBUM);
-            meta.genre = tag.getFirst(FieldKey.GENRE);
+            if (tag != null) {
+                meta.author = tag.getFirst(FieldKey.ARTIST);
+                meta.title = tag.getFirst(FieldKey.TITLE);
+                meta.album = tag.getFirst(FieldKey.ALBUM);
+                meta.genre = tag.getFirst(FieldKey.GENRE);
+            }
         }
         catch (Exception ignored) {
         }
@@ -80,6 +82,12 @@ public class AudioMetadata {
         if (meta.album == null || meta.album.isBlank()) {
             File parent = file.getParentFile();
             meta.album = (parent != null) ? parent.getName() : "(unknown)"; // arbitrary guess
+        }
+        if (meta.genre == null) {
+            meta.genre = "";
+        }
+        if (meta.author == null) {
+            meta.author = "";
         }
 
         return meta;
