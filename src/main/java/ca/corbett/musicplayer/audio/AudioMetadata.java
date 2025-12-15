@@ -97,13 +97,19 @@ public class AudioMetadata {
     /**
      * For testing purposes - allows construction of an arbitrary instance of AudioMetadata.
      */
-    protected static AudioMetadata fromRawValues(String title, String album, String author, String genre, int duration) {
+    protected static AudioMetadata fromRawValues(String title,
+                                                 String album,
+                                                 String author,
+                                                 String genre,
+                                                 File sourceFile,
+                                                 int duration) {
         AudioMetadata meta = new AudioMetadata();
         meta.title = title;
         meta.album = album;
         meta.author = author;
         meta.genre = genre;
         meta.durationSeconds = duration;
+        meta.sourceFile = sourceFile;
         return meta;
     }
 
