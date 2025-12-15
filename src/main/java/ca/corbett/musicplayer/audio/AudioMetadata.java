@@ -100,7 +100,7 @@ public class AudioMetadata {
 
     /**
      * Returns the track duration in a more human-friendly version, instead of seconds.
-     * For example, 2461 should return "41:01" indicating minutes:hours.
+     * For example, 2461 should return "41:01" indicating minutes:seconds.
      */
     public String getDurationFormatted() {
         // special case for small values:
