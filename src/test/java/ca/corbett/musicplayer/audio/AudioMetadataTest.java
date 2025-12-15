@@ -67,4 +67,55 @@ class AudioMetadataTest {
         // THEN we should see it flipped to a positive value:
         assertEquals("01:25", formatted);
     }
+
+    @Test
+    public void getFormatted_withTypicalValues_shouldSucceed() {
+        // GIVEN typical metadata values:
+        AudioMetadata meta = AudioMetadata.fromRawValues("Song Title",
+                                                         "Album Name",
+                                                         "Artist Name",
+                                                         "Genre Name",
+                                                         245);
+
+        // WHEN we format it:
+        String formatted = meta.getFormatted("%a - %t [%b] (%g) {%D}");
+
+        // THEN we should see the expected formatted string:
+        String expected = "Artist Name - Song Title [Album Name] (Genre Name) {04:05}";
+        assertEquals(expected, formatted);
+    }
+
+    @Test
+    public void getFormatted_withMissingValues_shouldUseDefaults() {
+        // GIVEN some missing metadata values:
+        AudioMetadata meta = AudioMetadata.fromRawValues("",
+                                                         "",
+                                                         null,
+                                                         "   ",
+                                                         0);
+
+        // WHEN we format it:
+        String formatted = meta.getFormatted("%a - %t [%b] (%g) {%D}");
+
+        // THEN we should see the expected formatted string with defaults:
+        String expected = "unknown - unknown [unknown] (unknown) {00:00}";
+        assertEquals(expected, formatted);
+    }
+
+    @Test
+    public void getFormatted_withInvalidFormatChars_shouldIgnoreThem() {
+        // GIVEN typical metadata values:
+        AudioMetadata meta = AudioMetadata.fromRawValues("Title",
+                                                         "Album",
+                                                         "Artist",
+                                                         "Genre",
+                                                         123);
+
+        // WHEN we format it with some invalid format characters:
+        String formatted = meta.getFormatted("%x %y %a %z %t %1 %D %%");
+
+        // THEN we should see only the valid format characters replaced:
+        String expected = "  Artist  Title  02:03 %";
+        assertEquals(expected, formatted);
+    }
 }

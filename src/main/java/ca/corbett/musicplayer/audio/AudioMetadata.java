@@ -1,5 +1,6 @@
 package ca.corbett.musicplayer.audio;
 
+import ca.corbett.musicplayer.AppConfig;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.AudioHeader;
@@ -104,6 +105,107 @@ public class AudioMetadata {
         meta.genre = genre;
         meta.durationSeconds = duration;
         return meta;
+    }
+
+    /**
+     * Returns a formatted string representing this track's metadata.
+     * The format string is provided as an argument.
+     */
+    public String getFormatted(String formatString) {
+        if (formatString == null) {
+            formatString = AppConfig.DEFAULT_FORMAT_STRING; // fallback
+        }
+
+        StringBuilder result = new StringBuilder();
+        int i = 0;
+
+        while (i < formatString.length()) {
+            char c = formatString.charAt(i);
+
+            if (c == '%') {
+                // Check if there's a character after %
+                if (i + 1 >= formatString.length()) {
+                    //throw new IllegalArgumentException("Invalid format string: '%' at end of string");
+                    i++;
+                    continue; // just ignore it
+                }
+
+                char formatChar = formatString.charAt(i + 1);
+
+                // Special case: for a literal % sign, you can use %%:
+                if (formatChar == '%') {
+                    result.append('%');
+                    i += 2; // Skip both '%' characters
+                    continue;
+                }
+
+                String replacement = getReplacementValue(formatChar);
+
+                if (replacement == null) {
+                    //throw new IllegalArgumentException("Invalid format tag: '%" + formatChar + "'");
+                    i += 2;
+                    continue; // just ignore it
+                }
+
+                result.append(replacement);
+                i += 2; // Skip both '%' and the format character
+            }
+            else {
+                result.append(c);
+                i++;
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Returns a formatted string representing this track's metadata.
+     * The format string is taken from application configuration.
+     */
+    public String getFormatted() {
+        return getFormatted(AppConfig.getInstance().getPlaylistFormatString());
+    }
+
+    /**
+     * Returns the replacement value for a given format character.
+     */
+    private String getReplacementValue(char formatChar) {
+        final String DEFAULT_VALUE = "unknown";
+        String value;
+
+        switch (formatChar) {
+            case 'a':
+                value = getAuthor();
+                break;
+            case 'b':
+                value = getAlbum();
+                break;
+            case 't':
+                value = getTitle();
+                break;
+            case 'g':
+                value = getGenre();
+                break;
+            case 'f':
+                File file = getSourceFile();
+                value = file != null ? file.getName() : null;
+                break;
+            case 'F':
+                File absFile = getSourceFile();
+                value = absFile != null ? absFile.getAbsolutePath() : null;
+                break;
+            case 'd':
+                return String.valueOf(getDurationSeconds());
+            case 'D':
+                value = getDurationFormatted();
+                break;
+            default:
+                return null; // Invalid format character
+        }
+
+        // Return default if value is null or blank
+        return (value == null || value.trim().isEmpty()) ? DEFAULT_VALUE : value;
     }
 
     /**

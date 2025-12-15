@@ -15,6 +15,7 @@ import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.extras.properties.PropertiesManager;
+import ca.corbett.extras.properties.ShortTextProperty;
 import ca.corbett.extras.properties.SliderProperty;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
@@ -72,6 +73,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     private static final Logger logger = Logger.getLogger(AppConfig.class.getName());
 
+    public static final String DEFAULT_FORMAT_STRING = "[%a] - %t (%D)"; // [artist] - title (duration)
+
     private static AppConfig instance;
     public static final File PROPS_FILE;
 
@@ -86,6 +89,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private EnumProperty<WaveformConfigField.Compression> waveformResolution;
     private EnumProperty<WaveformConfigField.WidthLimit> waveformWidthLimit;
     private ComboProperty<String> applicationTheme;
+    private ShortTextProperty playlistFormatString;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
     private IntegerProperty windowWidth;
@@ -222,6 +226,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     public AppTheme.Theme getAppTheme() {
         return AppTheme.getTheme(applicationTheme.getSelectedItem());
+    }
+
+    public String getPlaylistFormatString() {
+        return playlistFormatString.getValue();
     }
 
     public boolean isShuffleEnabled() {
@@ -437,6 +445,12 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
         applicationTheme = buildCombo("UI.Theme.theme", "Theme:", getAppThemeChoices(), true);
 
+        playlistFormatString = new ShortTextProperty("UI.Playlist.formatString",
+                                                     "Playlist format string:",
+                                                     DEFAULT_FORMAT_STRING,
+                                                     2);
+        playlistFormatString.setHelpText(getPlaylistFormatCheatsheet());
+
         visualizerType = buildCombo("Visualization.General.visualizer", "Visualizer:", getVisualizerChoices(), true);
         visualizerRotation = new EnumProperty<>("Visualization.General.visualizerRotation", "Rotate visualizers:",
                                                 VisualizationThread.VisualizerRotation.NEVER);
@@ -541,6 +555,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        waveformResolution,
                        waveformWidthLimit,
                        applicationTheme,
+                       playlistFormatString,
                        shuffleEnabled,
                        repeatEnabled,
                        windowWidth,
@@ -707,5 +722,20 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
             default:
                 return 25;
         }
+    }
+
+    private String getPlaylistFormatCheatsheet() {
+        return "<html>Use the following tokens to customize the playlist format string:<br>" +
+            "<ul>" +
+            "<li><b>%a</b> - Artist</li>" +
+            "<li><b>%t</b> - Title</li>" +
+            "<li><b>%b</b> - Album</li>" +
+            "<li><b>%D</b> - Duration (mm:ss)</li>" +
+            "<li><b>%g</b> - Genre</li>" +
+            "<li><b>%f</b> - Filename</li>" +
+            "<li><b>%F</b> - Full file path</li>" +
+            "</ul>" +
+            "Combine these tokens with any desired text or punctuation to create your custom format." +
+            "</html>";
     }
 }

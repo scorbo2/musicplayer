@@ -6,6 +6,7 @@ import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
+import ca.corbett.musicplayer.audio.AudioMetadata;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 
 import javax.swing.DefaultListModel;
@@ -45,8 +46,8 @@ public class Playlist extends JPanel implements UIReloadable {
     private static Playlist instance;
     private MessageUtil messageUtil;
     private final JPanel buttonPanel;
-    private final JList<File> fileList;
-    private final DefaultListModel<File> fileListModel;
+    private final JList<AudioMetadata> fileList;
+    private final DefaultListModel<AudioMetadata> fileListModel;
 
     protected Playlist() {
         buttonPanel = new JPanel();
@@ -80,7 +81,9 @@ public class Playlist extends JPanel implements UIReloadable {
      * @param file Any File.
      */
     public void addItem(File file) {
-        fileListModel.addElement(file);
+        // Convert the file into AudioMetadata so the list can render title/artist/album
+        AudioMetadata meta = AudioMetadata.fromFile(file);
+        fileListModel.addElement(meta);
         revalidate();
         repaint();
     }
@@ -100,7 +103,8 @@ public class Playlist extends JPanel implements UIReloadable {
 
             // Arbitrary decision: if you remove the track that's currently
             // loaded in the audio panel, stop and unload it.
-            File selected = fileList.getSelectedValue();
+            AudioMetadata selectedMeta = fileList.getSelectedValue();
+            File selected = (selectedMeta != null) ? selectedMeta.getSourceFile() : null;
             AudioData currentlyLoaded = AudioPanel.getInstance().getAudioData();
             if (currentlyLoaded != null && currentlyLoaded.getSourceFile().equals(selected)) {
                 AudioPanel.getInstance().stop();
@@ -139,7 +143,8 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public File getSelectedTrackFile() {
         if (fileList.getSelectedIndex() != -1) {
-            return fileList.getSelectedValue();
+            AudioMetadata meta = fileList.getSelectedValue();
+            return (meta != null) ? meta.getSourceFile() : null;
         }
         return null;
     }
@@ -157,7 +162,10 @@ public class Playlist extends JPanel implements UIReloadable {
         }
         String sourcePath = audioData.getMetadata().getSourceFile().getAbsolutePath();
         for (int i = 0; i < fileListModel.size(); i++) {
-            if (sourcePath.equals(fileListModel.get(i).getAbsolutePath())) {
+            AudioMetadata meta = fileListModel.get(i);
+            if (meta != null
+                && meta.getSourceFile() != null
+                && sourcePath.equals(meta.getSourceFile().getAbsolutePath())) {
                 return i;
             }
         }
@@ -280,7 +288,10 @@ public class Playlist extends JPanel implements UIReloadable {
         }
 
         fileListModel.clear();
-        fileListModel.addAll(newTracks);
+        // Convert to metadata objects
+        for (File f : newTracks) {
+            fileListModel.addElement(AudioMetadata.fromFile(f));
+        }
         revalidate();
         repaint();
         AudioPanel.getInstance().next();
@@ -290,7 +301,10 @@ public class Playlist extends JPanel implements UIReloadable {
      * Appends the contents of the given playlist to the end of the current playlist.
      */
     public void appendPlaylist(File playlistFile) {
-        fileListModel.addAll(PlaylistUtil.loadPlaylist(playlistFile));
+        List<File> loaded = PlaylistUtil.loadPlaylist(playlistFile);
+        for (File f : loaded) {
+            fileListModel.addElement(AudioMetadata.fromFile(f));
+        }
         revalidate();
         repaint();
     }
@@ -303,7 +317,10 @@ public class Playlist extends JPanel implements UIReloadable {
     public void savePlaylist(File targetFile) {
         List<File> list = new ArrayList<>();
         for (int i = 0; i < fileListModel.size(); i++) {
-            list.add(fileListModel.get(i));
+            AudioMetadata meta = fileListModel.get(i);
+            if (meta != null && meta.getSourceFile() != null) {
+                list.add(meta.getSourceFile());
+            }
         }
 
         // If there's nothing here, don't bother:
@@ -359,7 +376,8 @@ public class Playlist extends JPanel implements UIReloadable {
      * an error is logged and displayed to the user and nothing is loaded.
      */
     public void loadSelected() {
-        File selected = fileList.getSelectedValue();
+        AudioMetadata selectedMeta = fileList.getSelectedValue();
+        File selected = (selectedMeta != null) ? selectedMeta.getSourceFile() : null;
         fileList.ensureIndexIsVisible(fileList.getSelectedIndex());
         if (fileListModel.isEmpty() || selected == null) {
             return;
@@ -468,6 +486,7 @@ public class Playlist extends JPanel implements UIReloadable {
         panel.setLayout(new BorderLayout());
         JScrollPane scrollPane = new JScrollPane(fileList);
         scrollPane.getVerticalScrollBar().setBlockIncrement(32);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
