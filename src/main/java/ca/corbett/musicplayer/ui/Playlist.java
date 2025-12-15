@@ -152,10 +152,10 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public int getIndexOfCurrentlyPlayingTrack() {
         AudioData audioData = AudioPanel.getInstance().getAudioData();
-        if (audioData == null || audioData.getMetadata() == null || audioData.getMetadata().sourceFile == null) {
+        if (audioData == null || audioData.getMetadata() == null || audioData.getMetadata().getSourceFile() == null) {
             return -1;
         }
-        String sourcePath = audioData.getMetadata().sourceFile.getAbsolutePath();
+        String sourcePath = audioData.getMetadata().getSourceFile().getAbsolutePath();
         for (int i = 0; i < fileListModel.size(); i++) {
             if (sourcePath.equals(fileListModel.get(i).getAbsolutePath())) {
                 return i;
