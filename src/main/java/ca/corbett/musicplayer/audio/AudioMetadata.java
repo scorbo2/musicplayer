@@ -78,7 +78,8 @@ public class AudioMetadata {
             meta.title = file.getName();
         }
         if (meta.album == null || meta.album.isBlank()) {
-            meta.album = file.getParentFile().getName(); // arbitrary guess
+            File parent = file.getParentFile();
+            meta.album = (parent != null) ? parent.getName() : "(unknown)"; // arbitrary guess
         }
 
         return meta;
