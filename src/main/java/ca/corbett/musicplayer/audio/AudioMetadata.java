@@ -111,15 +111,16 @@ public class AudioMetadata {
         int hours = 0;
         int minutes = 0;
         int seconds = 0;
-        while (durationSeconds >= 3600) {
-            durationSeconds -= 3600;
+        int remainingSeconds = durationSeconds;
+        while (remainingSeconds >= 3600) {
+            remainingSeconds -= 3600;
             hours++;
         }
-        while (durationSeconds >= 60) {
-            durationSeconds -= 60;
+        while (remainingSeconds >= 60) {
+            remainingSeconds -= 60;
             minutes++;
         }
-        seconds = durationSeconds;
+        seconds = remainingSeconds;
 
         String hoursStr = "";
         String minutesStr = "";
