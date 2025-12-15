@@ -56,4 +56,15 @@ class AudioMetadataTest {
         assertEquals("2:46:39", formatted);
     }
 
+    @Test
+    public void getDurationFormatted_withNegativeValue_shouldTreatAsPositive() {
+        // GIVEN an obviously wrong negative duration value:
+        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", -85);
+
+        // WHEN we format it:
+        String formatted = meta.getDurationFormatted();
+
+        // THEN we should see it flipped to a positive value:
+        assertEquals("01:25", formatted);
+    }
 }

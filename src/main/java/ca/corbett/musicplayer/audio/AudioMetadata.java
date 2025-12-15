@@ -111,6 +111,11 @@ public class AudioMetadata {
      * For example, 2461 should return "41:01" indicating minutes:seconds.
      */
     public String getDurationFormatted() {
+        // Negative duration values are impossible, so just flip it:
+        if (durationSeconds < 0) {
+            durationSeconds = Math.abs(durationSeconds);
+        }
+
         // special case for small values:
         if (durationSeconds < 60) {
             return "00:" + String.format("%02d", durationSeconds);
