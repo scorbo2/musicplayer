@@ -37,6 +37,12 @@ import java.util.logging.Logger;
  * or backwards through the list. Shuffle and Repeat are also
  * available as options. The currently showing list of files can be
  * saved for easy retrieval later.
+ * <p>
+ *     The formatting of the list items is handled by PlaylistCellRenderer,
+ *     and is user-configurable via the playlist item format setting in
+ *     the application preferences. The default format is "[artist] - title (01:23)"
+ *     but this can be changed in AppConfig.
+ * </p>
  *
  * @author scorbo
  * @since 2025-03-23

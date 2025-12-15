@@ -11,6 +11,11 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 
+/**
+ * Displays a dialog showing information about a music track.
+ *
+ * @author <a href="https://github.com/scorbo2">scorbo2</a>
+ */
 public class TrackInfoDialog extends JFrame {
 
     public TrackInfoDialog(File trackFile) {
