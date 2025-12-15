@@ -19,6 +19,7 @@ import ca.corbett.extras.properties.ShortTextProperty;
 import ca.corbett.extras.properties.SliderProperty;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
+import ca.corbett.forms.fields.ShortTextField;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
@@ -448,7 +449,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         playlistFormatString = new ShortTextProperty("UI.Playlist.formatString",
                                                      "Playlist format:",
                                                      DEFAULT_FORMAT_STRING,
-                                                     15);
+                                                     20);
+        playlistFormatString.addFormFieldGenerationListener(
+            (property, formField)
+                -> ((ShortTextField)formField).getTextField().setColumns(20)); // THIS SHOULD NOT BE NECESSARY!
         playlistFormatString.setHelpText(getPlaylistFormatCheatsheet());
 
         visualizerType = buildCombo("Visualization.General.visualizer", "Visualizer:", getVisualizerChoices(), true);
