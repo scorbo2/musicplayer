@@ -446,9 +446,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         applicationTheme = buildCombo("UI.Theme.theme", "Theme:", getAppThemeChoices(), true);
 
         playlistFormatString = new ShortTextProperty("UI.Playlist.formatString",
-                                                     "Playlist format string:",
+                                                     "Playlist format:",
                                                      DEFAULT_FORMAT_STRING,
-                                                     2);
+                                                     15);
         playlistFormatString.setHelpText(getPlaylistFormatCheatsheet());
 
         visualizerType = buildCombo("Visualization.General.visualizer", "Visualizer:", getVisualizerChoices(), true);
