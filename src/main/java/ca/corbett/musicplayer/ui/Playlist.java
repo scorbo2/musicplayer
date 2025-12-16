@@ -478,6 +478,9 @@ public class Playlist extends JPanel implements UIReloadable {
     @Override
     public void reloadUI() {
         rebuildControls();
+        fileList.invalidate();
+        fileList.revalidate();
+        fileList.repaint();
     }
 
     public void rebuildControls() {

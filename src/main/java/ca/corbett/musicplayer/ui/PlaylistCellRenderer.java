@@ -15,7 +15,7 @@ public class PlaylistCellRenderer extends JLabel implements ListCellRenderer<Aud
 
     public PlaylistCellRenderer() {
         int padding = DEFAULT_MARGIN;
-        setBorder(new EmptyBorder(0, padding, 0, padding));
+        setBorder(new EmptyBorder(0, padding, 0, 0));
         setOpaque(true);
     }
 
