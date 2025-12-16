@@ -4,6 +4,7 @@ import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.progress.MultiProgressDialog;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.AppConfig;
+import ca.corbett.musicplayer.actions.PlaylistSortAction;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
 import ca.corbett.musicplayer.audio.AudioMetadata;
@@ -21,6 +22,7 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -55,6 +57,34 @@ public class Playlist extends JPanel implements UIReloadable {
     private final JPanel buttonPanel;
     private final JList<AudioMetadata> fileList;
     private final DefaultListModel<AudioMetadata> fileListModel;
+
+    public enum SortAttribute {
+        Genre("%g"),
+        Artist("%a"),
+        Album("%b"),
+        Title("%t"),
+        TrackNumber("%n"),
+        FilePath("%F");
+
+        private final String formatKey;
+
+        SortAttribute(String formatKey) {
+            this.formatKey = formatKey;
+        }
+
+        public String getFormatKey() {
+            return formatKey;
+        }
+
+        public static SortAttribute fromFormatKey(String key) {
+            for (SortAttribute attr : SortAttribute.values()) {
+                if (attr.getFormatKey().equalsIgnoreCase(key)) {
+                    return attr;
+                }
+            }
+            return null;
+        }
+    }
 
     protected Playlist() {
         buttonPanel = new JPanel();
@@ -140,6 +170,45 @@ public class Playlist extends JPanel implements UIReloadable {
         // Arbitrary decision: stop and unload any loaded track:
         AudioPanel.getInstance().stop();
         AudioPanel.getInstance().setAudioData(null);
+    }
+
+    /**
+     * Programmatically reverses the sort order of the current playlist.
+     */
+    public void reverseSort() {
+        List<AudioMetadata> metas = new ArrayList<>();
+        for (int i = 0; i < fileListModel.size(); i++) {
+            metas.add(fileListModel.get(i));
+        }
+        fileListModel.clear();
+        for (int i = metas.size() - 1; i >= 0; i--) {
+            fileListModel.addElement(metas.get(i));
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Sorts the current playlist using the given List of SortKeys.
+     */
+    public void sort(List<SortKey> sortKeys) {
+        if (sortKeys == null || sortKeys.isEmpty()) {
+            return;
+        }
+        List<AudioMetadata> metas = new ArrayList<>();
+        for (int i = 0; i < fileListModel.size(); i++) {
+            metas.add(fileListModel.get(i));
+        }
+        sortList(metas, sortKeys);
+
+        fileListModel.clear();
+        for (AudioMetadata meta : metas) {
+            fileListModel.addElement(meta);
+        }
+
+        revalidate();
+        repaint();
     }
 
     /**
@@ -455,6 +524,17 @@ public class Playlist extends JPanel implements UIReloadable {
                 }
             }
 
+            // Special case our playlist sort button:
+            // We need to add the button as the owner component of the action,
+            // so it can show its popup menu correctly.
+            if (button.getName().equalsIgnoreCase("playlist sort")) {
+                for (ActionListener listener : button.getActionListeners()) {
+                    if (listener instanceof PlaylistSortAction) {
+                        ((PlaylistSortAction)listener).setOwnerComponent(button);
+                    }
+                }
+            }
+
             constraints.gridx++;
         }
 
@@ -508,6 +588,64 @@ public class Playlist extends JPanel implements UIReloadable {
                 AudioPanel.getInstance().setAudioData(null);
                 AudioPanel.getInstance().play();
             }
+        }
+    }
+
+    protected void sortList(List<AudioMetadata> toSort, List<SortKey> sortKeys) {
+        if (toSort == null || sortKeys == null || toSort.isEmpty() || sortKeys.isEmpty()) {
+            return;
+        }
+        toSort.sort((a, b) -> {
+            for (SortKey sortKey : sortKeys) {
+                int comparison = switch (sortKey.attribute) {
+                    case Genre -> compareStrings(a.getGenre(), b.getGenre());
+                    case Artist -> compareStrings(a.getAuthor(), b.getAuthor());
+                    case Album -> compareStrings(a.getAlbum(), b.getAlbum());
+                    case Title -> compareStrings(a.getTitle(), b.getTitle());
+                    case TrackNumber -> Integer.compare(a.getTrackNumber(), b.getTrackNumber());
+                    case FilePath -> compareFilePaths(a.getSourceFile(), b.getSourceFile());
+                };
+                if (comparison != 0) {
+                    return sortKey.isAscending ? comparison : -comparison;
+                }
+            }
+            return 0;
+        });
+    }
+
+    private static int compareStrings(String a, String b) {
+        if (a == null && b == null) { return 0; }
+        if (a == null) {
+            return -1;  // nulls sort first
+        }
+        if (b == null) { return 1; }
+        return a.compareToIgnoreCase(b);
+    }
+
+    private static int compareFilePaths(File a, File b) {
+        if (a == null && b == null) { return 0; }
+        if (a == null) {
+            return -1;  // nulls sort first
+        }
+        if (b == null) { return 1; }
+        return a.getAbsolutePath().compareToIgnoreCase(b.getAbsolutePath());
+    }
+
+    public static class SortKey {
+        public final SortAttribute attribute;
+        public final boolean isAscending;
+
+        public SortKey(SortAttribute attribute, boolean isAscending) {
+            this.attribute = attribute;
+            this.isAscending = isAscending;
+        }
+
+        public static SortKey asc(SortAttribute attribute) {
+            return new SortKey(attribute, true);
+        }
+
+        public static SortKey desc(SortAttribute attribute) {
+            return new SortKey(attribute, false);
         }
     }
 

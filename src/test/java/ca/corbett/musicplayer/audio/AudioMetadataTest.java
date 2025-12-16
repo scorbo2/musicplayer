@@ -8,7 +8,7 @@ class AudioMetadataTest {
     @Test
     public void getDurationFormatted_withVeryShortValue_shouldSucceed() {
         // GIVEN a single digit value in seconds:
-        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 4);
+        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 4, 0);
 
         // WHEN we format it:
         String formatted = meta.getDurationFormatted();
@@ -20,7 +20,7 @@ class AudioMetadataTest {
     @Test
     public void getDurationFormatted_withShortValue_shouldSucceed() {
         // GIVEN a value in seconds less than one minute:
-        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 45);
+        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 45, 0);
 
         // WHEN we format it:
         String formatted = meta.getDurationFormatted();
@@ -32,7 +32,7 @@ class AudioMetadataTest {
     @Test
     public void getDurationFormatted_withMediumValue_shouldSucceed() {
         // GIVEN a value in seconds less than one hour:
-        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 3599);
+        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 3599, 0);
 
         // WHEN we format it:
         String formatted = meta.getDurationFormatted();
@@ -47,7 +47,7 @@ class AudioMetadataTest {
     @Test
     public void getDurationFormatted_withHugeValue_shouldSucceed() {
         // GIVEN an unreasonably large value in seconds:
-        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 9999);
+        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, 9999, 0);
 
         // WHEN we format it:
         String formatted = meta.getDurationFormatted();
@@ -59,7 +59,7 @@ class AudioMetadataTest {
     @Test
     public void getDurationFormatted_withNegativeValue_shouldTreatAsPositive() {
         // GIVEN an obviously wrong negative duration value:
-        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, -85);
+        AudioMetadata meta = AudioMetadata.fromRawValues("", "", "", "", null, -85, 0);
 
         // WHEN we format it:
         String formatted = meta.getDurationFormatted();
@@ -76,7 +76,8 @@ class AudioMetadataTest {
                                                          "Artist Name",
                                                          "Genre Name",
                                                          null,
-                                                         245);
+                                                         245,
+                                                         0);
 
         // WHEN we format it:
         String formatted = meta.getFormatted("%a - %t [%b] (%g) {%D}");
@@ -94,6 +95,7 @@ class AudioMetadataTest {
                                                          null,
                                                          "   ",
                                                          null,
+                                                         0,
                                                          0);
 
         // WHEN we format it:
@@ -112,7 +114,8 @@ class AudioMetadataTest {
                                                          "Artist",
                                                          "Genre",
                                                          null,
-                                                         123);
+                                                         123,
+                                                         0);
 
         // WHEN we format it with some invalid format characters:
         String formatted = meta.getFormatted("%x %y %a %z %t %1 %D %%");
@@ -130,7 +133,8 @@ class AudioMetadataTest {
                                                          "Artist",
                                                          "Genre",
                                                          null,
-                                                         200);
+                                                         200,
+                                                         0);
 
         // WHEN we format it with %f:
         String formatted = meta.getFormatted("File: (%f) Path: (%F)");
@@ -148,7 +152,8 @@ class AudioMetadataTest {
                                                          "Artist",
                                                          "Genre",
                                                          new java.io.File("/path/to/audiofile.mp3"),
-                                                         200);
+                                                         200,
+                                                         0);
 
         // WHEN we format it with %f and %F:
         String formatted = meta.getFormatted("File: (%f) Path: (%F)");
