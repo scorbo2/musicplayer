@@ -31,12 +31,14 @@ public class CustomSortDialog extends JDialog {
     private ComboField<Playlist.SortAttribute> sortKeyField5;
     private JButton btnAddLevel;
     private JButton btnRemoveLevel;
+    private ComboField<String> sortOrderField;
     private CheckBoxField updatePlaylistFormat;
 
     public CustomSortDialog() {
         setTitle("Custom Sort");
-        setSize(400, 300);
+        setSize(380, 360);
         setLocationRelativeTo(MainWindow.getInstance());
+        setMinimumSize(new Dimension(380, 200));
         setModal(true);
         setLayout(new BorderLayout());
         add(PropertiesDialog.buildScrollPane(buildFormPanel()), BorderLayout.CENTER);
@@ -72,6 +74,9 @@ public class CustomSortDialog extends JDialog {
         btnRemoveLevel.setVisible(false);
         panelField.getPanel().add(btnRemoveLevel);
         formPanel.add(panelField);
+
+        sortOrderField = new ComboField<>("Sort order:", List.of("Ascending", "Descending"), 0);
+        formPanel.add(sortOrderField);
 
         updatePlaylistFormat = new CheckBoxField("Update playlist format to match sort order", true);
         formPanel.add(updatePlaylistFormat);
@@ -152,7 +157,7 @@ public class CustomSortDialog extends JDialog {
      * so the next time the dialog is opened, the previous settings are restored.
      */
     private void applyAndClose() {
-        final boolean isAscending = true; // hard-coded for now
+        final boolean isAscending = sortOrderField.getSelectedIndex() == 0;
 
         List<Playlist.SortKey> sortKeys = Arrays.stream(new ComboField[]{
             sortKeyField1,
