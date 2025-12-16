@@ -101,11 +101,12 @@ public class AudioMetadata {
      * For testing purposes - allows construction of an arbitrary instance of AudioMetadata.
      */
     public static AudioMetadata fromRawValues(String title,
-                                                 String album,
-                                                 String author,
-                                                 String genre,
-                                                 File sourceFile,
-                                                 int duration) {
+                                              String album,
+                                              String author,
+                                              String genre,
+                                              File sourceFile,
+                                              int duration,
+                                              int trackNumber) {
         AudioMetadata meta = new AudioMetadata();
         meta.title = title;
         meta.album = album;
@@ -113,6 +114,7 @@ public class AudioMetadata {
         meta.genre = genre;
         meta.durationSeconds = duration;
         meta.sourceFile = sourceFile;
+        meta.trackNumber = trackNumber;
         return meta;
     }
 
