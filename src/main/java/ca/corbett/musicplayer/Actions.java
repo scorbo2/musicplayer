@@ -11,6 +11,7 @@ import ca.corbett.musicplayer.actions.PlaylistOpenAction;
 import ca.corbett.musicplayer.actions.PlaylistRemoveAllAction;
 import ca.corbett.musicplayer.actions.PlaylistRemoveOneAction;
 import ca.corbett.musicplayer.actions.PlaylistSaveAction;
+import ca.corbett.musicplayer.actions.PlaylistSortAction;
 import ca.corbett.musicplayer.actions.PlaylistTrackInfoAction;
 import ca.corbett.musicplayer.actions.PrevAction;
 import ca.corbett.musicplayer.actions.RepeatAction;
@@ -60,6 +61,7 @@ public final class Actions {
             new MPAction("Add", "Add to playlist", "icon-add.png", new PlaylistAddAction()),
             new MPAction("Remove selected", "Remove selected", "icon-remove-single.png", new PlaylistRemoveOneAction()),
             new MPAction("Clear", "Clear playlist", "icon-remove-all.png", new PlaylistRemoveAllAction()),
+        new MPAction("Playlist sort", "Sort playlist", "icon-sort.png", new PlaylistSortAction()),
             new MPAction("Track info", "Track info", "icon-popup.png", new PlaylistTrackInfoAction()),
             new MPAction("Shuffle", "Shuffle", "media-playlist-shuffle.png", new ShuffleAction()),
             new MPAction("Repeat", "Repeat", "media-playlist-repeat.png", new RepeatAction())

@@ -91,6 +91,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private EnumProperty<WaveformConfigField.WidthLimit> waveformWidthLimit;
     private ComboProperty<String> applicationTheme;
     private ShortTextProperty playlistFormatString;
+    private ShortTextProperty playlistCustomSortString;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
     private IntegerProperty windowWidth;
@@ -229,8 +230,27 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return AppTheme.getTheme(applicationTheme.getSelectedItem());
     }
 
+    /**
+     * Sets the playlist format string. See getPlaylistFormatCheatsheet for details.
+     */
+    public void setPlaylistFormatString(String formatStr) {
+        playlistFormatString.setValue(formatStr);
+    }
+
     public String getPlaylistFormatString() {
         return playlistFormatString.getValue();
+    }
+
+    /**
+     * Invoked internally to persist custom sort orders created via the Custom Sort dialog.
+     * This setting is not shown to the user.
+     */
+    public void setPlaylistCustomSortString(String sortStr) {
+        playlistCustomSortString.setValue(sortStr);
+    }
+
+    public String getPlaylistCustomSortString() {
+        return playlistCustomSortString.getValue();
     }
 
     public boolean isShuffleEnabled() {
@@ -455,6 +475,9 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                 -> ((ShortTextField)formField).getTextField().setColumns(20)); // THIS SHOULD NOT BE NECESSARY!
         playlistFormatString.setHelpText(getPlaylistFormatCheatsheet());
 
+        playlistCustomSortString = new ShortTextProperty("UI.Playlist.customFormatString", "customFormat", "");
+        playlistCustomSortString.setExposed(false);
+
         visualizerType = buildCombo("Visualization.General.visualizer", "Visualizer:", getVisualizerChoices(), true);
         visualizerRotation = new EnumProperty<>("Visualization.General.visualizerRotation", "Rotate visualizers:",
                                                 VisualizationThread.VisualizerRotation.NEVER);
@@ -560,6 +583,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        waveformWidthLimit,
                        applicationTheme,
                        playlistFormatString,
+                       playlistCustomSortString,
                        shuffleEnabled,
                        repeatEnabled,
                        windowWidth,
@@ -712,20 +736,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     private int getOldHardwareDelayFromStringOption(String option) {
-        switch (option) {
-            case "None - my hardware is awesome":
-                return 25;
-            case "Small - my hardware is a bit old":
-                return 50;
-            case "Medium - my hardware is not so good":
-                return 75;
-            case "Large - my hardware is pretty bad":
-                return 150;
-            case "XLarge - my hardware is ancient":
-                return 250;
-            default:
-                return 25;
-        }
+        return switch (option) {
+            case "None - my hardware is awesome" -> 25;
+            case "Small - my hardware is a bit old" -> 50;
+            case "Medium - my hardware is not so good" -> 75;
+            case "Large - my hardware is pretty bad" -> 150;
+            case "XLarge - my hardware is ancient" -> 250;
+            default -> 25;
+        };
     }
 
     private String getPlaylistFormatCheatsheet() {

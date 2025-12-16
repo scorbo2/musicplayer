@@ -26,8 +26,9 @@ public class AudioMetadata {
     private String author = "";
     private String album = "";
     private String genre = "";
-    private int durationSeconds;
+    private int durationSeconds = 0;
     private File sourceFile;
+    private int trackNumber = 0;
 
     static {
         NOTHING_PLAYING = new AudioMetadata();
@@ -36,6 +37,7 @@ public class AudioMetadata {
         NOTHING_PLAYING.album = "(n/a)";
         NOTHING_PLAYING.genre = "(n/a)";
         NOTHING_PLAYING.durationSeconds = 0;
+        NOTHING_PLAYING.trackNumber = 0;
     }
 
     private AudioMetadata() {
@@ -70,6 +72,7 @@ public class AudioMetadata {
                 meta.title = tag.getFirst(FieldKey.TITLE);
                 meta.album = tag.getFirst(FieldKey.ALBUM);
                 meta.genre = tag.getFirst(FieldKey.GENRE);
+                meta.trackNumber = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
             }
         }
         catch (Exception ignored) {
@@ -97,7 +100,7 @@ public class AudioMetadata {
     /**
      * For testing purposes - allows construction of an arbitrary instance of AudioMetadata.
      */
-    protected static AudioMetadata fromRawValues(String title,
+    public static AudioMetadata fromRawValues(String title,
                                                  String album,
                                                  String author,
                                                  String genre,
@@ -189,6 +192,9 @@ public class AudioMetadata {
                 break;
             case 't':
                 value = getTitle();
+                break;
+            case 'n':
+                value = Integer.toString(getTrackNumber());
                 break;
             case 'g':
                 value = getGenre();
@@ -283,6 +289,10 @@ public class AudioMetadata {
         return sourceFile;
     }
 
+    public int getTrackNumber() {
+        return trackNumber;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (!(object instanceof AudioMetadata that)) { return false; }
@@ -291,11 +301,12 @@ public class AudioMetadata {
             && Objects.equals(author, that.author)
             && Objects.equals(album, that.album)
             && Objects.equals(genre, that.genre)
+            && Objects.equals(trackNumber, that.trackNumber)
             && Objects.equals(sourceFile, that.sourceFile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, author, album, genre, durationSeconds, sourceFile);
+        return Objects.hash(title, author, album, genre, durationSeconds, sourceFile, trackNumber);
     }
 }
