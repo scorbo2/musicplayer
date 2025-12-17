@@ -752,6 +752,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
             "<li><b>%a</b> - Artist</li>" +
             "<li><b>%t</b> - Title</li>" +
             "<li><b>%b</b> - Album</li>" +
+            "<li><b>%n</b> - Track number</li>" +
             "<li><b>%D</b> - Duration (mm:ss)</li>" +
             "<li><b>%g</b> - Genre</li>" +
             "<li><b>%f</b> - Filename</li>" +
