@@ -8,9 +8,11 @@ import ca.corbett.musicplayer.actions.PlaylistSortAction;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
 import ca.corbett.musicplayer.audio.AudioMetadata;
+import ca.corbett.musicplayer.audio.AudioUtil;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 
 import javax.swing.DefaultListModel;
+import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -18,14 +20,19 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.TransferHandler;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -96,6 +103,11 @@ public class Playlist extends JPanel implements UIReloadable {
         fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fileList.addMouseListener(new DoubleClickListener());
 
+        // Enable drag and drop for reordering
+        fileList.setDragEnabled(true);
+        fileList.setDropMode(DropMode.INSERT);
+        fileList.setTransferHandler(new PlaylistTransferHandler());
+
         initComponents();
         ReloadUIAction.getInstance().registerReloadable(this);
     }
@@ -118,9 +130,44 @@ public class Playlist extends JPanel implements UIReloadable {
      * @param file Any File.
      */
     public void addItem(File file) {
-        // Convert the file into AudioMetadata so the list can render title/artist/album
-        AudioMetadata meta = AudioMetadata.fromFile(file);
+        addItem(AudioMetadata.fromFile(file));
+    }
+
+    /**
+     * Adds a single item to the list. Uniqueness checks are not done here,
+     * so it's possible to add the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void addItem(AudioMetadata meta) {
         fileListModel.addElement(meta);
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Inserts a single item at the given index in the list.
+     * Uniqueness checks are not done here, so it's possible to add
+     * the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void insertItemAt(File file, int index) {
+        insertItemAt(AudioMetadata.fromFile(file), index);
+    }
+
+    /**
+     * Inserts a single item at the given index in the list.
+     * Uniqueness checks are not done here, so it's possible to add
+     * the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void insertItemAt(AudioMetadata meta, int index) {
+        fileListModel.add(index, meta);
         revalidate();
         repaint();
     }
@@ -153,6 +200,23 @@ public class Playlist extends JPanel implements UIReloadable {
             revalidate();
             repaint();
         }
+    }
+
+    /**
+     * Reports the number of items currently in the playlist.
+     */
+    public int getItemCount() {
+        return fileListModel.size();
+    }
+
+    /**
+     * Returns the AudioMetadata object at the given index in the playlist.
+     */
+    public AudioMetadata getItemAt(int index) {
+        if (index < 0 || index >= fileListModel.size()) {
+            return null;
+        }
+        return fileListModel.get(index);
     }
 
     /**
@@ -386,6 +450,25 @@ public class Playlist extends JPanel implements UIReloadable {
     }
 
     /**
+     * Inserts the contents of the given playlist at the given index.
+     *
+     * @return The count of items actually inserted into the list.
+     */
+    public int insertPlaylistAt(File playlistFile, int index) {
+        int count = 0;
+        List<File> loaded = PlaylistUtil.loadPlaylist(playlistFile);
+        for (File f : loaded) {
+            AudioMetadata meta = AudioMetadata.fromFile(f);
+            fileListModel.add(index, meta);
+            index++;
+            count++;
+        }
+        revalidate();
+        repaint();
+        return count;
+    }
+
+    /**
      * Saves the contents of the current playlist to the target file.
      *
      * @param targetFile a destination save file. Will be overwritten if exists.
@@ -580,6 +663,156 @@ public class Playlist extends JPanel implements UIReloadable {
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    /**
+     * Custom TransferHandler for drag-and-drop reordering of playlist items.
+     */
+    protected static class PlaylistTransferHandler extends TransferHandler {
+
+        private static final DataFlavor AUDIO_METADATA_FLAVOR = new DataFlavor(AudioMetadata.class, "AudioMetadata");
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY_OR_MOVE;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            @SuppressWarnings("unchecked")
+            JList<AudioMetadata> list = (JList<AudioMetadata>)c;
+            AudioMetadata selectedValue = list.getSelectedValue();
+            if (selectedValue == null) {
+                return null;
+            }
+            return new AudioMetadataTransferable(selectedValue);
+        }
+
+        @Override
+        protected void exportDone(JComponent c, Transferable data, int action) {
+            // Clean up is handled in importData
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            // Support both file list drags (from file explorer) and internal reordering:
+            return support.isDrop() && (
+                support.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
+                    support.isDataFlavorSupported(AUDIO_METADATA_FLAVOR)
+            );
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+
+            JList.DropLocation dropLocation = (JList.DropLocation)support.getDropLocation();
+            int dropIndex = dropLocation.getIndex();
+
+            // Handle file list drops (from file explorer):
+            // Note: this is also handled at the MainWindow level, but the difference
+            // is that here, the user can choose where to insert the files into the playlist.
+            // At the MainWindow level, files are always appended to the end of the playlist.
+            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<File> files = (List<File>)support.getTransferable()
+                                                          .getTransferData(DataFlavor.javaFileListFlavor);
+
+                    for (File file : files) {
+                        if (AudioUtil.isValidAudioFile(file)) {
+                            Playlist.getInstance().insertItemAt(file, dropIndex);
+                            dropIndex++; // Increment drop index for next insert
+                        }
+                        else if (AudioUtil.isValidPlaylist(file)) {
+                            int countInserted = Playlist.getInstance().insertPlaylistAt(file, dropIndex);
+                            dropIndex += countInserted; // Increment drop index for next insert
+                        }
+                    }
+
+                    return true;
+                }
+                catch (UnsupportedFlavorException | IOException e) {
+                    logger.warning("Failed to import file list during drag and drop: " + e.getMessage());
+                    return false;
+                }
+            }
+
+            // Handle internal playlist reordering:
+            try {
+                AudioMetadata metadata = (AudioMetadata)support.getTransferable()
+                                                               .getTransferData(AUDIO_METADATA_FLAVOR);
+
+                @SuppressWarnings("unchecked")
+                JList<AudioMetadata> list = (JList<AudioMetadata>)support.getComponent();
+                DefaultListModel<AudioMetadata> model = (DefaultListModel<AudioMetadata>)list.getModel();
+
+                // Find the current index of the item being dragged
+                int sourceIndex = -1;
+                for (int i = 0; i < model.getSize(); i++) {
+                    if (model.getElementAt(i) == metadata) {
+                        sourceIndex = i;
+                        break;
+                    }
+                }
+
+                if (sourceIndex == -1) {
+                    return false;
+                }
+
+                // Remove from old position
+                model.remove(sourceIndex);
+
+                // Adjust drop index if necessary (if we removed an item before the drop location)
+                if (sourceIndex < dropIndex) {
+                    dropIndex--;
+                }
+
+                // Insert at new position
+                model.add(dropIndex, metadata);
+
+                // Select the moved item
+                list.setSelectedIndex(dropIndex);
+                list.ensureIndexIsVisible(dropIndex);
+
+                return true;
+            }
+            catch (UnsupportedFlavorException | IOException e) {
+                logger.warning("Failed to import data during drag and drop: " + e.getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * Wrapper class to make AudioMetadata transferable for drag-and-drop operations.
+         */
+        private static class AudioMetadataTransferable implements Transferable {
+            private final AudioMetadata metadata;
+
+            public AudioMetadataTransferable(AudioMetadata metadata) {
+                this.metadata = metadata;
+            }
+
+            @Override
+            public DataFlavor[] getTransferDataFlavors() {
+                return new DataFlavor[]{AUDIO_METADATA_FLAVOR};
+            }
+
+            @Override
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
+                return AUDIO_METADATA_FLAVOR.equals(flavor);
+            }
+
+            @Override
+            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+                if (!isDataFlavorSupported(flavor)) {
+                    throw new UnsupportedFlavorException(flavor);
+                }
+                return metadata;
+            }
+        }
     }
 
     protected static class DoubleClickListener extends MouseAdapter {
