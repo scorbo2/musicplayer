@@ -120,4 +120,57 @@ class PlaylistTest {
         assertDoesNotThrow(() -> Playlist.getInstance().sortList(empty, List.of(Playlist.SortKey.asc(Playlist.SortAttribute.Title))));
         assertEquals(0, empty.size());
     }
+
+    @Test
+    public void insertItemAt_withEmptyList_shouldInsert() throws Exception {
+        AudioMetadata a = makeMeta("One", "Album", "A", "", "/tmp/one.mp3", 5, 0);
+
+        Playlist.getInstance().insertItemAt(a, 0);
+
+        assertEquals(1, Playlist.getInstance().getItemCount());
+        assertEquals(a, Playlist.getInstance().getItemAt(0));
+
+        // Clean up single instance for subsequent tests
+        Playlist.getInstance().clear();
+    }
+
+    @Test
+    public void insertItemAt_withInvalidIndex_shouldThrow() throws Exception {
+        AudioMetadata a = makeMeta("One", "Album", "A", "", "/tmp/one.mp3", 5, 0);
+
+        // Negative index
+        try {
+            Playlist.getInstance().insertItemAt(a, -1);
+        }
+        catch (IndexOutOfBoundsException e) {
+            // Expected
+        }
+
+        // Index greater than size
+        try {
+            Playlist.getInstance().insertItemAt(a, 1);
+        }
+        catch (IndexOutOfBoundsException e) {
+            // Expected
+        }
+    }
+
+    @Test
+    public void insertItemAt_withValidIndex_shouldInsertAtCorrectPosition() throws Exception {
+        AudioMetadata a = makeMeta("One", "Album", "A", "", "/tmp/one.mp3", 5, 0);
+        AudioMetadata b = makeMeta("Two", "Album", "B", "", "/tmp/two.mp3", 5, 0);
+        AudioMetadata c = makeMeta("Three", "Album", "C", "", "/tmp/three.mp3", 5, 0);
+
+        Playlist.getInstance().insertItemAt(a, 0); // List: [a]
+        Playlist.getInstance().insertItemAt(c, 1); // List: [a, c]
+        Playlist.getInstance().insertItemAt(b, 1); // List: [a, b, c]
+
+        assertEquals(3, Playlist.getInstance().getItemCount());
+        assertEquals(a, Playlist.getInstance().getItemAt(0));
+        assertEquals(b, Playlist.getInstance().getItemAt(1));
+        assertEquals(c, Playlist.getInstance().getItemAt(2));
+
+        // Clean up single instance for subsequent tests
+        Playlist.getInstance().clear();
+    }
 }

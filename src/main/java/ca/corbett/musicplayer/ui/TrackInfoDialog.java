@@ -22,6 +22,7 @@ public class TrackInfoDialog extends JFrame {
         super("Track info");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(new Dimension(375, 340));
+        setMinimumSize(new Dimension(300, 250));
         setResizable(true);
         setLocationRelativeTo(MainWindow.getInstance());
         AudioMetadata meta = AudioMetadata.fromFile(trackFile);
