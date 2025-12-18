@@ -130,8 +130,17 @@ public class Playlist extends JPanel implements UIReloadable {
      * @param file Any File.
      */
     public void addItem(File file) {
-        // Convert the file into AudioMetadata so the list can render title/artist/album
-        AudioMetadata meta = AudioMetadata.fromFile(file);
+        addItem(AudioMetadata.fromFile(file));
+    }
+
+    /**
+     * Adds a single item to the list. Uniqueness checks are not done here,
+     * so it's possible to add the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void addItem(AudioMetadata meta) {
         fileListModel.addElement(meta);
         revalidate();
         repaint();
@@ -146,7 +155,18 @@ public class Playlist extends JPanel implements UIReloadable {
      * realizing it until you try to actually play it.
      */
     public void insertItemAt(File file, int index) {
-        AudioMetadata meta = AudioMetadata.fromFile(file);
+        insertItemAt(AudioMetadata.fromFile(file), index);
+    }
+
+    /**
+     * Inserts a single item at the given index in the list.
+     * Uniqueness checks are not done here, so it's possible to add
+     * the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void insertItemAt(AudioMetadata meta, int index) {
         fileListModel.add(index, meta);
         revalidate();
         repaint();
@@ -180,6 +200,23 @@ public class Playlist extends JPanel implements UIReloadable {
             revalidate();
             repaint();
         }
+    }
+
+    /**
+     * Reports the number of items currently in the playlist.
+     */
+    public int getItemCount() {
+        return fileListModel.size();
+    }
+
+    /**
+     * Returns the AudioMetadata object at the given index in the playlist.
+     */
+    public AudioMetadata getItemAt(int index) {
+        if (index < 0 || index >= fileListModel.size()) {
+            return null;
+        }
+        return fileListModel.get(index);
     }
 
     /**
