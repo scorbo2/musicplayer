@@ -54,7 +54,7 @@ Set environment variables `GITHUB_ACTOR` (your GitHub username) and `GITHUB_TOKE
 src/main/java/ca/corbett/musicplayer/
 ├── Main.java               # Entry point
 ├── AppConfig.java          # Config (extends AppProperties from swing-extras)
-├── Actions.java            # Action registration
+├── Actions.java            # Media player and playlist commands (unrelated to the actions/ package)
 ├── actions/                # 18 UI action classes
 ├── audio/                  # Audio playback, playlist (3 classes)
 ├── extensions/             # Extension system (MusicPlayerExtension, MusicPlayerExtensionManager, builtin/)
@@ -64,7 +64,7 @@ src/main/java/ca/corbett/musicplayer/
 **Architecture:**
 - **Extensions:** `swing-extras` ExtensionManager loads jars from `EXTENSIONS_DIR` (~/.MusicPlayer/extensions/)
 - **Config:** AppProperties auto-generates UI from properties in `AppConfig.java` → saved to `~/.MusicPlayer/MusicPlayer.props`
-- **Actions:** 18 Swing Actions in `actions/` registered via `Actions.java`
+- **Actions:** 18 Swing Actions in `actions/` - note that these are not related to `Actions.java` which is unrelated.
 - **Audio:** MP3 decoded via mp3spi → WAV → Java Sound API (see TODO in `AudioData.java`)
 
 **Config Files:** `pom.xml` (Maven), `.editorconfig` (4-space indent, 120 char lines), `logging.properties`, `installer.props`
@@ -79,10 +79,12 @@ src/main/java/ca/corbett/musicplayer/
 
 ## Development Tasks
 
-**New Action:** Create class in `actions/`, extend `AbstractAction`, register in `Actions.java`  
+**New UI Action:** Create class in `actions/`, extend `AbstractAction`  
 **New Visualizer:** See `docs/developer_exercise2.md`, extend `AbstractWaveformVisualizer`  
 **New Config Property:** Add to `AppConfig.java` using `ca.corbett.extras.properties.*` types  
 **Modify UI:** MainWindow, ControlPanel, AudioPanel, VisualizationWindow, Playlist in `ui/`
+**New media player command:** Follow the pattern in `Actions.java`
+**New playlist command:** Follow the pattern in `Actions.java`
 
 ## Documentation
 
