@@ -414,16 +414,21 @@ public class Playlist extends JPanel implements UIReloadable {
 
     /**
      * Inserts the contents of the given playlist at the given index.
+     *
+     * @return The count of items actually inserted into the list.
      */
-    public void insertPlaylistAt(File playlistFile, int index) {
+    public int insertPlaylistAt(File playlistFile, int index) {
+        int count = 0;
         List<File> loaded = PlaylistUtil.loadPlaylist(playlistFile);
         for (File f : loaded) {
             AudioMetadata meta = AudioMetadata.fromFile(f);
             fileListModel.add(index, meta);
             index++;
+            count++;
         }
         revalidate();
         repaint();
+        return count;
     }
 
     /**
@@ -682,9 +687,11 @@ public class Playlist extends JPanel implements UIReloadable {
                     for (File file : files) {
                         if (AudioUtil.isValidAudioFile(file)) {
                             Playlist.getInstance().insertItemAt(file, dropIndex);
+                            dropIndex++; // Increment drop index for next insert
                         }
                         else if (AudioUtil.isValidPlaylist(file)) {
-                            Playlist.getInstance().insertPlaylistAt(file, dropIndex);
+                            int countInserted = Playlist.getInstance().insertPlaylistAt(file, dropIndex);
+                            dropIndex += countInserted; // Increment drop index for next insert
                         }
                     }
 
