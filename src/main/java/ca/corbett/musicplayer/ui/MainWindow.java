@@ -249,12 +249,7 @@ public class MainWindow extends JFrame implements UIReloadable {
     public void processStartArgs(List<String> args) {
         // Bring the main window to the front:
         // (If running in single instance mode, we want to make sure the user sees it.)
-        logger.fine("MusicPlayer single instance: bringing main window to front.");
-        setState(JFrame.NORMAL); // unminimize if needed
-        setAlwaysOnTop(true); // cheesy trick to make this work on linux
-        toFront();
-        requestFocus();
-        setAlwaysOnTop(false); // linux mint cinnamon seems to ignore toFront() unless we do this
+        bringToFront();
 
         // If we were given no args, we're done:
         // But note that we do this AFTER bringing the window to the front.
@@ -340,6 +335,24 @@ public class MainWindow extends JFrame implements UIReloadable {
         MusicPlayerExtensionManager.getInstance().deactivateAll();
         SingleInstanceManager.getInstance().release();
         logger.info("Application cleanup finished. Exiting normally.");
+    }
+
+    /**
+     * Who would've thunk that bringing a window to the front would be so
+     * platform-dependent and require all sorts of goofy hacks?
+     */
+    private void bringToFront() {
+        logger.fine("MusicPlayer single instance: bringing main window to front.");
+        final boolean isLinux = System.getProperty("os.name").toLowerCase().contains("linux");
+        setState(JFrame.NORMAL); // unminimize if needed
+        if (isLinux) {
+            setAlwaysOnTop(true); // cheesy trick to make this work on linux
+        }
+        toFront();
+        requestFocus();
+        if (isLinux) {
+            setAlwaysOnTop(false); // linux mint cinnamon seems to ignore toFront() unless we do this
+        }
     }
 
     private MessageUtil getMessageUtil() {
