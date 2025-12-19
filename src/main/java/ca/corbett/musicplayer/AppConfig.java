@@ -89,6 +89,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty waveformOutlineThickness;
     private EnumProperty<WaveformConfigField.Compression> waveformResolution;
     private EnumProperty<WaveformConfigField.WidthLimit> waveformWidthLimit;
+    private BooleanProperty enableSingleInstance;
     private ComboProperty<String> applicationTheme;
     private ShortTextProperty playlistFormatString;
     private ShortTextProperty playlistCustomSortString;
@@ -224,6 +225,14 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     public WaveformConfigField.WidthLimit getWaveformWidthLimit() {
         return waveformWidthLimit.getSelectedItem();
+    }
+
+    public boolean isSingleInstanceEnabled() {
+        return enableSingleInstance.getValue();
+    }
+
+    public void setSingleInstanceEnabled(boolean enabled) {
+        enableSingleInstance.setValue(enabled);
     }
 
     public AppTheme.Theme getAppTheme() {
@@ -428,6 +437,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         overrideAppThemeWaveform = buildCombo("Waveform.Waveform graphics.override", "Waveform:",
                                               getOverrideThemeWaveformChoices(), false);
 
+        enableSingleInstance = new BooleanProperty("UI.General.singleInstance",
+                                                   "Only allow a single instance of MusicPlayer",
+                                                   true);
+
         LabelProperty label = new LabelProperty("UI.General.progressBarDelayMSLabel",
                                                 "Optional delay before showing the audio load progress bar:");
         loadProgressBarShowDelayMS = new SliderProperty("UI.General.progressBarDelay", "", 0, 5000, 1000);
@@ -572,6 +585,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return List.of(buttonSize,
                        controlAlignment,
                        idleAnimation,
+                       enableSingleInstance,
                        label,
                        loadProgressBarShowDelayMS,
                        overrideAppThemeWaveform,

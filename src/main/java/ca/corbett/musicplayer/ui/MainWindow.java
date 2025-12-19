@@ -5,7 +5,9 @@ import ca.corbett.extras.audio.PlaybackThread;
 import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
+import ca.corbett.musicplayer.SingleInstanceManager;
 import ca.corbett.musicplayer.Version;
+import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.actions.StopAction;
 import ca.corbett.musicplayer.audio.AudioUtil;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
@@ -44,7 +46,7 @@ import java.util.logging.Logger;
  * @author scorbo2
  * @since 2025-03-23
  */
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements UIReloadable {
 
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());
 
@@ -58,7 +60,6 @@ public class MainWindow extends JFrame {
     private MessageUtil messageUtil;
     private final Timer resizeTimer;
     private UpdateManager updateManager;
-    private String[] args;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -99,18 +100,10 @@ public class MainWindow extends JFrame {
             LogConsole.getInstance().setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
             parseUpdateSources();
             enableDragAndDrop();
-            processStartArgs();
+            ReloadUIAction.getInstance().registerReloadable(this);
         }
     }
 
-    /**
-     * Sets optional startup arguments (typically from the command line). This must be
-     * invoked BEFORE setVisible(true) is invoked for the first time! It is effectively
-     * ignored after the window has been shown.
-     */
-    public void setArgs(String[] args) {
-        this.args = args;
-    }
 
     /**
      * Loads and returns an image icon resource, scaling up or down to the given size if needed.
@@ -247,31 +240,61 @@ public class MainWindow extends JFrame {
         setDropTarget(dropTarget);
     }
 
-    private void processStartArgs() {
-        if (args == null || args.length == 0) {
+    /**
+     * Accepts a list of audio files or playlists to be added to the current playlist.
+     * This is invoked at startup if we were given any command line arguments, and
+     * can also be invoked at runtime if we are running in single-instance mode and
+     * receive arguments from a new instance.
+     */
+    public void processStartArgs(List<String> args) {
+        // Bring the main window to the front:
+        // (If running in single instance mode, we want to make sure the user sees it.)
+        logger.fine("MusicPlayer single instance: bringing main window to front.");
+        setState(JFrame.NORMAL); // unminimize if needed
+        setAlwaysOnTop(true); // cheesy trick to make this work on linux
+        toFront();
+        requestFocus();
+        setAlwaysOnTop(false); // linux mint cinnamon seems to ignore toFront() unless we do this
+
+        // If we were given no args, we're done:
+        // But note that we do this AFTER bringing the window to the front.
+        // If you try to launch a second instance when the first instance is up,
+        // but is obscured by some other window, we want to bring the single instance to the front.
+        // Otherwise it may seem like nothing happened.
+        if (args == null || args.isEmpty()) {
             return;
         }
 
+        // Current list size will be the selection index of the first added item:
+        int firstAddedIndex = Playlist.getInstance().getItemCount();
+
+        // Add all given tracks:
         boolean addedAtLeastOne = false;
         for (String arg : args) {
             File candidate = new File(arg);
             if (AudioUtil.isValidAudioFile(candidate)) {
                 Playlist.getInstance().addItem(candidate);
+                logger.info("Added file from startup argument: " + arg);
                 addedAtLeastOne = true;
             }
             else if (AudioUtil.isValidPlaylist(candidate)) {
                 Playlist.getInstance().appendPlaylist(candidate);
                 addedAtLeastOne = true;
+                logger.info("Added playlist from startup argument: " + arg);
             }
             else {
                 logger.warning("Unable to process start argument: " + arg);
             }
         }
 
-        // Auto-play if we got at least one valid one:
-        if (addedAtLeastOne) {
-            AudioPanel.getInstance().next();
+        // If we didn't add anything, we're done:
+        if (!addedAtLeastOne) {
+            return;
         }
+
+        // Otherwise, select and start playing the first added item:
+        // Arbitrary decision: if we were already playing something, interrupt it and play the new stuff.
+        Playlist.getInstance().selectAndPlay(firstAddedIndex);
     }
 
     public static MainWindow getInstance() {
@@ -315,6 +338,7 @@ public class MainWindow extends JFrame {
         new StopAction().actionPerformed(null);
         VisualizationWindow.getInstance().stopFullScreen();
         MusicPlayerExtensionManager.getInstance().deactivateAll();
+        SingleInstanceManager.getInstance().release();
         logger.info("Application cleanup finished. Exiting normally.");
     }
 
@@ -323,5 +347,33 @@ public class MainWindow extends JFrame {
             messageUtil = new MessageUtil(getInstance(), logger);
         }
         return messageUtil;
+    }
+
+    /**
+     * Invoked from ReloadUIAction when the UI is to reload itself -
+     * we use this to enable/disable single instance mode depending on user selection.
+     */
+    @Override
+    public void reloadUI() {
+        // If single instance mode is now enabled, try to acquire the lock:
+        if (AppConfig.getInstance().isSingleInstanceEnabled()) {
+            logger.info("Enabling single instance mode.");
+            SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
+            if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a))) {
+                // Another instance is already running, let's inform the user and
+                // disable single instance mode:
+                getMessageUtil().error("Single Instance Mode",
+                                       "Another instance of MusicPlayer is already running.\n" +
+                                           "Single Instance Mode has been disabled.");
+                AppConfig.getInstance().setSingleInstanceEnabled(false);
+                AppConfig.getInstance().save();
+            }
+        }
+
+        // Otherwise, if single instance mode is now disabled, release the lock if we have it:
+        else {
+            logger.info("Disabling single instance mode.");
+            SingleInstanceManager.getInstance().release();
+        }
     }
 }

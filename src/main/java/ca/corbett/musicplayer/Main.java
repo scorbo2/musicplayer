@@ -7,6 +7,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.SwingUtilities;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -38,7 +39,22 @@ import java.util.logging.Logger;
  */
 public class Main {
     public static void main(String[] args) {
+        // Before we do anything else, set up logging:
         configureLogging();
+
+        // Ensure only a single instance is running (if configured to do so):
+        boolean isSingleInstanceEnabled = Boolean.parseBoolean(AppConfig.peek("UI.General.singleInstance"));
+        if (isSingleInstanceEnabled) {
+            SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
+            if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a))) {
+                // Another instance is already running, let's send our args to it and exit:
+                // Send even if empty, as this will force the main window to the front.
+                SingleInstanceManager.getInstance().sendArgsToRunningInstance(args);
+                return;
+            }
+        }
+
+        // We are the only instance running, so we can start up normally:
         Logger logger = Logger.getLogger(Main.class.getName());
         logger.log(Level.INFO,
                    Version.FULL_NAME + " starting up: installDir={0}, settingsDir={1}, extensionsDir={2}",
@@ -49,8 +65,8 @@ public class Main {
 
         SwingUtilities.invokeLater(() -> {
             LookAndFeelManager.switchLaf(FlatLightLaf.class.getName());
-            MainWindow.getInstance().setArgs(args);
             MainWindow.getInstance().setVisible(true);
+            MainWindow.getInstance().processStartArgs(Arrays.asList(args));
         });
     }
 
