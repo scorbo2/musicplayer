@@ -8,6 +8,7 @@ import javax.swing.SwingUtilities;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -46,7 +47,7 @@ public class Main {
         boolean isSingleInstanceEnabled = Boolean.parseBoolean(AppConfig.peek("UI.General.singleInstance"));
         if (isSingleInstanceEnabled) {
             SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
-            if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a))) {
+            if (!instanceManager.tryAcquireLock(Main::handleStartArgs)) {
                 // Another instance is already running, let's send our args to it and exit:
                 // Send even if empty, as this will force the main window to the front.
                 SingleInstanceManager.getInstance().sendArgsToRunningInstance(args);
@@ -104,6 +105,13 @@ public class Main {
         } catch (IOException ioe) {
             System.out.println("WARN: Unable to load log configuration: " + ioe.getMessage());
         }
+    }
+
+    /**
+     * Invoked internally to handle start arguments on the EDT.
+     */
+    private static void handleStartArgs(List<String> args) {
+        SwingUtilities.invokeLater(() -> MainWindow.getInstance().processStartArgs(args));
     }
 
     /**
