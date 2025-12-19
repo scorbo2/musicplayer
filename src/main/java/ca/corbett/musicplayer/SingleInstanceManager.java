@@ -1,5 +1,7 @@
 package ca.corbett.musicplayer;
 
+import ca.corbett.extras.MessageUtil;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,6 +32,7 @@ import java.util.logging.Logger;
 public class SingleInstanceManager {
 
     private static final Logger log = Logger.getLogger(SingleInstanceManager.class.getName());
+    private MessageUtil messageUtil;
 
     // Use the initialization-on-demand holder idiom for a lazy, thread-safe singleton
     private SingleInstanceManager() {
@@ -144,7 +147,9 @@ public class SingleInstanceManager {
             out.println(ARGUMENT_END_SIGNAL);
 
         } catch (IOException e) {
-            log.log(Level.SEVERE, "Failed to connect to running instance: " + e.getMessage(), e);
+            getMessageUtil().error("MusicPlayer error",
+                                   "Failed to connect to running instance on port " + port + ": " + e.getMessage(),
+                                   e);
         }
     }
 
@@ -231,5 +236,12 @@ public class SingleInstanceManager {
         } catch (IOException e) {
             log.log(Level.SEVERE, "Error closing server socket: " + e.getMessage(), e);
         }
+    }
+
+    private MessageUtil getMessageUtil() {
+        if (messageUtil == null) {
+            messageUtil = new MessageUtil(null, log);
+        }
+        return messageUtil;
     }
 }
