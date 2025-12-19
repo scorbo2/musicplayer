@@ -66,6 +66,23 @@ public class SingleInstanceManager {
     private ArgsListener argsListener;
 
     /**
+     * Package-private functional provider used for tests to inject ServerSocket creation.
+     * Tests in the same package can set a custom provider via setServerSocketProvider(...).
+     */
+    @FunctionalInterface
+    static interface ServerSocketProvider {
+        ServerSocket create(int port) throws IOException;
+    }
+
+    // Default provider - creates a normal ServerSocket
+    private static ServerSocketProvider serverSocketProvider = ServerSocket::new;
+
+    // Package-private setter for tests; passing null restores default behavior
+    static void setServerSocketProvider(ServerSocketProvider provider) {
+        serverSocketProvider = (provider == null) ? ServerSocket::new : provider;
+    }
+
+    /**
      * Invoked when startup arguments are received from a new instance.
      */
     public interface ArgsListener {
@@ -98,7 +115,9 @@ public class SingleInstanceManager {
         this.port = port;
 
         try {
-            serverSocket = new ServerSocket(port);
+            // Use the injectable provider so tests can control creation/mocking
+            serverSocket = serverSocketProvider.create(port);
+
             // Successfully bound to port - we're the primary instance
             startListening();
             log.info("MusicPlayer single instance manager listening on port " + port);
