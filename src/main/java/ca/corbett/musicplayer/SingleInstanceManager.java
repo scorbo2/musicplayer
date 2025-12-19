@@ -106,7 +106,7 @@ public class SingleInstanceManager {
      * @return true if this is the primary instance, false otherwise
      * @throws IllegalArgumentException if the port is outside the valid range or is a privileged port
      */
-    public boolean tryAcquireLock(ArgsListener listener, int port) {
+    public synchronized boolean tryAcquireLock(ArgsListener listener, int port) {
         if (port < 1024 || port > 65535) {
             throw new IllegalArgumentException("Port must be between 1024 and 65535 (non-privileged ports only), got: " + port);
         }
@@ -175,7 +175,7 @@ public class SingleInstanceManager {
                     }
                 }
             }
-        });
+        }, "SingleInstanceManager-ListenerThread-" + System.currentTimeMillis());
         listenerThread.setDaemon(true);
         listenerThread.start();
     }
@@ -212,7 +212,7 @@ public class SingleInstanceManager {
                     log.log(Level.SEVERE, "Error closing client socket: " + e.getMessage(), e);
                 }
             }
-        }).start();
+        }, "SingleInstanceManager-clientHandler-" + System.currentTimeMillis()).start();
     }
 
     /**
