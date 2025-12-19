@@ -373,13 +373,10 @@ public class MainWindow extends JFrame implements UIReloadable {
             logger.info("Enabling single instance mode.");
             SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
             if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a))) {
-                // Another instance is already running, let's inform the user and
-                // disable single instance mode:
+                // Another instance is already running, let's inform the user:
                 getMessageUtil().error("Single Instance Mode",
                                        "Another instance of MusicPlayer is already running.\n" +
-                                           "Single Instance Mode has been disabled.");
-                AppConfig.getInstance().setSingleInstanceEnabled(false);
-                AppConfig.getInstance().save();
+                                           "Unable to enable single instance mode.");
             }
         }
 
