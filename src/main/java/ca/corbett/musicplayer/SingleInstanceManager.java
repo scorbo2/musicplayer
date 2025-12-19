@@ -150,6 +150,10 @@ public class SingleInstanceManager {
                     if (!serverSocket.isClosed()) {
                         log.log(Level.SEVERE, "Error accepting connection: " + e.getMessage(), e);
                     }
+                    else {
+                        serverSocket = null;
+                        break; // Server socket closed, exit loop
+                    }
                 }
             }
         });
