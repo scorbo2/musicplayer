@@ -9,7 +9,7 @@
     },
     {
       "name": "local filesystem",
-      "baseUrl": "file:${user.home}/Software/sc-releases/apps/MusicPlayer/",
+      "baseUrl": "file:${user.home}/Software/sc-releases/apps-dist/MusicPlayer/",
       "versionManifest": "version_manifest.json",
       "publicKey": "public.key"
     }
