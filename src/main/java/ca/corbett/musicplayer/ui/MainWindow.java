@@ -266,6 +266,13 @@ public class MainWindow extends JFrame implements UIReloadable {
         // Add all given tracks:
         boolean addedAtLeastOne = false;
         for (String arg : args) {
+            // Strip wrapping single quotes if present:
+            // (some OSes/shells may add these, tested on Linux Mint with Cinnamon, and it's a problem there):
+            if (arg.startsWith("'") && arg.endsWith("'") && arg.length() > 1) {
+                arg = arg.substring(1, arg.length() - 1);
+            }
+
+            // Now we can process the argument as usual:
             File candidate = new File(arg);
             if (AudioUtil.isValidAudioFile(candidate)) {
                 Playlist.getInstance().addItem(candidate);
