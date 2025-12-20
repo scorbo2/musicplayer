@@ -469,6 +469,37 @@ public class Playlist extends JPanel implements UIReloadable {
     }
 
     /**
+     * Selects the track at the given index and starts playing it.
+     * Does nothing if the given index is out of bounds.
+     * This will stop and unload any track that is currently playing.
+     */
+    public void selectAndPlay(int index) {
+        if (index < 0 || index >= fileListModel.size()) {
+            return;
+        }
+
+        // Don't bother if it's already selected and playing:
+        if (fileList.getSelectedIndex() == index) {
+            AudioMetadata selectedMeta = fileList.getSelectedValue();
+            File selected = (selectedMeta != null) ? selectedMeta.getSourceFile() : null;
+            AudioData currentlyLoaded = AudioPanel.getInstance().getAudioData();
+            if (currentlyLoaded != null
+                && Objects.equals(currentlyLoaded.getSourceFile(), selected)
+                && AudioPanel.getInstance().getPanelState() == AudioPanel.PanelState.PLAYING) {
+                return;
+            }
+        }
+
+        // If currently playing, stop:
+        AudioPanel.getInstance().stop();
+
+        // Select and play:
+        fileList.setSelectedIndex(index);
+        AudioPanel.getInstance().setAudioData(null); // force an unload of whatever was loaded
+        AudioPanel.getInstance().play(); // will force a load of the selected track
+    }
+
+    /**
      * Saves the contents of the current playlist to the target file.
      *
      * @param targetFile a destination save file. Will be overwritten if exists.
