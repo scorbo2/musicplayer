@@ -69,7 +69,7 @@ user-friendly desktop icon for easy launching).
 
 ## License
 
-musicplayer is made available under the MIT license: https://opensource.org/license/mit
+MusicPlayer is made available under the MIT license: https://opensource.org/license/mit
 
 ## Revision history
 
