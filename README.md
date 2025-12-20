@@ -56,7 +56,7 @@ user-friendly desktop icon for easy launching).
 - [Customizing the UI](docs/user_guide_ui.md) 
 - [Controlling log output](docs/user_guide_logging.md)
 - **NEW in 3.0 release:** [Dynamically discovering and installing extensions](docs/user_guide_extension_manager.md)
-- **New in 3.1 release:** [Single instance mode](docs/user_guide_single_instance_mode.md)
+- **NEW in 3.1 release:** [Single instance mode](docs/user_guide_single_instance_mode.md)
 
 ## Developer guide
 
