@@ -17,7 +17,7 @@ a LOT of code. The purpose of this abstract class is to join together a `Propert
 together to make your application MUCH easier to extend and configure. For example, in the user guide
 for music player, you probably saw at least one screenshot of the Properties dialog:
 
-![PropertiesDialog](screenshots/config-visualization.jpg "PropertiesDialog")
+![PropertiesDialog](screenshots/config_visualization.jpg "PropertiesDialog")
 
 It may surprise you to learn that there is almost zero UI code in the musicplayer
 app to generate this dialog and to lay out all the form elements. That's right. 

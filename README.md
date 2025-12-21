@@ -23,10 +23,14 @@ also used musicplayer as a testbed for my own app-extensions library
 so I could test out ways to make an application incredibly customizable via dynamically-loaded extensions. I also 
 wanted to prove out the `AppProperties` class from `app-extensions` to really demonstrate how to develop an extremely 
 customizable application while writing surprisingly little UI code (in the case of the properties dialog, and
-the extension manager, almost literally none). With version 3.x, I'm also using this application as a testbed
+the extension manager, almost literally none). With version 3.0, I'm also using this application as a testbed
 for the new "dynamic extension discovery and download" feature from my swing-extras library. This allows
 users to download, install, and update extensions right from within the UI of the application, without having
-to clone, build, and install them manually.
+to clone, build, and install them manually. In the 3.1 release, MusicPlayer is the testbed for the new
+"single instance mode" feature targeted for swing-extras, which allows users to ensure that only one instance
+of the application is running at a time. In short, MusicPlayer is my personal playground for testing
+out new ideas in application extensibility and configurability, while also providing a simple music player
+with nice visualizations for my own personal use.
 
 ## How do I get it?
 
@@ -47,9 +51,10 @@ java -jar musicplayer-3.1.jar # Launch the application manually
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building
 on Linux, the installer tarball will be generated for you automatically during a build and placed into `target`.
-This is preferable to launching manually as shown above, at least when running on a Linux machine, because the
-installer script will create a launcher wrapper script with proper environment variables set (and you get a nice
-user-friendly desktop icon for easy launching).
+Installing from the tarball is preferable to launching manually as shown above, at least when running on a Linux 
+machine, because the installer script will create a launcher wrapper script with proper environment variables 
+set (and you get a nice user-friendly desktop icon for easy launching, along with better OS integration,
+such as being able to right-click on audio files in your file explorer and select "Open with MusicPlayer").
 
 ## User guide
 

@@ -11,6 +11,7 @@ Version 3.1 [2025-12-20] - Maintenance release
   #58 Add support for startup arguments (tracks/playlists)
   #57 Add drag and drop support on main window
   #56 Track info dialog now shows more audio metadata
+  #55 Better playlist sorting options
 
 Version 3.0 [2025-12-06] - Dynamic extension discovery
   #54 register shutdown hook with UpdateManager
