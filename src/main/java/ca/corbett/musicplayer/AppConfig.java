@@ -15,9 +15,11 @@ import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.extras.properties.PropertiesManager;
+import ca.corbett.extras.properties.ShortTextProperty;
 import ca.corbett.extras.properties.SliderProperty;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
+import ca.corbett.forms.fields.ShortTextField;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
@@ -72,6 +74,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     private static final Logger logger = Logger.getLogger(AppConfig.class.getName());
 
+    public static final String DEFAULT_FORMAT_STRING = "[%a] - %t (%D)"; // [artist] - title (duration)
+
     private static AppConfig instance;
     public static final File PROPS_FILE;
 
@@ -85,7 +89,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private IntegerProperty waveformOutlineThickness;
     private EnumProperty<WaveformConfigField.Compression> waveformResolution;
     private EnumProperty<WaveformConfigField.WidthLimit> waveformWidthLimit;
+    private BooleanProperty enableSingleInstance;
     private ComboProperty<String> applicationTheme;
+    private ShortTextProperty playlistFormatString;
+    private ShortTextProperty playlistCustomSortString;
     private BooleanProperty shuffleEnabled;
     private BooleanProperty repeatEnabled;
     private IntegerProperty windowWidth;
@@ -220,8 +227,39 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return waveformWidthLimit.getSelectedItem();
     }
 
+    public boolean isSingleInstanceEnabled() {
+        return enableSingleInstance.getValue();
+    }
+
+    public void setSingleInstanceEnabled(boolean enabled) {
+        enableSingleInstance.setValue(enabled);
+    }
+
     public AppTheme.Theme getAppTheme() {
         return AppTheme.getTheme(applicationTheme.getSelectedItem());
+    }
+
+    /**
+     * Sets the playlist format string. See getPlaylistFormatCheatsheet for details.
+     */
+    public void setPlaylistFormatString(String formatStr) {
+        playlistFormatString.setValue(formatStr);
+    }
+
+    public String getPlaylistFormatString() {
+        return playlistFormatString.getValue();
+    }
+
+    /**
+     * Invoked internally to persist custom sort orders created via the Custom Sort dialog.
+     * This setting is not shown to the user.
+     */
+    public void setPlaylistCustomSortString(String sortStr) {
+        playlistCustomSortString.setValue(sortStr);
+    }
+
+    public String getPlaylistCustomSortString() {
+        return playlistCustomSortString.getValue();
     }
 
     public boolean isShuffleEnabled() {
@@ -399,6 +437,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         overrideAppThemeWaveform = buildCombo("Waveform.Waveform graphics.override", "Waveform:",
                                               getOverrideThemeWaveformChoices(), false);
 
+        enableSingleInstance = new BooleanProperty("UI.General.singleInstance",
+                                                   "Only allow a single instance of MusicPlayer",
+                                                   true);
+
         LabelProperty label = new LabelProperty("UI.General.progressBarDelayMSLabel",
                                                 "Optional delay before showing the audio load progress bar:");
         loadProgressBarShowDelayMS = new SliderProperty("UI.General.progressBarDelay", "", 0, 5000, 1000);
@@ -436,6 +478,18 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                                                 WaveformConfigField.WidthLimit.LARGE);
 
         applicationTheme = buildCombo("UI.Theme.theme", "Theme:", getAppThemeChoices(), true);
+
+        playlistFormatString = new ShortTextProperty("UI.Playlist.formatString",
+                                                     "Playlist format:",
+                                                     DEFAULT_FORMAT_STRING,
+                                                     20);
+        playlistFormatString.addFormFieldGenerationListener(
+            (property, formField)
+                -> ((ShortTextField)formField).getTextField().setColumns(20)); // THIS SHOULD NOT BE NECESSARY!
+        playlistFormatString.setHelpText(getPlaylistFormatCheatsheet());
+
+        playlistCustomSortString = new ShortTextProperty("UI.Playlist.customFormatString", "customFormat", "");
+        playlistCustomSortString.setExposed(false);
 
         visualizerType = buildCombo("Visualization.General.visualizer", "Visualizer:", getVisualizerChoices(), true);
         visualizerRotation = new EnumProperty<>("Visualization.General.visualizerRotation", "Rotate visualizers:",
@@ -531,6 +585,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return List.of(buttonSize,
                        controlAlignment,
                        idleAnimation,
+                       enableSingleInstance,
                        label,
                        loadProgressBarShowDelayMS,
                        overrideAppThemeWaveform,
@@ -541,6 +596,8 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        waveformResolution,
                        waveformWidthLimit,
                        applicationTheme,
+                       playlistFormatString,
+                       playlistCustomSortString,
                        shuffleEnabled,
                        repeatEnabled,
                        windowWidth,
@@ -693,19 +750,29 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     private int getOldHardwareDelayFromStringOption(String option) {
-        switch (option) {
-            case "None - my hardware is awesome":
-                return 25;
-            case "Small - my hardware is a bit old":
-                return 50;
-            case "Medium - my hardware is not so good":
-                return 75;
-            case "Large - my hardware is pretty bad":
-                return 150;
-            case "XLarge - my hardware is ancient":
-                return 250;
-            default:
-                return 25;
-        }
+        return switch (option) {
+            case "None - my hardware is awesome" -> 25;
+            case "Small - my hardware is a bit old" -> 50;
+            case "Medium - my hardware is not so good" -> 75;
+            case "Large - my hardware is pretty bad" -> 150;
+            case "XLarge - my hardware is ancient" -> 250;
+            default -> 25;
+        };
+    }
+
+    private String getPlaylistFormatCheatsheet() {
+        return "<html>Use the following tokens to customize the playlist format string:<br>" +
+            "<ul>" +
+            "<li><b>%a</b> - Artist</li>" +
+            "<li><b>%t</b> - Title</li>" +
+            "<li><b>%b</b> - Album</li>" +
+            "<li><b>%n</b> - Track number</li>" +
+            "<li><b>%D</b> - Duration (mm:ss)</li>" +
+            "<li><b>%g</b> - Genre</li>" +
+            "<li><b>%f</b> - Filename</li>" +
+            "<li><b>%F</b> - Full file path</li>" +
+            "</ul>" +
+            "Combine these tokens with any desired text or punctuation to create your custom format." +
+            "</html>";
     }
 }

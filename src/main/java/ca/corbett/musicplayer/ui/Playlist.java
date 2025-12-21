@@ -4,11 +4,15 @@ import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.progress.MultiProgressDialog;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.AppConfig;
+import ca.corbett.musicplayer.actions.PlaylistSortAction;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.audio.AudioData;
+import ca.corbett.musicplayer.audio.AudioMetadata;
+import ca.corbett.musicplayer.audio.AudioUtil;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 
 import javax.swing.DefaultListModel;
+import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -16,15 +20,22 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.TransferHandler;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -35,6 +46,12 @@ import java.util.logging.Logger;
  * or backwards through the list. Shuffle and Repeat are also
  * available as options. The currently showing list of files can be
  * saved for easy retrieval later.
+ * <p>
+ *     The formatting of the list items is handled by PlaylistCellRenderer,
+ *     and is user-configurable via the playlist item format setting in
+ *     the application preferences. The default format is "[artist] - title (01:23)"
+ *     but this can be changed in AppConfig.
+ * </p>
  *
  * @author scorbo
  * @since 2025-03-23
@@ -45,8 +62,36 @@ public class Playlist extends JPanel implements UIReloadable {
     private static Playlist instance;
     private MessageUtil messageUtil;
     private final JPanel buttonPanel;
-    private final JList<File> fileList;
-    private final DefaultListModel<File> fileListModel;
+    private final JList<AudioMetadata> fileList;
+    private final DefaultListModel<AudioMetadata> fileListModel;
+
+    public enum SortAttribute {
+        Genre("%g"),
+        Artist("%a"),
+        Album("%b"),
+        Title("%t"),
+        TrackNumber("%n"),
+        FilePath("%F");
+
+        private final String formatKey;
+
+        SortAttribute(String formatKey) {
+            this.formatKey = formatKey;
+        }
+
+        public String getFormatKey() {
+            return formatKey;
+        }
+
+        public static SortAttribute fromFormatKey(String key) {
+            for (SortAttribute attr : SortAttribute.values()) {
+                if (attr.getFormatKey().equalsIgnoreCase(key)) {
+                    return attr;
+                }
+            }
+            return null;
+        }
+    }
 
     protected Playlist() {
         buttonPanel = new JPanel();
@@ -57,6 +102,11 @@ public class Playlist extends JPanel implements UIReloadable {
         fileList.setCellRenderer(new PlaylistCellRenderer());
         fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fileList.addMouseListener(new DoubleClickListener());
+
+        // Enable drag and drop for reordering
+        fileList.setDragEnabled(true);
+        fileList.setDropMode(DropMode.INSERT);
+        fileList.setTransferHandler(new PlaylistTransferHandler());
 
         initComponents();
         ReloadUIAction.getInstance().registerReloadable(this);
@@ -80,7 +130,46 @@ public class Playlist extends JPanel implements UIReloadable {
      * @param file Any File.
      */
     public void addItem(File file) {
-        fileListModel.addElement(file);
+        addItem(AudioMetadata.fromFile(file));
+    }
+
+    /**
+     * Adds a single item to the list. Uniqueness checks are not done here,
+     * so it's possible to add the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void addItem(AudioMetadata meta) {
+        fileListModel.addElement(meta);
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Inserts a single item at the given index in the list.
+     * Uniqueness checks are not done here, so it's possible to add
+     * the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void insertItemAt(File file, int index) {
+        insertItemAt(AudioMetadata.fromFile(file), index);
+    }
+
+    /**
+     * Inserts a single item at the given index in the list.
+     * Uniqueness checks are not done here, so it's possible to add
+     * the same file multiple times if you want.
+     * Audio data is not loaded at this point! It's possible to load
+     * an invalid (corrupt, wrong format, etc) file here without
+     * realizing it until you try to actually play it.
+     */
+    public void insertItemAt(AudioMetadata meta, int index) {
+        fileListModel.add(index, meta);
+        revalidate();
+        repaint();
     }
 
     /**
@@ -98,15 +187,36 @@ public class Playlist extends JPanel implements UIReloadable {
 
             // Arbitrary decision: if you remove the track that's currently
             // loaded in the audio panel, stop and unload it.
-            File selected = fileList.getSelectedValue();
+            AudioMetadata selectedMeta = fileList.getSelectedValue();
+            File selected = (selectedMeta != null) ? selectedMeta.getSourceFile() : null;
             AudioData currentlyLoaded = AudioPanel.getInstance().getAudioData();
-            if (currentlyLoaded != null && currentlyLoaded.getSourceFile().equals(selected)) {
+            if (currentlyLoaded != null && Objects.equals(currentlyLoaded.getSourceFile(), selected)) {
                 AudioPanel.getInstance().stop();
                 AudioPanel.getInstance().setAudioData(null);
             }
 
             fileListModel.removeElementAt(fileList.getSelectedIndex());
+
+            revalidate();
+            repaint();
         }
+    }
+
+    /**
+     * Reports the number of items currently in the playlist.
+     */
+    public int getItemCount() {
+        return fileListModel.size();
+    }
+
+    /**
+     * Returns the AudioMetadata object at the given index in the playlist.
+     */
+    public AudioMetadata getItemAt(int index) {
+        if (index < 0 || index >= fileListModel.size()) {
+            return null;
+        }
+        return fileListModel.get(index);
     }
 
     /**
@@ -118,10 +228,51 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public void clear() {
         fileListModel.clear();
+        revalidate();
+        repaint();
 
         // Arbitrary decision: stop and unload any loaded track:
         AudioPanel.getInstance().stop();
         AudioPanel.getInstance().setAudioData(null);
+    }
+
+    /**
+     * Programmatically reverses the sort order of the current playlist.
+     */
+    public void reverseSort() {
+        List<AudioMetadata> metas = new ArrayList<>();
+        for (int i = 0; i < fileListModel.size(); i++) {
+            metas.add(fileListModel.get(i));
+        }
+        fileListModel.clear();
+        for (int i = metas.size() - 1; i >= 0; i--) {
+            fileListModel.addElement(metas.get(i));
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Sorts the current playlist using the given List of SortKeys.
+     */
+    public void sort(List<SortKey> sortKeys) {
+        if (sortKeys == null || sortKeys.isEmpty()) {
+            return;
+        }
+        List<AudioMetadata> metas = new ArrayList<>();
+        for (int i = 0; i < fileListModel.size(); i++) {
+            metas.add(fileListModel.get(i));
+        }
+        sortList(metas, sortKeys);
+
+        fileListModel.clear();
+        for (AudioMetadata meta : metas) {
+            fileListModel.addElement(meta);
+        }
+
+        revalidate();
+        repaint();
     }
 
     /**
@@ -132,7 +283,8 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public File getSelectedTrackFile() {
         if (fileList.getSelectedIndex() != -1) {
-            return fileList.getSelectedValue();
+            AudioMetadata meta = fileList.getSelectedValue();
+            return (meta != null) ? meta.getSourceFile() : null;
         }
         return null;
     }
@@ -145,12 +297,15 @@ public class Playlist extends JPanel implements UIReloadable {
      */
     public int getIndexOfCurrentlyPlayingTrack() {
         AudioData audioData = AudioPanel.getInstance().getAudioData();
-        if (audioData == null || audioData.getMetadata() == null || audioData.getMetadata().sourceFile == null) {
+        if (audioData == null || audioData.getMetadata() == null || audioData.getMetadata().getSourceFile() == null) {
             return -1;
         }
-        String sourcePath = audioData.getMetadata().sourceFile.getAbsolutePath();
+        String sourcePath = audioData.getMetadata().getSourceFile().getAbsolutePath();
         for (int i = 0; i < fileListModel.size(); i++) {
-            if (sourcePath.equals(fileListModel.get(i).getAbsolutePath())) {
+            AudioMetadata meta = fileListModel.get(i);
+            if (meta != null
+                && meta.getSourceFile() != null
+                && sourcePath.equals(meta.getSourceFile().getAbsolutePath())) {
                 return i;
             }
         }
@@ -273,8 +428,75 @@ public class Playlist extends JPanel implements UIReloadable {
         }
 
         fileListModel.clear();
-        fileListModel.addAll(newTracks);
+        // Convert to metadata objects
+        for (File f : newTracks) {
+            fileListModel.addElement(AudioMetadata.fromFile(f));
+        }
+        revalidate();
+        repaint();
         AudioPanel.getInstance().next();
+    }
+
+    /**
+     * Appends the contents of the given playlist to the end of the current playlist.
+     */
+    public void appendPlaylist(File playlistFile) {
+        List<File> loaded = PlaylistUtil.loadPlaylist(playlistFile);
+        for (File f : loaded) {
+            fileListModel.addElement(AudioMetadata.fromFile(f));
+        }
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Inserts the contents of the given playlist at the given index.
+     *
+     * @return The count of items actually inserted into the list.
+     */
+    public int insertPlaylistAt(File playlistFile, int index) {
+        int count = 0;
+        List<File> loaded = PlaylistUtil.loadPlaylist(playlistFile);
+        for (File f : loaded) {
+            AudioMetadata meta = AudioMetadata.fromFile(f);
+            fileListModel.add(index, meta);
+            index++;
+            count++;
+        }
+        revalidate();
+        repaint();
+        return count;
+    }
+
+    /**
+     * Selects the track at the given index and starts playing it.
+     * Does nothing if the given index is out of bounds.
+     * This will stop and unload any track that is currently playing.
+     */
+    public void selectAndPlay(int index) {
+        if (index < 0 || index >= fileListModel.size()) {
+            return;
+        }
+
+        // Don't bother if it's already selected and playing:
+        if (fileList.getSelectedIndex() == index) {
+            AudioMetadata selectedMeta = fileList.getSelectedValue();
+            File selected = (selectedMeta != null) ? selectedMeta.getSourceFile() : null;
+            AudioData currentlyLoaded = AudioPanel.getInstance().getAudioData();
+            if (currentlyLoaded != null
+                && Objects.equals(currentlyLoaded.getSourceFile(), selected)
+                && AudioPanel.getInstance().getPanelState() == AudioPanel.PanelState.PLAYING) {
+                return;
+            }
+        }
+
+        // If currently playing, stop:
+        AudioPanel.getInstance().stop();
+
+        // Select and play:
+        fileList.setSelectedIndex(index);
+        AudioPanel.getInstance().setAudioData(null); // force an unload of whatever was loaded
+        AudioPanel.getInstance().play(); // will force a load of the selected track
     }
 
     /**
@@ -285,7 +507,10 @@ public class Playlist extends JPanel implements UIReloadable {
     public void savePlaylist(File targetFile) {
         List<File> list = new ArrayList<>();
         for (int i = 0; i < fileListModel.size(); i++) {
-            list.add(fileListModel.get(i));
+            AudioMetadata meta = fileListModel.get(i);
+            if (meta != null && meta.getSourceFile() != null) {
+                list.add(meta.getSourceFile());
+            }
         }
 
         // If there's nothing here, don't bother:
@@ -341,7 +566,8 @@ public class Playlist extends JPanel implements UIReloadable {
      * an error is logged and displayed to the user and nothing is loaded.
      */
     public void loadSelected() {
-        File selected = fileList.getSelectedValue();
+        AudioMetadata selectedMeta = fileList.getSelectedValue();
+        File selected = (selectedMeta != null) ? selectedMeta.getSourceFile() : null;
         fileList.ensureIndexIsVisible(fileList.getSelectedIndex());
         if (fileListModel.isEmpty() || selected == null) {
             return;
@@ -366,6 +592,9 @@ public class Playlist extends JPanel implements UIReloadable {
     @Override
     public void reloadUI() {
         rebuildControls();
+        fileList.invalidate();
+        fileList.revalidate();
+        fileList.repaint();
     }
 
     public void rebuildControls() {
@@ -412,6 +641,17 @@ public class Playlist extends JPanel implements UIReloadable {
                 }
             }
 
+            // Special case our playlist sort button:
+            // We need to add the button as the owner component of the action,
+            // so it can show its popup menu correctly.
+            if (button.getName().equalsIgnoreCase("playlist sort")) {
+                for (ActionListener listener : button.getActionListeners()) {
+                    if (listener instanceof PlaylistSortAction) {
+                        ((PlaylistSortAction)listener).setOwnerComponent(button);
+                    }
+                }
+            }
+
             constraints.gridx++;
         }
 
@@ -450,9 +690,160 @@ public class Playlist extends JPanel implements UIReloadable {
         panel.setLayout(new BorderLayout());
         JScrollPane scrollPane = new JScrollPane(fileList);
         scrollPane.getVerticalScrollBar().setBlockIncrement(32);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    /**
+     * Custom TransferHandler for drag-and-drop reordering of playlist items.
+     */
+    protected static class PlaylistTransferHandler extends TransferHandler {
+
+        private static final DataFlavor AUDIO_METADATA_FLAVOR = new DataFlavor(AudioMetadata.class, "AudioMetadata");
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY_OR_MOVE;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            @SuppressWarnings("unchecked")
+            JList<AudioMetadata> list = (JList<AudioMetadata>)c;
+            AudioMetadata selectedValue = list.getSelectedValue();
+            if (selectedValue == null) {
+                return null;
+            }
+            return new AudioMetadataTransferable(selectedValue);
+        }
+
+        @Override
+        protected void exportDone(JComponent c, Transferable data, int action) {
+            // Clean up is handled in importData
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            // Support both file list drags (from file explorer) and internal reordering:
+            return support.isDrop() && (
+                support.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
+                    support.isDataFlavorSupported(AUDIO_METADATA_FLAVOR)
+            );
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+
+            JList.DropLocation dropLocation = (JList.DropLocation)support.getDropLocation();
+            int dropIndex = dropLocation.getIndex();
+
+            // Handle file list drops (from file explorer):
+            // Note: this is also handled at the MainWindow level, but the difference
+            // is that here, the user can choose where to insert the files into the playlist.
+            // At the MainWindow level, files are always appended to the end of the playlist.
+            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<File> files = (List<File>)support.getTransferable()
+                                                          .getTransferData(DataFlavor.javaFileListFlavor);
+
+                    for (File file : files) {
+                        if (AudioUtil.isValidAudioFile(file)) {
+                            Playlist.getInstance().insertItemAt(file, dropIndex);
+                            dropIndex++; // Increment drop index for next insert
+                        }
+                        else if (AudioUtil.isValidPlaylist(file)) {
+                            int countInserted = Playlist.getInstance().insertPlaylistAt(file, dropIndex);
+                            dropIndex += countInserted; // Increment drop index for next insert
+                        }
+                    }
+
+                    return true;
+                }
+                catch (UnsupportedFlavorException | IOException e) {
+                    logger.warning("Failed to import file list during drag and drop: " + e.getMessage());
+                    return false;
+                }
+            }
+
+            // Handle internal playlist reordering:
+            try {
+                AudioMetadata metadata = (AudioMetadata)support.getTransferable()
+                                                               .getTransferData(AUDIO_METADATA_FLAVOR);
+
+                @SuppressWarnings("unchecked")
+                JList<AudioMetadata> list = (JList<AudioMetadata>)support.getComponent();
+                DefaultListModel<AudioMetadata> model = (DefaultListModel<AudioMetadata>)list.getModel();
+
+                // Find the current index of the item being dragged
+                int sourceIndex = -1;
+                for (int i = 0; i < model.getSize(); i++) {
+                    if (model.getElementAt(i) == metadata) {
+                        sourceIndex = i;
+                        break;
+                    }
+                }
+
+                if (sourceIndex == -1) {
+                    return false;
+                }
+
+                // Remove from old position
+                model.remove(sourceIndex);
+
+                // Adjust drop index if necessary (if we removed an item before the drop location)
+                if (sourceIndex < dropIndex) {
+                    dropIndex--;
+                }
+
+                // Insert at new position
+                model.add(dropIndex, metadata);
+
+                // Select the moved item
+                list.setSelectedIndex(dropIndex);
+                list.ensureIndexIsVisible(dropIndex);
+
+                return true;
+            }
+            catch (UnsupportedFlavorException | IOException e) {
+                logger.warning("Failed to import data during drag and drop: " + e.getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * Wrapper class to make AudioMetadata transferable for drag-and-drop operations.
+         */
+        private static class AudioMetadataTransferable implements Transferable {
+            private final AudioMetadata metadata;
+
+            public AudioMetadataTransferable(AudioMetadata metadata) {
+                this.metadata = metadata;
+            }
+
+            @Override
+            public DataFlavor[] getTransferDataFlavors() {
+                return new DataFlavor[]{AUDIO_METADATA_FLAVOR};
+            }
+
+            @Override
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
+                return AUDIO_METADATA_FLAVOR.equals(flavor);
+            }
+
+            @Override
+            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+                if (!isDataFlavorSupported(flavor)) {
+                    throw new UnsupportedFlavorException(flavor);
+                }
+                return metadata;
+            }
+        }
     }
 
     protected static class DoubleClickListener extends MouseAdapter {
@@ -464,6 +855,64 @@ public class Playlist extends JPanel implements UIReloadable {
                 AudioPanel.getInstance().setAudioData(null);
                 AudioPanel.getInstance().play();
             }
+        }
+    }
+
+    protected void sortList(List<AudioMetadata> toSort, List<SortKey> sortKeys) {
+        if (toSort == null || sortKeys == null || toSort.isEmpty() || sortKeys.isEmpty()) {
+            return;
+        }
+        toSort.sort((a, b) -> {
+            for (SortKey sortKey : sortKeys) {
+                int comparison = switch (sortKey.attribute) {
+                    case Genre -> compareStrings(a.getGenre(), b.getGenre());
+                    case Artist -> compareStrings(a.getAuthor(), b.getAuthor());
+                    case Album -> compareStrings(a.getAlbum(), b.getAlbum());
+                    case Title -> compareStrings(a.getTitle(), b.getTitle());
+                    case TrackNumber -> Integer.compare(a.getTrackNumber(), b.getTrackNumber());
+                    case FilePath -> compareFilePaths(a.getSourceFile(), b.getSourceFile());
+                };
+                if (comparison != 0) {
+                    return sortKey.isAscending ? comparison : -comparison;
+                }
+            }
+            return 0;
+        });
+    }
+
+    private static int compareStrings(String a, String b) {
+        if (a == null && b == null) { return 0; }
+        if (a == null) {
+            return -1;  // nulls sort first
+        }
+        if (b == null) { return 1; }
+        return a.compareToIgnoreCase(b);
+    }
+
+    private static int compareFilePaths(File a, File b) {
+        if (a == null && b == null) { return 0; }
+        if (a == null) {
+            return -1;  // nulls sort first
+        }
+        if (b == null) { return 1; }
+        return a.getAbsolutePath().compareToIgnoreCase(b.getAbsolutePath());
+    }
+
+    public static class SortKey {
+        public final SortAttribute attribute;
+        public final boolean isAscending;
+
+        public SortKey(SortAttribute attribute, boolean isAscending) {
+            this.attribute = attribute;
+            this.isAscending = isAscending;
+        }
+
+        public static SortKey asc(SortAttribute attribute) {
+            return new SortKey(attribute, true);
+        }
+
+        public static SortKey desc(SortAttribute attribute) {
+            return new SortKey(attribute, false);
         }
     }
 

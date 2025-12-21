@@ -23,17 +23,21 @@ also used musicplayer as a testbed for my own app-extensions library
 so I could test out ways to make an application incredibly customizable via dynamically-loaded extensions. I also 
 wanted to prove out the `AppProperties` class from `app-extensions` to really demonstrate how to develop an extremely 
 customizable application while writing surprisingly little UI code (in the case of the properties dialog, and
-the extension manager, almost literally none). With version 3.x, I'm also using this application as a testbed
+the extension manager, almost literally none). With version 3.0, I'm also using this application as a testbed
 for the new "dynamic extension discovery and download" feature from my swing-extras library. This allows
 users to download, install, and update extensions right from within the UI of the application, without having
-to clone, build, and install them manually.
+to clone, build, and install them manually. In the 3.1 release, MusicPlayer is the testbed for the new
+"single instance mode" feature targeted for swing-extras, which allows users to ensure that only one instance
+of the application is running at a time. In short, MusicPlayer is my personal playground for testing
+out new ideas in application extensibility and configurability, while also providing a simple music player
+with nice visualizations for my own personal use.
 
 ## How do I get it?
 
 You can download an installer tarball for Linux here:
-- [MusicPlayer-3.0.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.0.tar.gz)
-- Size: 21MB
-- SHA-1: `6f65304e8a3160782fd8003df15b0f25da15af60`
+- [MusicPlayer-3.1.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.1.tar.gz)
+- Size: 23MB
+- SHA-1: `7485ab3c7c2b8f03f6aa8f658003d53463046b59`
 
 Alternatively, you can clone the repo and build the project locally:
 
@@ -42,19 +46,22 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-3.0.jar # Launch the application manually
+java -jar musicplayer-3.1.jar # Launch the application manually
 ```
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building
 on Linux, the installer tarball will be generated for you automatically during a build and placed into `target`.
-This is preferable to launching manually as shown above, at least when running on a Linux machine, because the
-installer script will create a launcher wrapper script with proper environment variables set (and you get a nice
-user-friendly desktop icon for easy launching).
+Installing from the tarball is preferable to launching manually as shown above, at least when running on a Linux 
+machine, because the installer script will create a launcher wrapper script with proper environment variables 
+set (and you get a nice user-friendly desktop icon for easy launching, along with better OS integration,
+such as being able to right-click on audio files in your file explorer and select "Open with MusicPlayer").
 
 ## User guide
 
 - [Customizing the UI](docs/user_guide_ui.md) 
 - [Controlling log output](docs/user_guide_logging.md)
+- **NEW in 3.0 release:** [Dynamically discovering and installing extensions](docs/user_guide_extension_manager.md)
+- **NEW in 3.1 release:** [Single instance mode](docs/user_guide_single_instance_mode.md)
 
 ## Developer guide
 
@@ -67,7 +74,7 @@ user-friendly desktop icon for easy launching).
 
 ## License
 
-musicplayer is made available under the MIT license: https://opensource.org/license/mit
+MusicPlayer is made available under the MIT license: https://opensource.org/license/mit
 
 ## Revision history
 

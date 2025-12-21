@@ -30,6 +30,36 @@ public class AudioUtil {
     }
 
     /**
+     * Returns true if the given File exists, is readable, and has an extension
+     * compatible with our load code. (Currently, this means wav or mp3).
+     */
+    public static boolean isValidAudioFile(File candidate) {
+        if (candidate == null) {
+            return false;
+        }
+        String filename = candidate.getName().toLowerCase();
+        return candidate.exists()
+            && candidate.isFile()
+            && candidate.canRead() &&
+            (filename.endsWith(".mp3") || filename.endsWith(".wav"));
+    }
+
+    /**
+     * Returns true if the given File exists, is readable, and has an extension
+     * that indicates it's a MusicPlayer playlist. (mplist)
+     */
+    public static boolean isValidPlaylist(File candidate) {
+        if (candidate == null) {
+            return false;
+        }
+        String filename = candidate.getName().toLowerCase();
+        return candidate.exists()
+            && candidate.isFile()
+            && candidate.canRead() &&
+            filename.endsWith(".mplist");
+    }
+
+    /**
      * Invoked from AudioLoadThread when we have some audio data to be processed.
      * The current audio load implementation is a bit wonky and I'm not happy with it,
      * but it goes like this:
