@@ -33,7 +33,7 @@ to clone, build, and install them manually.
 You can download an installer tarball for Linux here:
 - [MusicPlayer-3.1.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.1.tar.gz)
 - Size: 23MB
-- SHA-1: `c1cd10321fa9392b1576d929bb3979b3f566b5a3`
+- SHA-1: `7485ab3c7c2b8f03f6aa8f658003d53463046b59`
 
 Alternatively, you can clone the repo and build the project locally:
 

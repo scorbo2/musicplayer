@@ -2,7 +2,7 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
-Version 3.1 [TODO] - Maintenance release
+Version 3.1 [2025-12-20] - Maintenance release
   #73 Fix bug when opening files with spaces from command line
   #68 Add single application instance option
   #67 Drag and drop within playlist to reorder tracks
