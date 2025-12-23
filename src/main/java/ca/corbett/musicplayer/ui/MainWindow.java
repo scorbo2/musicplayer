@@ -379,7 +379,7 @@ public class MainWindow extends JFrame implements UIReloadable {
     public void reloadUI() {
         boolean newValue = AppConfig.getInstance().isSingleInstanceEnabled();
         
-        // Only take action if the setting has changed:
+        // If the user did not change the setting, do nothing
         if (newValue == isSingleInstanceModeEnabled) {
             return;
         }
