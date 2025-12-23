@@ -1,8 +1,6 @@
 package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.ExtensionManager;
-import ca.corbett.extras.properties.AbstractProperty;
-import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
@@ -16,7 +14,6 @@ import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -84,29 +81,6 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     public void deactivateAll() {
         super.deactivateAll();
         logger.info("Extension manager: all extensions have been shut down.");
-    }
-
-    /**
-     * Overridden here so we can add a read-only view of the extension scan dir
-     * and some instructions for how to change the value. I want to add these instructions
-     * dead last so that they show up at the end of the properties dialog
-     * no matter how many extensions are loaded.
-     *
-     * @return A List of all properties exposed by all enabled extensions.
-     */
-    @Override
-    public List<AbstractProperty> getAllEnabledExtensionProperties() {
-        List<AbstractProperty> props = super.getAllEnabledExtensionProperties();
-
-        props.add(LabelProperty.createLabel("Extensions.Configuration.label1", "The following directory will be scanned for extension jars:"));
-        props.add(new LabelProperty("Extensions.Configuration.scanDir", Version.EXTENSIONS_DIR.getAbsolutePath(),
-                                    new Font(Font.MONOSPACED, Font.BOLD, 12)));
-        props.add(LabelProperty.createLabel("Extensions.Configuration.label2",
-                "<html>If the directory exists and is readable, it is scanned at startup<br>" +
-                    "automatically. You can set it using the following system property,<br>" +
-                    "but it requires an application restart!<br><br>" +
-                    "<pre>EXTENSIONS_DIR</pre></html>"));
-        return props;
     }
 
     /**
