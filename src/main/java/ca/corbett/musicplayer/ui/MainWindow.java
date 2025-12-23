@@ -60,6 +60,7 @@ public class MainWindow extends JFrame implements UIReloadable {
     private MessageUtil messageUtil;
     private final Timer resizeTimer;
     private UpdateManager updateManager;
+    private boolean isSingleInstanceModeEnabled;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -101,6 +102,7 @@ public class MainWindow extends JFrame implements UIReloadable {
             parseUpdateSources();
             enableDragAndDrop();
             ReloadUIAction.getInstance().registerReloadable(this);
+            isSingleInstanceModeEnabled = AppConfig.getInstance().isSingleInstanceEnabled();
         }
     }
 
@@ -375,8 +377,18 @@ public class MainWindow extends JFrame implements UIReloadable {
      */
     @Override
     public void reloadUI() {
+        boolean newValue = AppConfig.getInstance().isSingleInstanceEnabled();
+        
+        // Only take action if the setting has changed:
+        if (newValue == isSingleInstanceModeEnabled) {
+            return;
+        }
+        
+        // Update our cached value:
+        isSingleInstanceModeEnabled = newValue;
+        
         // If single instance mode is now enabled, try to acquire the lock:
-        if (AppConfig.getInstance().isSingleInstanceEnabled()) {
+        if (newValue) {
             logger.info("Enabling single instance mode.");
             SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
             if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a))) {
