@@ -3,6 +3,7 @@ https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
 Version 3.2 [2025-12-31] - Maintenance release
+  #82 Bring javadocs up to date.
   #80 MainWindow title shows currently playing track
   #78 Remove "extensions" info tab from app properties dialog
   #76 Fix bug in reloadUI() with single instance logic
