@@ -46,7 +46,7 @@ import java.util.logging.Logger;
  * @author scorbo2
  * @since 2025-03-23
  */
-public class MainWindow extends JFrame implements UIReloadable {
+public class MainWindow extends JFrame implements UIReloadable, AudioPanelListener {
 
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());
 
@@ -81,6 +81,7 @@ public class MainWindow extends JFrame implements UIReloadable {
 
         add(AudioPanel.getInstance(), BorderLayout.NORTH);
         add(Playlist.getInstance(), BorderLayout.CENTER);
+        AudioPanel.getInstance().addAudioPanelListener(this);
     }
 
     /**
@@ -403,6 +404,29 @@ public class MainWindow extends JFrame implements UIReloadable {
         else {
             logger.info("Disabling single instance mode.");
             SingleInstanceManager.getInstance().release();
+        }
+    }
+
+    /**
+     * Called when the AudioPanel state changes (IDLE, PLAYING, PAUSED).
+     * When the panel goes to IDLE, we revert the window title to the default.
+     */
+    @Override
+    public void stateChanged(AudioPanel sourcePanel, AudioPanel.PanelState state) {
+        if (state == AudioPanel.PanelState.IDLE) {
+            setTitle(Version.FULL_NAME);
+        }
+    }
+
+    /**
+     * Called when an audio clip is loaded into the AudioPanel.
+     * We update the window title to show the formatted track metadata.
+     */
+    @Override
+    public void audioLoaded(AudioPanel sourcePanel, VisualizationTrackInfo trackInfo) {
+        if (sourcePanel.getAudioData() != null && sourcePanel.getAudioData().getMetadata() != null) {
+            String formattedTitle = sourcePanel.getAudioData().getMetadata().getFormatted();
+            setTitle(formattedTitle);
         }
     }
 }
