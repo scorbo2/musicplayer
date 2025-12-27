@@ -418,10 +418,19 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
             setTitle(Version.FULL_NAME);
         } else if (state == AudioPanel.PanelState.PLAYING) {
             // Update title when playing starts, in case track was already loaded
-            if (sourcePanel.getAudioData() != null && sourcePanel.getAudioData().getMetadata() != null) {
-                String formattedTitle = sourcePanel.getAudioData().getMetadata().getFormatted();
-                setTitle(formattedTitle);
-            }
+            updateTitleFromAudioData(sourcePanel);
+        }
+    }
+
+    /**
+     * Updates the window title using the formatted metadata from the given AudioPanel's audio data.
+     */
+    private void updateTitleFromAudioData(AudioPanel sourcePanel) {
+        if (sourcePanel != null
+                && sourcePanel.getAudioData() != null
+                && sourcePanel.getAudioData().getMetadata() != null) {
+            String formattedTitle = sourcePanel.getAudioData().getMetadata().getFormatted();
+            setTitle(formattedTitle);
         }
     }
 
@@ -431,9 +440,6 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
      */
     @Override
     public void audioLoaded(AudioPanel sourcePanel, VisualizationTrackInfo trackInfo) {
-        if (sourcePanel.getAudioData() != null && sourcePanel.getAudioData().getMetadata() != null) {
-            String formattedTitle = sourcePanel.getAudioData().getMetadata().getFormatted();
-            setTitle(formattedTitle);
-        }
+        updateTitleFromAudioData(sourcePanel);
     }
 }
