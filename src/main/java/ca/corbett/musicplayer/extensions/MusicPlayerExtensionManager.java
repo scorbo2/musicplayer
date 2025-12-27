@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  *     is already configured for you. You can override it by setting the EXTENSIONS_DIR
  *     system property when launching the application, as shown below:
  * </p>
- * <pre>java -DEXTENSIONS_DIR=/path/to/extensions/dir musicplayer.jar</pre>
+ * <pre>java -DEXTENSIONS_DIR=/path/to/extensions/dir -jar musicplayer.jar</pre>
  *
  * @author scorbo2
  * @since 2025-03-26
