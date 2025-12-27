@@ -410,11 +410,18 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
     /**
      * Called when the AudioPanel state changes (IDLE, PLAYING, PAUSED).
      * When the panel goes to IDLE, we revert the window title to the default.
+     * When the panel starts playing, we update the title in case audioLoaded() wasn't called.
      */
     @Override
     public void stateChanged(AudioPanel sourcePanel, AudioPanel.PanelState state) {
         if (state == AudioPanel.PanelState.IDLE) {
             setTitle(Version.FULL_NAME);
+        } else if (state == AudioPanel.PanelState.PLAYING) {
+            // Update title when playing starts, in case track was already loaded
+            if (sourcePanel.getAudioData() != null && sourcePanel.getAudioData().getMetadata() != null) {
+                String formattedTitle = sourcePanel.getAudioData().getMetadata().getFormatted();
+                setTitle(formattedTitle);
+            }
         }
     }
 
