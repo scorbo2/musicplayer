@@ -100,7 +100,7 @@ src/main/java/ca/corbett/musicplayer/
 2. **Do not remove extra-jars/** - Contains required vavi-commons workaround
 3. **GUI application** - Requires display, not headless-compatible
 4. **Extension loading** - JARs from EXTENSIONS_DIR (~/.MusicPlayer/extensions/)
-5. **System properties:** java.util.logging.config.file, ca.corbett.musicplayer.props.file, ca.corbett.musicplayer.extensions.dir, INSTALL_DIR, SETTINGS_DIR
+5. **System properties:** java.util.logging.config.file, INSTALL_DIR, SETTINGS_DIR, EXTENSIONS_DIR
 6. **Java 17 required** - Ensure compatibility
 7. **Javadoc linting relaxed** - Missing docs allowed (-Xdoclint:-missing)
 8. **Trust these instructions** - Only search if incomplete/incorrect

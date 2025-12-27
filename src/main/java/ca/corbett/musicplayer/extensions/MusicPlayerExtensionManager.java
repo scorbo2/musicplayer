@@ -23,6 +23,13 @@ import java.util.logging.Logger;
 /**
  * Manages extensions for musicplayer, and provides wrapper methods to make it
  * easy for the application code to interrogate extensions as to their capabilities.
+ * <p>
+ *     Extensions are loaded from the ${EXTENSIONS_DIR} at application startup.
+ *     If you installed the application via the installer script, this directory
+ *     is already configured for you. You can override it by setting the EXTENSIONS_DIR
+ *     system property when launching the application, as shown below:
+ * </p>
+ * <pre>java -DEXTENSIONS_DIR=/path/to/extensions/dir musicplayer.jar</pre>
  *
  * @author scorbo2
  * @since 2025-03-26

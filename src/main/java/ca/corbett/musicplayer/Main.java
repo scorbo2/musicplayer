@@ -19,21 +19,21 @@ import java.util.logging.Logger;
  * <ul>
  *     <li><b>java.util.logging.config.file</b> - if set, this is the full path
  *     and name of your custom logging.properties file. If not set, the default
- *     logging.properties will be used (from the application jar file). Note that
- *     we also check for a logging.properties in whatever directory you launch
- *     from, and unless the above property is set, we'll use that one if it exists.
+ *     logging.properties will be used (from the application jar file).
  *     By default, all log output goes to the console. You can specify a custom
  *     logging.properties to easily change that.</li>
- *     <li><b>ca.corbett.musicplayer.props.file</b> - if set, this is the full
- *     path and name of your MusicPlayer.props file containing application settings.
- *     If not set, this file will be created as needed in your home directory.
- *     If the file does not exist on startup, the application will launch with
- *     all default properties, and the file will be created if you change any
- *     of the application settings.</li>
- *     <li><b>ca.corbett.musicplayer.extensions.dir</b> - if set, this is the
- *     directory from which extension jars will be loaded. There is no default value,
- *     so if you don't set this, you will be unable to load extension jars.</li>
+ *     <li><b>SETTINGS_DIR</b> - This defaults to a directory named ".MusicPlayer"
+ *     in the user's home directory, but can be overridden. The application
+ *     configuration file lives here.</li>
+ *     <li><b>EXTENSIONS_DIR</b> - This defaults to a directory named "extensions"
+ *     inside SETTINGS_DIR, but can be overridden. This is the
+ *     directory from which extension jars will be loaded.</li>
  * </ul>
+ * <p>
+ *     <b>Note:</b> If you used the installer script to install MusicPlayer,
+ *     these system properties will already have been set for you in the
+ *     launcher script, and you don't have to worry about them.
+ * </p>
  *
  * @author scorbo2
  * @since 2025-03-23
