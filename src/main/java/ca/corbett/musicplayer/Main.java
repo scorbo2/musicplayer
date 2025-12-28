@@ -50,7 +50,7 @@ public class Main {
             if (!instanceManager.tryAcquireLock(Main::handleStartArgs)) {
                 // Another instance is already running, let's send our args to it and exit:
                 // Send even if empty, as this will force the main window to the front.
-                SingleInstanceManager.getInstance().sendArgsToRunningInstance(args);
+                instanceManager.sendArgsToRunningInstance(args);
                 return;
             }
         }
