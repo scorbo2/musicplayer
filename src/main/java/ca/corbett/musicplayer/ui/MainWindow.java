@@ -1,11 +1,12 @@
 package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.MessageUtil;
+import ca.corbett.extras.SingleInstanceManager;
 import ca.corbett.extras.audio.PlaybackThread;
 import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
-import ca.corbett.musicplayer.SingleInstanceManager;
+import ca.corbett.musicplayer.Main;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.actions.StopAction;
@@ -392,7 +393,8 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
         if (newValue) {
             logger.info("Enabling single instance mode.");
             SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
-            if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a))) {
+            if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a),
+                                                Main.SINGLE_INSTANCE_PORT)) {
                 // Another instance is already running, let's inform the user:
                 getMessageUtil().error("Single Instance Mode",
                                        "Another instance of MusicPlayer is already running.\n" +

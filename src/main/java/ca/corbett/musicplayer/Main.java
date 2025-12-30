@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer;
 
 import ca.corbett.extras.LookAndFeelManager;
+import ca.corbett.extras.SingleInstanceManager;
 import ca.corbett.musicplayer.ui.MainWindow;
 import com.formdev.flatlaf.FlatLightLaf;
 
@@ -41,6 +42,14 @@ import java.util.logging.Logger;
  * @since 2025-03-23
  */
 public class Main {
+
+    /**
+     * Don't use the default port unless you have to!
+     * It will conflict with any other application that was built with swing-extras.
+     * The best practice is for each application to pick its own unique port number.
+     */
+    public static final int SINGLE_INSTANCE_PORT = 44884;
+
     public static void main(String[] args) {
         // Before we do anything else, set up logging:
         configureLogging();
@@ -49,7 +58,7 @@ public class Main {
         boolean isSingleInstanceEnabled = Boolean.parseBoolean(AppConfig.peek("UI.General.singleInstance"));
         if (isSingleInstanceEnabled) {
             SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
-            if (!instanceManager.tryAcquireLock(Main::handleStartArgs)) {
+            if (!instanceManager.tryAcquireLock(Main::handleStartArgs, SINGLE_INSTANCE_PORT)) {
                 // Another instance is already running, let's send our args to it and exit:
                 // Send even if empty, as this will force the main window to the front.
                 instanceManager.sendArgsToRunningInstance(args);
