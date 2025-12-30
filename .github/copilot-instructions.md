@@ -73,7 +73,7 @@ src/main/java/ca/corbett/musicplayer/
 
 **No CI/CD configured.** Manual validation: `mvn clean package` succeeds, tests pass, follow .editorconfig style.
 
-**Key Dependencies:** swing-extras (2.5.0), mp3spi (1.9.14), sqlite-jdbc (3.49.1.0), jackson (2.18.3), junit-jupiter (5.12.1)
+**Key Dependencies:** swing-extras (2.6.0), mp3spi (1.9.14), sqlite-jdbc (3.49.1.0), jackson (2.18.3), junit-jupiter (5.12.1)
 
 **Code Quality:** TODOs in AudioPanel, VisualizationThread, AudioData, AudioUtil. MP3→WAV conversion approach needs improvement (see AudioData.java).
 

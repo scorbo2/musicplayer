@@ -46,7 +46,7 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-3.1.jar # Launch the application manually
+java -jar musicplayer-3.2.jar # Launch the application manually
 ```
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building

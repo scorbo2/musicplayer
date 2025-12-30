@@ -16,13 +16,13 @@ Now, you can create a new project, and add musicplayer as a dependency:
     <dependency>
         <groupId>ca.corbett</groupId>
         <artifactId>musicplayer</artifactId>
-        <version>3.1</version>
+        <version>3.2</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
 ```
 
-(At the time of this writing, 3.1 is the latest available version of the musicplayer code)
+(At the time of this writing, 3.2 is the latest available version of the MusicPlayer code)
 
 Note that we use the `provided` scope here. This tells Maven that our jar will be loaded in an
 environment where the MusicPlayer code is already loaded and running.
@@ -89,7 +89,7 @@ a directory structure that should be unique to your extension. For this example,
   "name": "Test extension",
   "version": "1.0",
   "targetAppName": "MusicPlayer",
-  "targetAppVersion": "3.1",
+  "targetAppVersion": "3.2",
   "author": "Steve Corbett",
   "shortDescription": "A quick test extension",
   "longDescription": "If this shows up, it means the jar was successfully scanned at startup!"
@@ -111,7 +111,7 @@ an extension location. Let's say `~/.MusicPlayer/extensionJars`. Then, we can re
 tell it where to look for extension jars:
 
 ```shell
-java -DEXTENSIONS_DIR=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-3.1.jar
+java -DEXTENSIONS_DIR=/home/scorbett/.MusicPlayer/extensionJars -jar musicplayer-3.2.jar
 ```
 
 On startup, we should hopefully see some promising log output:
