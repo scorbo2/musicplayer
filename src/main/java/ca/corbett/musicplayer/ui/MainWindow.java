@@ -1,11 +1,12 @@
 package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.MessageUtil;
+import ca.corbett.extras.SingleInstanceManager;
 import ca.corbett.extras.audio.PlaybackThread;
 import ca.corbett.extras.image.ImageUtil;
 import ca.corbett.extras.logging.LogConsole;
 import ca.corbett.musicplayer.AppConfig;
-import ca.corbett.musicplayer.SingleInstanceManager;
+import ca.corbett.musicplayer.Main;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.actions.StopAction;
@@ -46,7 +47,7 @@ import java.util.logging.Logger;
  * @author scorbo2
  * @since 2025-03-23
  */
-public class MainWindow extends JFrame implements UIReloadable {
+public class MainWindow extends JFrame implements UIReloadable, AudioPanelListener {
 
     private static final Logger logger = Logger.getLogger(MainWindow.class.getName());
 
@@ -60,6 +61,7 @@ public class MainWindow extends JFrame implements UIReloadable {
     private MessageUtil messageUtil;
     private final Timer resizeTimer;
     private UpdateManager updateManager;
+    private boolean isSingleInstanceModeEnabled;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -80,6 +82,7 @@ public class MainWindow extends JFrame implements UIReloadable {
 
         add(AudioPanel.getInstance(), BorderLayout.NORTH);
         add(Playlist.getInstance(), BorderLayout.CENTER);
+        AudioPanel.getInstance().addAudioPanelListener(this);
     }
 
     /**
@@ -101,6 +104,7 @@ public class MainWindow extends JFrame implements UIReloadable {
             parseUpdateSources();
             enableDragAndDrop();
             ReloadUIAction.getInstance().registerReloadable(this);
+            isSingleInstanceModeEnabled = AppConfig.getInstance().isSingleInstanceEnabled();
         }
     }
 
@@ -375,11 +379,22 @@ public class MainWindow extends JFrame implements UIReloadable {
      */
     @Override
     public void reloadUI() {
+        boolean newValue = AppConfig.getInstance().isSingleInstanceEnabled();
+        
+        // If the user did not change the setting, do nothing
+        if (newValue == isSingleInstanceModeEnabled) {
+            return;
+        }
+        
+        // Update our cached value:
+        isSingleInstanceModeEnabled = newValue;
+        
         // If single instance mode is now enabled, try to acquire the lock:
-        if (AppConfig.getInstance().isSingleInstanceEnabled()) {
+        if (newValue) {
             logger.info("Enabling single instance mode.");
             SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
-            if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a))) {
+            if (!instanceManager.tryAcquireLock(a -> MainWindow.getInstance().processStartArgs(a),
+                                                Main.SINGLE_INSTANCE_PORT)) {
                 // Another instance is already running, let's inform the user:
                 getMessageUtil().error("Single Instance Mode",
                                        "Another instance of MusicPlayer is already running.\n" +
@@ -392,5 +407,41 @@ public class MainWindow extends JFrame implements UIReloadable {
             logger.info("Disabling single instance mode.");
             SingleInstanceManager.getInstance().release();
         }
+    }
+
+    /**
+     * Called when the AudioPanel state changes (IDLE, PLAYING, PAUSED).
+     * When the panel goes to IDLE, we revert the window title to the default.
+     * When the panel starts playing, we update the title in case audioLoaded() wasn't called.
+     */
+    @Override
+    public void stateChanged(AudioPanel sourcePanel, AudioPanel.PanelState state) {
+        if (state == AudioPanel.PanelState.IDLE) {
+            setTitle(Version.FULL_NAME);
+        } else if (state == AudioPanel.PanelState.PLAYING) {
+            // Update title when playing starts, in case track was already loaded
+            updateTitleFromAudioData(sourcePanel);
+        }
+    }
+
+    /**
+     * Updates the window title using the formatted metadata from the given AudioPanel's audio data.
+     */
+    private void updateTitleFromAudioData(AudioPanel sourcePanel) {
+        if (sourcePanel != null
+                && sourcePanel.getAudioData() != null
+                && sourcePanel.getAudioData().getMetadata() != null) {
+            String formattedTitle = sourcePanel.getAudioData().getMetadata().getFormatted();
+            setTitle(formattedTitle);
+        }
+    }
+
+    /**
+     * Called when an audio clip is loaded into the AudioPanel.
+     * We update the window title to show the formatted track metadata.
+     */
+    @Override
+    public void audioLoaded(AudioPanel sourcePanel, VisualizationTrackInfo trackInfo) {
+        updateTitleFromAudioData(sourcePanel);
     }
 }

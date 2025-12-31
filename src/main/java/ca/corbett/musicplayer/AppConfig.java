@@ -56,16 +56,13 @@ import static ca.corbett.musicplayer.ui.VisualizationWindow.DISPLAY;
  * ExtensionManagerDialog through this class.
  * </p>
  * <p>
- * All configuration is persisted to the properties file which
- * is defined by the system property "ca.corbett.musicplayer.props.file".
- * If this system property is not defined, it defaults to a file
- * called MusicPlayer.props which will be created in the user's
- * home directory.
+ * All configuration is stored in a file named "MusicPlayer.props"
+ * which lives in ${SETTINGS_DIR}. The settings directory lives
+ * in the user's home directory by default, but can be overridden
+ * by specifying the SETTINGS_DIR system property when launching
+ * the application, as shown in this example:
  * </p>
- * <p>
- * To override the default properties file location:
- * </p>
- * <pre>java -Dca.corbett.musicplayer.props.file=/tmp/blah.props -jar musicplayer.jar</pre>
+ * <pre>java -DSETTINGS_DIR=/path/to/settings/dir -jar musicplayer.jar</pre>
  *
  * @author scorbo2
  * @since 2025-03-23

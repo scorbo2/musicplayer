@@ -1,8 +1,6 @@
 package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.ExtensionManager;
-import ca.corbett.extras.properties.AbstractProperty;
-import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
@@ -16,7 +14,6 @@ import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -26,6 +23,13 @@ import java.util.logging.Logger;
 /**
  * Manages extensions for musicplayer, and provides wrapper methods to make it
  * easy for the application code to interrogate extensions as to their capabilities.
+ * <p>
+ *     Extensions are loaded from the ${EXTENSIONS_DIR} at application startup.
+ *     If you installed the application via the installer script, this directory
+ *     is already configured for you. You can override it by setting the EXTENSIONS_DIR
+ *     system property when launching the application, as shown below:
+ * </p>
+ * <pre>java -DEXTENSIONS_DIR=/path/to/extensions/dir -jar musicplayer.jar</pre>
  *
  * @author scorbo2
  * @since 2025-03-26
@@ -84,29 +88,6 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     public void deactivateAll() {
         super.deactivateAll();
         logger.info("Extension manager: all extensions have been shut down.");
-    }
-
-    /**
-     * Overridden here so we can add a read-only view of the extension scan dir
-     * and some instructions for how to change the value. I want to add these instructions
-     * dead last so that they show up at the end of the properties dialog
-     * no matter how many extensions are loaded.
-     *
-     * @return A List of all properties exposed by all enabled extensions.
-     */
-    @Override
-    public List<AbstractProperty> getAllEnabledExtensionProperties() {
-        List<AbstractProperty> props = super.getAllEnabledExtensionProperties();
-
-        props.add(LabelProperty.createLabel("Extensions.Configuration.label1", "The following directory will be scanned for extension jars:"));
-        props.add(new LabelProperty("Extensions.Configuration.scanDir", Version.EXTENSIONS_DIR.getAbsolutePath(),
-                                    new Font(Font.MONOSPACED, Font.BOLD, 12)));
-        props.add(LabelProperty.createLabel("Extensions.Configuration.label2",
-                "<html>If the directory exists and is readable, it is scanned at startup<br>" +
-                    "automatically. You can set it using the following system property,<br>" +
-                    "but it requires an application restart!<br><br>" +
-                    "<pre>EXTENSIONS_DIR</pre></html>"));
-        return props;
     }
 
     /**

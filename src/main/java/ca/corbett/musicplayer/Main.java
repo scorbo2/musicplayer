@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer;
 
 import ca.corbett.extras.LookAndFeelManager;
+import ca.corbett.extras.SingleInstanceManager;
 import ca.corbett.musicplayer.ui.MainWindow;
 import com.formdev.flatlaf.FlatLightLaf;
 
@@ -18,27 +19,37 @@ import java.util.logging.Logger;
  * but you can specify a few system properties to achieve different things:
  * <ul>
  *     <li><b>java.util.logging.config.file</b> - if set, this is the full path
- *     and name of your custom logging.properties file. If not set, the default
- *     logging.properties will be used (from the application jar file). Note that
- *     we also check for a logging.properties in whatever directory you launch
- *     from, and unless the above property is set, we'll use that one if it exists.
+ *     and name of your custom logging.properties file. If not set, we will
+ *     look for a logging.properties file in your application settings dir;
+ *     if not found there, then finally, as a last resort, the default
+ *     logging.properties will be used (from the application jar file).
  *     By default, all log output goes to the console. You can specify a custom
  *     logging.properties to easily change that.</li>
- *     <li><b>ca.corbett.musicplayer.props.file</b> - if set, this is the full
- *     path and name of your MusicPlayer.props file containing application settings.
- *     If not set, this file will be created as needed in your home directory.
- *     If the file does not exist on startup, the application will launch with
- *     all default properties, and the file will be created if you change any
- *     of the application settings.</li>
- *     <li><b>ca.corbett.musicplayer.extensions.dir</b> - if set, this is the
- *     directory from which extension jars will be loaded. There is no default value,
- *     so if you don't set this, you will be unable to load extension jars.</li>
+ *     <li><b>SETTINGS_DIR</b> - This defaults to a directory named ".MusicPlayer"
+ *     in the user's home directory, but can be overridden. The application
+ *     configuration file lives here.</li>
+ *     <li><b>EXTENSIONS_DIR</b> - This defaults to a directory named "extensions"
+ *     inside SETTINGS_DIR, but can be overridden. This is the
+ *     directory from which extension jars will be loaded.</li>
  * </ul>
+ * <p>
+ *     <b>Note:</b> If you used the installer script to install MusicPlayer,
+ *     these system properties will already have been set for you in the
+ *     launcher script, and you don't have to worry about them.
+ * </p>
  *
  * @author scorbo2
  * @since 2025-03-23
  */
 public class Main {
+
+    /**
+     * Don't use the default port unless you have to!
+     * It will conflict with any other application that was built with swing-extras.
+     * The best practice is for each application to pick its own unique port number.
+     */
+    public static final int SINGLE_INSTANCE_PORT = 44884;
+
     public static void main(String[] args) {
         // Before we do anything else, set up logging:
         configureLogging();
@@ -47,10 +58,10 @@ public class Main {
         boolean isSingleInstanceEnabled = Boolean.parseBoolean(AppConfig.peek("UI.General.singleInstance"));
         if (isSingleInstanceEnabled) {
             SingleInstanceManager instanceManager = SingleInstanceManager.getInstance();
-            if (!instanceManager.tryAcquireLock(Main::handleStartArgs)) {
+            if (!instanceManager.tryAcquireLock(Main::handleStartArgs, SINGLE_INSTANCE_PORT)) {
                 // Another instance is already running, let's send our args to it and exit:
                 // Send even if empty, as this will force the main window to the front.
-                SingleInstanceManager.getInstance().sendArgsToRunningInstance(args);
+                instanceManager.sendArgsToRunningInstance(args);
                 return;
             }
         }
@@ -73,13 +84,14 @@ public class Main {
 
     /**
      * Logging can use the built-in configuration, or you can supply your own logging properties file.
+     * This code will look for logging configuration in the following order:
      * <ol>
+     *     <li>System property <b>java.util.logging.config.file</b> - if set, this file will be read
+     *     for logging configuration.</li>
+     *     <li>A <b>logging.properties</b> file in your application settings dir (via the SETTINGS_DIR variable).
+     *     If this file is found, it will be read.</li>
      *     <li><b>Built-in logging.properties</b>: the jar file comes packaged with a default logging.properties
-     *     file that you can use. You don't need to do anything to activate this config: this is the default.</li>
-     *     <li><b>Specify your own</b>: you can create a logging.properties file and put it in the directory
-     *     from which you launch the application. It will be detected and used. OR you can start the application
-     *     with the -Djava.util.logging.config.file= option, in which case you can point it to wherever your
-     *     logging.properties file lives.</li>
+     *     file that you can use. If neither of the above checks succeeded, this log configuration will be used.</li>
      * </ol>
      */
     private static void configureLogging() {
@@ -90,7 +102,7 @@ public class Main {
             return;
         }
 
-        // Otherwise, see if we can spot a logging.properties file in the application dir:
+        // Otherwise, see if we can spot a logging.properties file in the application settings dir:
         File propsFile = new File(Version.SETTINGS_DIR, "logging.properties");
         if (propsFile.exists() && propsFile.canRead()) {
             System.setProperty("java.util.logging.config.file", propsFile.getAbsolutePath());
@@ -120,18 +132,21 @@ public class Main {
      * See <A HREF="https://github.com/scorbo2/musicplayer/issues/18">Issue 18</A> for details.
      */
     private static void checkJavaRuntime() {
-
-//        System.out.println("java.vendor: " + System.getProperty("java.vendor"));
-//        System.out.println("java.vm.specification.version: " + System.getProperty("java.vm.specification.version"));
-//        System.out.println("java.vm.specification.vendor: " + System.getProperty("java.vm.specification.vendor"));
-//        System.out.println("java.vm.specification.name: " + System.getProperty("java.vm.specification.name"));
-//        System.out.println("java.vm.vendor: " + System.getProperty("java.vm.vendor"));
-//        System.out.println("java.runtime.name: " + System.getProperty("java.runtime.name"));
-//        System.out.println("java.specification.vendor: " + System.getProperty("java.specification.vendor"));
-//        System.out.println("java.specification.name: " + System.getProperty("java.specification.name"));
+        // Diagnostic information for debugging:
+        Logger logger = Logger.getLogger(Main.class.getName());
+        logger.fine("Java Runtime Info: ");
+        logger.fine("  java.version: " + System.getProperty("java.version"));
+        logger.fine("  java.vendor: " + System.getProperty("java.vendor"));
+        logger.fine("  java.vm.specification.version: " + System.getProperty("java.vm.specification.version"));
+        logger.fine("  java.vm.specification.vendor: " + System.getProperty("java.vm.specification.vendor"));
+        logger.fine("  java.vm.specification.name: " + System.getProperty("java.vm.specification.name"));
+        logger.fine("  java.vm.vendor: " + System.getProperty("java.vm.vendor"));
+        logger.fine("  java.vm.name: " + System.getProperty("java.vm.name"));
+        logger.fine("  java.runtime.name: " + System.getProperty("java.runtime.name"));
+        logger.fine("  java.specification.vendor: " + System.getProperty("java.specification.vendor"));
+        logger.fine("  java.specification.name: " + System.getProperty("java.specification.name"));
 
         String vendor = detectJREDistribution();
-        Logger logger = Logger.getLogger(Main.class.getName());
         if (vendor.toLowerCase().contains("openjdk") ||
             vendor.toLowerCase().contains("azul")) {
             logger.warning("Your JRE vendor \"" + vendor + "\" may have problems with full-screen animation." +
@@ -140,6 +155,9 @@ public class Main {
         }
     }
 
+    /**
+     * Make a best-effort guess at the JRE distribution vendor, based on system properties.
+     */
     private static String detectJREDistribution() {
         String vendor = System.getProperty("java.vendor", "").toLowerCase();
         String vmName = System.getProperty("java.vm.name", "").toLowerCase();
