@@ -8,7 +8,7 @@ FORMAT="tarball"
 
 # Application name/version will also be used for the jar file name.
 APPLICATION="MusicPlayer"
-VERSION="3.2-SNAPSHOT"
+VERSION="3.2"
 
 # For proper categorization of our application icon in linux menus:
 CATEGORY="AudioVideo"

@@ -35,9 +35,9 @@ with nice visualizations for my own personal use.
 ## How do I get it?
 
 You can download an installer tarball for Linux here:
-- [MusicPlayer-3.1.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.1.tar.gz)
+- [http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz)
 - Size: 23MB
-- SHA-1: `7485ab3c7c2b8f03f6aa8f658003d53463046b59`
+- SHA-1: `a90851c5f63ab69585fb21bdd94cdfdab0dbaeb8`
 
 Alternatively, you can clone the repo and build the project locally:
 
@@ -46,7 +46,7 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-3.1.jar # Launch the application manually
+java -jar musicplayer-3.2.jar # Launch the application manually
 ```
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building
