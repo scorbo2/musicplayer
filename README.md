@@ -37,7 +37,8 @@ with nice visualizations for my own personal use.
 You can download an installer tarball for Linux here:
 - [http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz)
 - Size: 23MB
-- SHA-1: `a90851c5f63ab69585fb21bdd94cdfdab0dbaeb8`
+- SHA-1: `b5dadab2136b4dc950fda0c6cb171201ca7a3df7`
+- SHA-256: `33be2f33805b9b70baa346b6d595cc8b9d9342afdf791e330a43abfce6988439`
 
 Alternatively, you can clone the repo and build the project locally:
 
