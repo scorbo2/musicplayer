@@ -1,6 +1,6 @@
 package ca.corbett.musicplayer.ui;
 
-import ca.corbett.extras.properties.PropertiesDialog;
+import ca.corbett.extras.ScrollUtil;
 import ca.corbett.forms.FormPanel;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
@@ -41,7 +41,7 @@ public class CustomSortDialog extends JDialog {
         setMinimumSize(new Dimension(380, 200));
         setModal(true);
         setLayout(new BorderLayout());
-        add(PropertiesDialog.buildScrollPane(buildFormPanel()), BorderLayout.CENTER);
+        add(ScrollUtil.buildScrollPane(buildFormPanel()), BorderLayout.CENTER);
         add(buildButtonPanel(), BorderLayout.SOUTH);
         restorePreviousSettings();
     }
