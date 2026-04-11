@@ -1,5 +1,6 @@
 package ca.corbett.musicplayer.audio;
 
+import ca.corbett.extras.StringFormatter;
 import ca.corbett.musicplayer.AppConfig;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -127,47 +128,28 @@ public class AudioMetadata {
             formatString = AppConfig.DEFAULT_FORMAT_STRING; // fallback
         }
 
-        StringBuilder result = new StringBuilder();
-        int i = 0;
+        return StringFormatter.format(formatString, ch -> {
+            final String INVALID_FORMAT_CHAR = "INVALID_FORMAT_CHARACTER";
+            String replacement = switch (ch) {
+                case 'a' -> getAuthor();
+                case 'b' -> getAlbum();
+                case 't' -> getTitle();
+                case 'n' -> Integer.toString(getTrackNumber());
+                case 'g' -> getGenre();
+                case 'f' -> getSourceFile() == null ? null : getSourceFile().getName();
+                case 'F' -> getSourceFile() == null ? null : getSourceFile().getAbsolutePath();
+                case 'd' -> String.valueOf(getDurationSeconds());
+                case 'D' -> getDurationFormatted();
+                default -> INVALID_FORMAT_CHAR;
+            };
 
-        while (i < formatString.length()) {
-            char c = formatString.charAt(i);
-
-            if (c == '%') {
-                // Check if there's a character after %
-                if (i + 1 >= formatString.length()) {
-                    //throw new IllegalArgumentException("Invalid format string: '%' at end of string");
-                    i++;
-                    continue; // just ignore it
-                }
-
-                char formatChar = formatString.charAt(i + 1);
-
-                // Special case: for a literal % sign, you can use %%:
-                if (formatChar == '%') {
-                    result.append('%');
-                    i += 2; // Skip both '%' characters
-                    continue;
-                }
-
-                String replacement = getReplacementValue(formatChar);
-
-                if (replacement == null) {
-                    //throw new IllegalArgumentException("Invalid format tag: '%" + formatChar + "'");
-                    i += 2;
-                    continue; // just ignore it
-                }
-
-                result.append(replacement);
-                i += 2; // Skip both '%' and the format character
+            if (INVALID_FORMAT_CHAR.equals(replacement)) {
+                return null; // signal to ignore this format char
             }
-            else {
-                result.append(c);
-                i++;
-            }
-        }
 
-        return result.toString();
+            // Otherwise, replace null/blank strings with "unknown":
+            return replacement != null && !replacement.isBlank() ? replacement : "unknown"; // default placeholder
+        });
     }
 
     /**
@@ -176,50 +158,6 @@ public class AudioMetadata {
      */
     public String getFormatted() {
         return getFormatted(AppConfig.getInstance().getPlaylistFormatString());
-    }
-
-    /**
-     * Returns the replacement value for a given format character.
-     */
-    private String getReplacementValue(char formatChar) {
-        final String DEFAULT_VALUE = "unknown";
-        String value;
-
-        switch (formatChar) {
-            case 'a':
-                value = getAuthor();
-                break;
-            case 'b':
-                value = getAlbum();
-                break;
-            case 't':
-                value = getTitle();
-                break;
-            case 'n':
-                value = Integer.toString(getTrackNumber());
-                break;
-            case 'g':
-                value = getGenre();
-                break;
-            case 'f':
-                File file = getSourceFile();
-                value = file != null ? file.getName() : null;
-                break;
-            case 'F':
-                File absFile = getSourceFile();
-                value = absFile != null ? absFile.getAbsolutePath() : null;
-                break;
-            case 'd':
-                return String.valueOf(getDurationSeconds());
-            case 'D':
-                value = getDurationFormatted();
-                break;
-            default:
-                return null; // Invalid format character
-        }
-
-        // Return default if value is null or blank
-        return (value == null || value.trim().isEmpty()) ? DEFAULT_VALUE : value;
     }
 
     /**
