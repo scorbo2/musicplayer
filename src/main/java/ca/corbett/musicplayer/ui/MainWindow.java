@@ -174,6 +174,7 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
                 UpdateSources updateSources = UpdateSources.fromFile(Version.UPDATE_SOURCES_FILE);
                 updateManager = new UpdateManager(updateSources);
                 updateManager.registerShutdownHook(MainWindow::cleanup);
+                Version.getAboutInfo().updateManager = updateManager;
                 logger.info("Update sources provided. Dynamic extension discovery is enabled.");
             }
             catch (Exception e) {
