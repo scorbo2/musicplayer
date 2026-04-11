@@ -1,5 +1,6 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.extras.EnhancedAction;
 import ca.corbett.musicplayer.ui.CustomSortDialog;
 import ca.corbett.musicplayer.ui.Playlist;
 
@@ -19,7 +20,7 @@ import java.util.logging.Logger;
  * @author <a href="https://github.com/scorbo2">scorbo2</a>
  * @since MusicPlayer 3.1
  */
-public class PlaylistSortAction extends AbstractAction {
+public class PlaylistSortAction extends EnhancedAction {
 
     private static final Logger log = Logger.getLogger(PlaylistSortAction.class.getName());
 

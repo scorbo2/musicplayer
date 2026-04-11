@@ -1,11 +1,11 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.extras.EnhancedAction;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.MainWindow;
 import ca.corbett.musicplayer.ui.Playlist;
 
-import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
@@ -22,10 +22,11 @@ import java.util.List;
  * @author scorbo2
  * @since 2023-03-27
  */
-public class PlaylistOpenAction extends AbstractAction {
+public class PlaylistOpenAction extends EnhancedAction {
     private final JFileChooser fileChooser;
 
     public PlaylistOpenAction() {
+        super("Open playlist");
         fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);

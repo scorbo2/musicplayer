@@ -1,16 +1,21 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.extras.EnhancedAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.musicplayer.ui.MainWindow;
 import ca.corbett.musicplayer.ui.Playlist;
 import ca.corbett.musicplayer.ui.TrackInfoDialog;
 
-import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-public class PlaylistTrackInfoAction extends AbstractAction {
+public class PlaylistTrackInfoAction extends EnhancedAction {
+
+    public PlaylistTrackInfoAction() {
+        super("Track info");
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         File selectedTrack = Playlist.getInstance().getSelectedTrackFile();

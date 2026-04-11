@@ -1,8 +1,8 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.extras.EnhancedAction;
 import ca.corbett.musicplayer.ui.UIReloadable;
 
-import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * @author scorbo2
  * @since 2025-03-25
  */
-public class ReloadUIAction extends AbstractAction {
+public class ReloadUIAction extends EnhancedAction {
 
     private static final Logger logger = Logger.getLogger(ReloadUIAction.class.getName());
 
@@ -27,6 +27,7 @@ public class ReloadUIAction extends AbstractAction {
     private final Set<UIReloadable> reloadables = new HashSet<>();
 
     private ReloadUIAction() {
+        super("Reload UI");
     }
 
     public static ReloadUIAction getInstance() {

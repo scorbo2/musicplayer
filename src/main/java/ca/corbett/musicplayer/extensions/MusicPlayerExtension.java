@@ -8,7 +8,6 @@ import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -129,19 +128,6 @@ public abstract class MusicPlayerExtension extends AppExtension {
      */
     public List<VisualizationManager.Visualizer> getCustomVisualizers() {
         return new ArrayList<>();
-    }
-
-    /**
-     * Invoked when the application receives a keyboard shortcut. The extension
-     * can choose to do something with it or not. Processing the keyboard event
-     * does not stop when an extension acts on a shortcut, so in theory multiple
-     * extensions could respond to the same keyboard shortcut.
-     *
-     * @param keyEvent the KeyEvent that triggered this message.
-     * @return true if this extension handled the shortcut (default false).
-     */
-    public boolean handleKeyEvent(KeyEvent keyEvent) {
-        return false;
     }
 
     /**
