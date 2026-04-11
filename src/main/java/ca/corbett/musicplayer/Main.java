@@ -55,7 +55,7 @@ public class Main {
         // Before we do anything else, set up logging:
         configureLogging();
 
-        // Set up a fallback exception handler so that unhandled exception get logged:
+        // Set up a fallback exception handler so that unhandled exceptions are logged:
         FallbackExceptionHandler.register();
 
         // Ensure only a single instance is running (if configured to do so):
