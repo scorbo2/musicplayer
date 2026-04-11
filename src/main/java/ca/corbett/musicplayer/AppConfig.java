@@ -630,7 +630,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     /**
-     * Overridden here so we can add override the default size of the properties dialog,
+     * Overridden here so we can customize the size of the properties dialog,
      * and also so that we can set the initial state of certain fields based upon
      * the values of our properties.
      *
