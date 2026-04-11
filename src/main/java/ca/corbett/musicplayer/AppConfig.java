@@ -20,7 +20,6 @@ import ca.corbett.extras.properties.SliderProperty;
 import ca.corbett.extras.properties.dialog.PropertiesDialog;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
-import ca.corbett.forms.fields.ShortTextField;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
@@ -485,9 +484,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                                                      "Playlist format:",
                                                      DEFAULT_FORMAT_STRING,
                                                      20);
-        playlistFormatString.addFormFieldGenerationListener(
-            (property, formField)
-                -> ((ShortTextField)formField).getTextField().setColumns(20)); // THIS SHOULD NOT BE NECESSARY!
         playlistFormatString.setHelpText(getPlaylistFormatCheatsheet());
 
         playlistCustomSortString = new ShortTextProperty("UI.Playlist.customFormatString", "customFormat", "");
