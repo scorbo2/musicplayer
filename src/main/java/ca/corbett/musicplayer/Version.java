@@ -9,9 +9,9 @@ public final class Version {
     private static final AboutInfo aboutInfo;
 
     public static String NAME = "MusicPlayer";
-    public static String VERSION = "3.2";
+    public static String VERSION = "3.3";
     public static String FULL_NAME = NAME + " " + VERSION;
-    public static String COPYRIGHT = "Copyright © 2017-2025 Steve Corbett";
+    public static String COPYRIGHT = "Copyright © 2017-2026 Steve Corbett";
     public static String PROJECT_URL = "https://github.com/scorbo2/musicplayer";
     public static String LICENSE = "https://opensource.org/license/mit";
 
@@ -55,7 +55,7 @@ public final class Version {
     static {
         aboutInfo = new AboutInfo();
         aboutInfo.applicationName = NAME;
-        aboutInfo.applicationVersion = VERSION;
+        aboutInfo.applicationVersion = VERSION + "-SNAPSHOT"; // TODO remove SNAPSHOT before release
         aboutInfo.copyright = COPYRIGHT;
         aboutInfo.license = LICENSE;
         aboutInfo.projectUrl = PROJECT_URL;

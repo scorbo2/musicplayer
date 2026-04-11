@@ -2,6 +2,7 @@
 
 This is "MusicPlayer", a 100% Java music player with a UI written in Java Swing. 
 
+TODO update screenshot for 3.3 release
 ![MusicPlayer](docs/musicplayer.jpg "MusicPlayer")
 
 Features:
@@ -18,7 +19,7 @@ Agreed. Go download VLC if you want something extremely solid and full-featured.
 
 I wanted to play music on the tv in my living room, but with interesting and customizable full-screen visualization
 so I could just leave it running and have something nice to look at while I do other stuff. With version 2.x, I 
-also used musicplayer as a testbed for my own app-extensions library
+also used MusicPlayer as a testbed for my own app-extensions library
 (now part of [swing-extras](https://github.com/scorbo2/swing-extras))
 so I could test out ways to make an application incredibly customizable via dynamically-loaded extensions. I also 
 wanted to prove out the `AppProperties` class from `app-extensions` to really demonstrate how to develop an extremely 
@@ -34,7 +35,7 @@ with nice visualizations for my own personal use.
 
 ## How do I get it?
 
-You can download an installer tarball for Linux here:
+You can download an installer tarball for Linux here: (TODO update tarball link and hashes for 3.3 release)
 - [http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz)
 - Size: 23MB
 - SHA-1: `9a1f937eca69df53bccb0089579f09e3882c9066`
@@ -47,7 +48,7 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-3.2.jar # Launch the application manually
+java -jar musicplayer-3.3.jar # Launch the application manually
 ```
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building
