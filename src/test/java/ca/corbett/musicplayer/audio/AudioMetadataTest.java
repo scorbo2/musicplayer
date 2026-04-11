@@ -121,7 +121,7 @@ class AudioMetadataTest {
         String formatted = meta.getFormatted("%x %y %a %z %t %1 %D %%");
 
         // THEN we should see only the valid format characters replaced:
-        String expected = "  Artist  Title  02:03 %";
+        String expected = "%x %y Artist %z Title %1 02:03 %";
         assertEquals(expected, formatted);
     }
 
