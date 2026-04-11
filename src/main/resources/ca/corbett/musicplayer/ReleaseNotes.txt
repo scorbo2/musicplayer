@@ -3,7 +3,7 @@ https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
 Version 3.3 [TODO release date goes here] - Maintenance release
-  TODO add release notes for 3.3 here
+  #87 AboutDialog was not showing application update information
 
 Version 3.2 [2025-12-31] - Maintenance release
   #84 SingleInstanceManager has moved to swing-extras 2.6
