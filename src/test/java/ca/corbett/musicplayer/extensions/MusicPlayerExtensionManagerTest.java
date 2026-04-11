@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.AppExtensionInfo;
 import ca.corbett.extras.properties.AbstractProperty;
+import ca.corbett.musicplayer.Version;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -56,7 +57,11 @@ class MusicPlayerExtensionManagerTest {
 
         @Override
         public AppExtensionInfo getInfo() {
-            return new AppExtensionInfo.Builder("XmlPlay").build();
+            return new AppExtensionInfo.Builder("XmlPlay")
+                .setTargetAppName(Version.NAME)
+                .setTargetAppVersion(Version.VERSION)
+                .setVersion(Version.VERSION)
+                .build();
         }
 
         @Override

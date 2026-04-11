@@ -17,6 +17,7 @@ import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.extras.properties.PropertiesManager;
 import ca.corbett.extras.properties.ShortTextProperty;
 import ca.corbett.extras.properties.SliderProperty;
+import ca.corbett.extras.properties.dialog.PropertiesDialog;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
 import ca.corbett.forms.fields.ShortTextField;
@@ -31,8 +32,8 @@ import ca.corbett.musicplayer.ui.VisualizationThread;
 import ca.corbett.musicplayer.ui.VisualizationWindow;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,6 +131,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     protected AppConfig() {
         super(Version.FULL_NAME, PROPS_FILE, MusicPlayerExtensionManager.getInstance());
+
+        // Debatable, but I prefer the "classic" style props dialog for this application
+        // over the newer "action panel" style introduced in swing-extras 2.8:
+        setDialogType(DialogType.Classic);
     }
 
     /**
@@ -629,14 +634,13 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
      * and also so that we can set the initial state of certain fields based upon
      * the values of our properties.
      *
-     * @param owner The owning Frame (so we can make the dialog modal to that Frame).
-     * @return true if the user OK'd the dialog with changes.
+     * @param dialog the generated PropertiesDialog, before it is shown to the user.
      */
     @Override
-    public boolean showPropertiesDialog(Frame owner) {
+    protected void propertiesDialogCreated(PropertiesDialog dialog) {
         // We need a slightly larger dialog than the default value:
-        propertiesDialogMinimumWidth = propertiesDialogInitialWidth = 660;
-        propertiesDialogMinimumHeight = propertiesDialogInitialHeight = 480;
+        dialog.setSize(new Dimension(660, 480));
+        dialog.setMinimumSize(new Dimension(660, 480));
 
         // Set initial state of waveform fields based on the value of overrideAppThemeWaveform:
         boolean isWaveformOverride = overrideAppThemeWaveform.getSelectedIndex() == 1;
@@ -653,8 +657,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         visualizerOverlayBorderColor.setInitiallyEditable(isOverlayOverride);
         visualizerOverlayProgressBackground.setInitiallyEditable(isOverlayOverride);
         visualizerOverlayProgressForeground.setInitiallyEditable(isOverlayOverride);
-
-        return super.showPropertiesDialog(owner);
     }
 
     /**

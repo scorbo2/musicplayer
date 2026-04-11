@@ -67,7 +67,11 @@ class ActionsTest {
 
         @Override
         public AppExtensionInfo getInfo() {
-            return new AppExtensionInfo.Builder("someextension").build();
+            return new AppExtensionInfo.Builder("someextension")
+                .setTargetAppName(Version.NAME)
+                .setTargetAppVersion(Version.VERSION)
+                .setVersion(Version.VERSION)
+                .build();
         }
 
         @Override

@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extensions.AppExtensionInfo;
 import ca.corbett.extras.properties.AbstractProperty;
+import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,11 @@ class AppThemeTest {
 
         @Override
         public AppExtensionInfo getInfo() {
-            return new AppExtensionInfo.Builder("textextension").build();
+            return new AppExtensionInfo.Builder("textextension")
+                .setTargetAppName(Version.NAME)
+                .setTargetAppVersion(Version.VERSION)
+                .setVersion(Version.VERSION)
+                .build();
         }
 
         @Override

@@ -1,6 +1,6 @@
 package ca.corbett.musicplayer.ui;
 
-import ca.corbett.extras.properties.PropertiesDialog;
+import ca.corbett.extras.ScrollUtil;
 import ca.corbett.forms.Alignment;
 import ca.corbett.forms.FormPanel;
 import ca.corbett.forms.fields.LabelField;
@@ -44,7 +44,7 @@ public class TrackInfoDialog extends JFrame {
         formPanel.add(new LabelField("Album:", meta.getAlbum()));
         formPanel.add(new LabelField("Genre:", meta.getGenre()));
         formPanel.add(new LabelField("Length:", meta.getDurationFormatted()));
-        add(PropertiesDialog.buildScrollPane(formPanel), BorderLayout.CENTER);
+        add(ScrollUtil.buildScrollPane(formPanel), BorderLayout.CENTER);
     }
 
     protected static String trimString(String input) {
