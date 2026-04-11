@@ -1,5 +1,6 @@
 package ca.corbett.musicplayer;
 
+import ca.corbett.extras.FallbackExceptionHandler;
 import ca.corbett.extras.LookAndFeelManager;
 import ca.corbett.extras.SingleInstanceManager;
 import ca.corbett.musicplayer.ui.MainWindow;
@@ -53,6 +54,9 @@ public class Main {
     public static void main(String[] args) {
         // Before we do anything else, set up logging:
         configureLogging();
+
+        // Set up a fallback exception handler so that unhandled exceptions are logged:
+        FallbackExceptionHandler.register();
 
         // Ensure only a single instance is running (if configured to do so):
         boolean isSingleInstanceEnabled = Boolean.parseBoolean(AppConfig.peek("UI.General.singleInstance"));

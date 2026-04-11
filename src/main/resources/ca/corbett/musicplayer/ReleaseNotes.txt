@@ -3,6 +3,7 @@ https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
 Version 3.3 [TODO release date goes here] - Maintenance release
+  #99 Wire up a FallbackExceptionHandler
   #90 Use new StringFormatter utility method in swing-extras
   #87 AboutDialog was not showing application update information
   #64 Remove old code workaround for this issue (no longer needed)
