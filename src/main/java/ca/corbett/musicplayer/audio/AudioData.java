@@ -40,12 +40,26 @@ public class AudioData {
     private AudioMetadata metadata;
     private final float sampleRate;
     private final int durationSeconds;
+    private final WaveformPeaks waveformPeaks;
 
     public AudioData(int[][] rawData, File sourceFile, float sampleRate) {
         this.rawData = rawData;
         this.sourceFile = sourceFile;
         this.sampleRate = (sampleRate < 0) ? 44100f : sampleRate;
         this.durationSeconds = (int) (rawData[0].length / sampleRate);
+        this.waveformPeaks = new WaveformPeaks(rawData.length, this.sampleRate, 512);
+    }
+
+    /**
+     * Lightweight constructor used by the new streaming pipeline.
+     */
+    public AudioData(File sourceFile) {
+        this.rawData = null;
+        this.sourceFile = sourceFile;
+        this.metadata = AudioMetadata.fromFile(sourceFile);
+        this.sampleRate = 44100f;
+        this.durationSeconds = Math.max(0, this.metadata.getDurationSeconds());
+        this.waveformPeaks = new WaveformPeaks(2, this.sampleRate, 512);
     }
 
     public int[][] getRawData() {
@@ -57,7 +71,14 @@ public class AudioData {
     }
 
     public int getDurationSeconds() {
-        return durationSeconds;
+        if (durationSeconds > 0) {
+            return durationSeconds;
+        }
+        if (metadata != null && metadata.getDurationSeconds() > 0) {
+            return metadata.getDurationSeconds();
+        }
+        long est = waveformPeaks.getDurationMillisEstimate();
+        return (int) (est / 1000L);
     }
 
     public File getSourceFile() {
@@ -88,9 +109,13 @@ public class AudioData {
      */
     public BufferedImage getWaveformImage() {
         if (waveformImage == null) {
-            waveformImage = generateWaveformImage(rawData);
+            waveformImage = generateWaveformImageSnapshot();
         }
         return waveformImage;
+    }
+
+    public WaveformPeaks getWaveformPeaks() {
+        return waveformPeaks;
     }
 
     /**
@@ -100,8 +125,19 @@ public class AudioData {
      * @return A BufferedImage representing audio data for our clip.
      */
     public BufferedImage regenerateWaveformImage() {
-        waveformImage = null;
-        return getWaveformImage();
+        waveformImage = generateWaveformImageSnapshot();
+        return waveformImage;
+    }
+
+    /**
+     * Generates a fresh waveform image from whichever backing data is currently available.
+     * This is synchronized so callers can safely invoke it from a background thread.
+     */
+    public synchronized BufferedImage generateWaveformImageSnapshot() {
+        if (waveformPeaks.getBucketCount() > 0) {
+            return generateWaveformImage(waveformPeaks.snapshotByChannel(), waveformPeaks.getFramesPerBucket());
+        }
+        return generateWaveformImage(rawData, 1);
     }
 
     /**
@@ -109,7 +145,7 @@ public class AudioData {
      *
      * @return A BufferedImage representing our audio, or null if we have no audio.
      */
-    private BufferedImage generateWaveformImage(int[][] audioData) {
+    private BufferedImage generateWaveformImage(int[][] audioData, int frameMultiplier) {
         BufferedImage waveform = null;
         if (audioData == null) {
             return waveform;
@@ -122,7 +158,17 @@ public class AudioData {
         topChannelIndex = (topChannelIndex >= audioData.length) ? audioData.length - 1 : topChannelIndex;
         btmChannelIndex = (btmChannelIndex >= audioData.length) ? audioData.length - 1 : btmChannelIndex;
 
-        // Go through the data and find our highest y values:
+        // Determine the horizontal sampling scale we will use in both passes.
+        int xScale = Math.max(1, config.getCompression().getXValue() / Math.max(1, frameMultiplier));
+        int width = Math.max(1, audioData[0].length / xScale);
+        if (width > config.getWidthLimit().getLimit()) {
+            width = config.getWidthLimit().getLimit();
+            xScale = Math.max(1, audioData[0].length / config.getWidthLimit().getLimit());
+            logger.log(Level.INFO, "AudioUtil: scaling waveform image down to fit X limit of {2} (you can change this in settings).",
+                       new Object[]{config.getCompression().getXValue(), xScale, config.getWidthLimit().getLimit()});
+        }
+
+        // Go through the data and find our highest y values using the final xScale:
         int averagedSample1 = 0;
         int averagedSample2 = 0;
         int averagedSampleCount = 0;
@@ -135,7 +181,7 @@ public class AudioData {
             averagedSample1 += sample1;
             averagedSample2 += sample2;
             averagedSampleCount++;
-            if (averagedSampleCount > config.getCompression().getXValue()) {
+            if (averagedSampleCount >= xScale) {
                 averagedSample1 /= averagedSampleCount;
                 averagedSample2 /= averagedSampleCount;
 
@@ -147,15 +193,6 @@ public class AudioData {
             }
         }
 
-        // We can now create a blank image of the appropriate size based on this scale:
-        int xScale = config.getCompression().getXValue();
-        int width = audioData[0].length / config.getCompression().getXValue();
-        if (width > config.getWidthLimit().getLimit()) {
-            width = config.getWidthLimit().getLimit();
-            xScale = audioData[0].length / config.getWidthLimit().getLimit();
-            logger.log(Level.INFO, "AudioUtil: scaling waveform image down to fit X limit of {2} (you can change this in settings).",
-                       new Object[]{config.getCompression().getXValue(), xScale, config.getWidthLimit().getLimit()});
-        }
         int height = maxY1 + maxY2;
         height = (height <= 0) ? 100 : height; // height can be zero if there's no audio data.
         int verticalMargin = 0; // (int)((maxY1+maxY2)*0.1); // disabling margin for now
@@ -171,12 +208,12 @@ public class AudioData {
         int previousSample1 = 0;
         int previousSample2 = 0;
         int x = 0;
-        for (int sample = 0; sample < audioData[0].length; sample++) {
+        for (int sample = 0; sample < audioData[0].length && x < width; sample++) {
             averagedSample1 += Math.abs(audioData[topChannelIndex][sample] / config.getCompression().getYValue());
             averagedSample2 += Math.abs(audioData[btmChannelIndex][sample] / config.getCompression().getYValue());
             averagedSampleCount++;
 
-            if (averagedSampleCount > xScale) {
+            if (averagedSampleCount >= xScale) {
                 averagedSample1 /= averagedSampleCount;
                 averagedSample2 /= averagedSampleCount;
 
@@ -246,41 +283,4 @@ public class AudioData {
         return config;
     }
 
-    /**
-     * Id3 tags apparently encode the track duration in microseconds, which seems overkillish
-     * to me, but okay. This method will convert some ungodly huge number to a human-readable
-     * time string.
-     *
-     * @param value A value in microseconds.
-     * @return A human readable string in the form [[HH:]MM:]SS
-     */
-    private String formatMicroseconds(Long value) {
-        if (value == null) {
-            return " (n/a) ";
-        }
-
-        int seconds = (int) (value / 1000 / 1000);
-        int hours = 0;
-        int minutes = 0;
-        while (seconds > 3600) {
-            seconds -= 3600;
-            hours++;
-        }
-        while (seconds > 60) {
-            seconds -= 60;
-            minutes++;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        if (hours > 0) {
-            sb.append(hours);
-            sb.append(":");
-        }
-        if (hours > 0 || minutes > 0) {
-            sb.append(String.format("%02d", minutes));
-            sb.append(":");
-        }
-        sb.append(String.format("%02d", seconds));
-        return sb.toString();
-    }
 }

@@ -69,6 +69,8 @@ public class AudioPanel extends JPanel implements UIReloadable {
 
     private final ImagePanel imagePanel;
     private BufferedImage waveformImage;
+    private volatile boolean waveformRefreshInProgress;
+    private volatile boolean waveformRefreshPending;
 
     private final List<AudioPanelListener> panelListeners;
     private PanelState panelState;
@@ -115,6 +117,8 @@ public class AudioPanel extends JPanel implements UIReloadable {
         trackInfo = new VisualizationTrackInfo();
         trackInfo.reset();
         panelListeners = new ArrayList<>();
+        waveformRefreshInProgress = false;
+        waveformRefreshPending = false;
 
         // Lay out the UI:
         initComponents();
@@ -187,6 +191,43 @@ public class AudioPanel extends JPanel implements UIReloadable {
         play();
     }
 
+    public void refreshWaveformForRequest(long requestId) {
+        if (audioData == null || currentRequestId != requestId || !AudioLoadCoordinator.getInstance().isCurrentRequest(requestId)) {
+            return;
+        }
+
+        if (waveformRefreshInProgress) {
+            waveformRefreshPending = true;
+            return;
+        }
+
+        waveformRefreshInProgress = true;
+        waveformRefreshPending = false;
+        AudioData requestedData = audioData;
+        Thread worker = new Thread(() -> {
+            BufferedImage rendered = requestedData.generateWaveformImageSnapshot();
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    if (audioData == requestedData
+                        && currentRequestId == requestId
+                        && AudioLoadCoordinator.getInstance().isCurrentRequest(requestId)) {
+                        waveformImage = rendered;
+                        redrawWaveform();
+                    }
+                }
+                finally {
+                    waveformRefreshInProgress = false;
+                    if (waveformRefreshPending) {
+                        waveformRefreshPending = false;
+                        refreshWaveformForRequest(requestId);
+                    }
+                }
+            });
+        }, "musicplayer-waveform-refresh");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
     private void setAudioDataInternal(AudioData data) {
         // If we already had data, make sure we're stopped:
         if (audioData != null || panelState != PanelState.IDLE) {
@@ -197,6 +238,8 @@ public class AudioPanel extends JPanel implements UIReloadable {
 
         // If the new data is null, switch on the idle animation:
         if (data == null) {
+            waveformRefreshInProgress = false;
+            waveformRefreshPending = false;
             AudioPanelIdleAnimation.getInstance().go();
             return;
         }

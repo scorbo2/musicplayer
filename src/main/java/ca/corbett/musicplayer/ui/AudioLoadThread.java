@@ -3,12 +3,8 @@ package ca.corbett.musicplayer.ui;
 import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.progress.MultiProgressWorker;
 import ca.corbett.musicplayer.audio.AudioData;
-import ca.corbett.musicplayer.audio.AudioUtil;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
 import java.io.File;
-import java.io.IOException;
 import java.util.function.BooleanSupplier;
 import java.util.logging.Logger;
 
@@ -55,39 +51,15 @@ public class AudioLoadThread extends MultiProgressWorker {
     }
 
     public AudioData loadAudioData() throws Exception {
-        fireProgressBegins(2);
-        fireMajorProgressUpdate(1, 3, "Loading " + sourceFile.getName() + "...");
-        fireMinorProgressUpdate(1, 0, "Converting audio...");
+        fireProgressBegins(1);
+        fireMajorProgressUpdate(1, 1, "Loading " + sourceFile.getName() + "...");
+        fireMinorProgressUpdate(1, 0, "Reading track metadata...");
 
         checkCanceled();
-
-        File convertedFile = null;
-        try {
-            // Convert if necessary from mp3 to wav:
-            if (sourceFile.getName().toLowerCase().endsWith(".mp3")) {
-                try (AudioInputStream sourceStream = AudioSystem.getAudioInputStream(sourceFile)) {
-                    convertedFile = AudioUtil.convert(sourceStream);
-                }
-                if (convertedFile == null) {
-                    throw new IOException("Decode mp3 failed!");
-                }
-            }
-
-            fireMinorProgressUpdate(1, 1, "Parsing converted data...");
-            checkCanceled();
-
-            AudioData audioData = AudioUtil.load(sourceFile, convertedFile);
-            convertedFile = null; // AudioUtil.load deletes it after successful parse.
-
-            fireMinorProgressUpdate(1, 2, "Processing audio...");
-            checkCanceled();
-            return audioData;
-        }
-        finally {
-            if (convertedFile != null && convertedFile.exists()) {
-                convertedFile.delete();
-            }
-        }
+        AudioData audioData = new AudioData(sourceFile);
+        fireMinorProgressUpdate(1, 1, "Preparing waveform generation...");
+        checkCanceled();
+        return audioData;
     }
 
     private void checkCanceled() throws InterruptedException {

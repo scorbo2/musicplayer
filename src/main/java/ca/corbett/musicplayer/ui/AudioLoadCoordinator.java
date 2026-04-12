@@ -20,6 +20,8 @@ import java.util.logging.Logger;
  */
 public final class AudioLoadCoordinator {
 
+    private static final long MIN_WAVEFORM_REFRESH_INTERVAL_MS = 500;
+
     private static final Logger logger = Logger.getLogger(AudioLoadCoordinator.class.getName());
     private static AudioLoadCoordinator instance;
 
@@ -28,6 +30,10 @@ public final class AudioLoadCoordinator {
     private final Object requestLock = new Object();
     private final Thread workerThread;
     private volatile LoadRequest pendingRequest;
+    private volatile WaveformBuildThread waveformBuildThread;
+    private volatile long waveformRequestId;
+    private volatile long lastWaveformUiRefreshMillis;
+    private volatile boolean waveformRefreshQueued;
     private volatile boolean running = true;
     private MessageUtil messageUtil;
 
@@ -75,6 +81,7 @@ public final class AudioLoadCoordinator {
             pendingRequest = null;
             requestLock.notifyAll();
         }
+        stopWaveformBuild();
         workerThread.interrupt();
     }
 
@@ -92,6 +99,7 @@ public final class AudioLoadCoordinator {
             pendingRequest = null;
             requestLock.notifyAll();
         }
+        stopWaveformBuild();
         workerThread.interrupt();
     }
 
@@ -121,6 +129,7 @@ public final class AudioLoadCoordinator {
                     AudioPanel panel = AudioPanel.getInstance();
                     if (panel.applyLoadedAudioData(request.requestId, audioData)) {
                         panel.playRequest(request.requestId);
+                        startWaveformBuild(request.requestId, audioData);
                     }
                 });
             }
@@ -163,6 +172,54 @@ public final class AudioLoadCoordinator {
             messageUtil = new MessageUtil(MainWindow.getInstance(), logger);
         }
         return messageUtil;
+    }
+
+    private void startWaveformBuild(long requestId, AudioData audioData) {
+        stopWaveformBuild();
+        if (audioData == null || audioData.getSourceFile() == null) {
+            return;
+        }
+
+        waveformRequestId = requestId;
+        lastWaveformUiRefreshMillis = 0L;
+        waveformRefreshQueued = false;
+        waveformBuildThread = new WaveformBuildThread(audioData.getSourceFile(),
+                                                      audioData.getWaveformPeaks(),
+                                                      () -> running && isCurrentRequest(requestId) && waveformRequestId == requestId,
+                                                      () -> requestWaveformRefresh(requestId, audioData.getWaveformPeaks().isComplete()));
+        waveformBuildThread.start();
+    }
+
+    private void stopWaveformBuild() {
+        waveformRequestId = 0L;
+        waveformRefreshQueued = false;
+        lastWaveformUiRefreshMillis = 0L;
+        if (waveformBuildThread != null) {
+            waveformBuildThread.interrupt();
+            waveformBuildThread = null;
+        }
+    }
+
+    private void requestWaveformRefresh(long requestId, boolean forceRefresh) {
+        if (!running || !isCurrentRequest(requestId) || waveformRequestId != requestId) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (!forceRefresh && (waveformRefreshQueued || (now - lastWaveformUiRefreshMillis) < MIN_WAVEFORM_REFRESH_INTERVAL_MS)) {
+            return;
+        }
+
+        waveformRefreshQueued = true;
+        SwingUtilities.invokeLater(() -> {
+            waveformRefreshQueued = false;
+            if (!running || !isCurrentRequest(requestId) || waveformRequestId != requestId) {
+                return;
+            }
+
+            lastWaveformUiRefreshMillis = System.currentTimeMillis();
+            AudioPanel.getInstance().refreshWaveformForRequest(requestId);
+        });
     }
 
     private record LoadRequest(long requestId, File sourceFile) {
