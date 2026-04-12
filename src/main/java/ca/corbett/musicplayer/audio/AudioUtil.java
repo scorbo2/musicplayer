@@ -123,10 +123,54 @@ public class AudioUtil {
     }
 
     public static PlaybackThread play(AudioData data, long offset, PlaybackListener listener) throws IOException, LineUnavailableException {
-        AudioInputStream audioStream = getAudioInputStream(data);
+        if (data == null || data.getSourceFile() == null) {
+            throw new IOException("No audio source file is available for playback.");
+        }
+
+        AudioInputStream audioStream = openPlaybackStream(data.getSourceFile());
         PlaybackThread thread = new PlaybackThread(audioStream, offset, 0, listener);
         new Thread(thread).start();
         return thread;
+    }
+
+    /**
+     * Opens an audio stream suitable for immediate playback from the given source file.
+     * For mp3 files, we decode to 16-bit PCM on the fly using the installed Java Sound SPI.
+     * For already-playable PCM files, this simply returns the source stream.
+     */
+    public static AudioInputStream openPlaybackStream(File sourceFile) throws IOException {
+        AudioInputStream sourceStream;
+        try {
+            sourceStream = AudioSystem.getAudioInputStream(sourceFile);
+        }
+        catch (UnsupportedAudioFileException e) {
+            throw new IOException("Unsupported source audio file: " + sourceFile.getName(), e);
+        }
+        AudioFormat sourceFormat = sourceStream.getFormat();
+
+        // Keep playback format consistent for mp3/wav by targeting signed 16-bit little-endian PCM.
+        AudioFormat targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+                                                   sourceFormat.getSampleRate(),
+                                                   16,
+                                                   sourceFormat.getChannels(),
+                                                   sourceFormat.getChannels() * 2,
+                                                   sourceFormat.getSampleRate(),
+                                                   false);
+
+        if (AudioSystem.isConversionSupported(targetFormat, sourceFormat)) {
+            return AudioSystem.getAudioInputStream(targetFormat, sourceStream);
+        }
+
+        // If conversion is unsupported but the stream is already in a sensible playback format,
+        // return it as-is instead of failing fast.
+        if (sourceFormat.getEncoding() == AudioFormat.Encoding.PCM_SIGNED
+            && sourceFormat.getSampleSizeInBits() == 16
+            && sourceFormat.getChannels() > 0) {
+            return sourceStream;
+        }
+
+        sourceStream.close();
+        throw new IOException("Unsupported playback format: " + sourceFormat);
     }
 
     /**
@@ -137,6 +181,7 @@ public class AudioUtil {
      * @return An AudioInputStream ready to be read.
      */
     public static AudioInputStream getAudioInputStream(AudioData audioData) {
+        // Legacy helper retained for waveform-related code paths.
         // Audio saving code cobbled together from
         //  https://stackoverflow.com/questions/3297749/java-reading-manipulating-and-writing-wav-files
 
