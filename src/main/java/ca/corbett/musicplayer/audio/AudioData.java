@@ -4,6 +4,9 @@ import ca.corbett.extras.audio.WaveformConfig;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.ui.AppTheme;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -12,20 +15,10 @@ import java.util.logging.Logger;
 
 /**
  * A wrapper class to encapsulate a single audio clip.
- * Here, we track the original file, the converted file (if conversion was
- * done), the audio data associated with the clip, and metadata that we
- * managed to extract from the clip.
- * <p>
- * TODO I'm not happy with the wonky "convert from mp3 to wav and then play the wav" approach
- *      It's slow and monstrously memory unfriendly. Mostly I hate it because it's very slow,
- *      and results in a long gap of silence between tracks as the next track loads.
- *      But, without the raw wav data, I can't find a way to generate the audio waveform image,
- *      which is kind of a neat feature, and which also allows skipping forwards and backwards
- *      through the track by clicking on the waveform. Surely there's a middle of the road
- *      option where the application could have the best of both worlds - the speed of being
- *      able to stream audio directly from an mp3 file, while still being able to calculate
- *      a waveform image and allow clicking within it?
- * </p>
+ * The current pipeline keeps this object lightweight:
+ * source file identity + parsed metadata + compact waveform peaks.
+ * Playback streams directly from the source file and waveform data is
+ * generated asynchronously by {@link ca.corbett.musicplayer.ui.WaveformBuildThread}.
  *
  * @author scorbo2
  * @since 2025-03-23
@@ -33,31 +26,53 @@ import java.util.logging.Logger;
 public class AudioData {
 
     private static final Logger logger = Logger.getLogger(AudioData.class.getName());
+    private static final int DEFAULT_WAVEFORM_CHANNELS = 2;
+    private static final float DEFAULT_WAVEFORM_SAMPLE_RATE = 44100f;
+    private static final int DEFAULT_WAVEFORM_FRAMES_PER_BUCKET = 512;
 
-    private final int[][] rawData;
     private final File sourceFile;
     private BufferedImage waveformImage;
     private AudioMetadata metadata;
-    private final float sampleRate;
     private final int durationSeconds;
+    private final WaveformPeaks waveformPeaks;
 
-    public AudioData(int[][] rawData, File sourceFile, float sampleRate) {
-        this.rawData = rawData;
+    /**
+     * Lightweight constructor used by the new streaming pipeline.
+     */
+    public AudioData(File sourceFile) {
         this.sourceFile = sourceFile;
-        this.sampleRate = (sampleRate < 0) ? 44100f : sampleRate;
-        this.durationSeconds = (int) (rawData[0].length / sampleRate);
+        this.metadata = AudioMetadata.fromFile(sourceFile);
+        this.durationSeconds = Math.max(0, this.metadata.getDurationSeconds());
+        this.waveformPeaks = createWaveformPeaks(sourceFile);
     }
 
-    public int[][] getRawData() {
-        return rawData;
-    }
-
-    public float getSampleRate() {
-        return sampleRate;
+    private static WaveformPeaks createWaveformPeaks(File sourceFile) {
+        try (AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(sourceFile)) {
+            AudioFormat format = audioInputStream.getFormat();
+            int channels = format.getChannels() > 0 ? format.getChannels() : DEFAULT_WAVEFORM_CHANNELS;
+            float sampleRate = format.getSampleRate() > 0 ? format.getSampleRate() : DEFAULT_WAVEFORM_SAMPLE_RATE;
+            return new WaveformPeaks(channels, sampleRate, DEFAULT_WAVEFORM_FRAMES_PER_BUCKET);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING,
+                    "Unable to determine audio format for waveform peak initialization, using defaults for "
+                            + sourceFile,
+                    ex);
+            return new WaveformPeaks(
+                    DEFAULT_WAVEFORM_CHANNELS,
+                    DEFAULT_WAVEFORM_SAMPLE_RATE,
+                    DEFAULT_WAVEFORM_FRAMES_PER_BUCKET);
+        }
     }
 
     public int getDurationSeconds() {
-        return durationSeconds;
+        if (durationSeconds > 0) {
+            return durationSeconds;
+        }
+        if (metadata != null && metadata.getDurationSeconds() > 0) {
+            return metadata.getDurationSeconds();
+        }
+        long est = waveformPeaks.getDurationMillisEstimate();
+        return (int) (est / 1000L);
     }
 
     public File getSourceFile() {
@@ -88,9 +103,13 @@ public class AudioData {
      */
     public BufferedImage getWaveformImage() {
         if (waveformImage == null) {
-            waveformImage = generateWaveformImage(rawData);
+            waveformImage = generateWaveformImageSnapshot();
         }
         return waveformImage;
+    }
+
+    public WaveformPeaks getWaveformPeaks() {
+        return waveformPeaks;
     }
 
     /**
@@ -100,8 +119,19 @@ public class AudioData {
      * @return A BufferedImage representing audio data for our clip.
      */
     public BufferedImage regenerateWaveformImage() {
-        waveformImage = null;
-        return getWaveformImage();
+        waveformImage = generateWaveformImageSnapshot();
+        return waveformImage;
+    }
+
+    /**
+     * Generates a fresh waveform image from whichever backing data is currently available.
+     * This is synchronized so callers can safely invoke it from a background thread.
+     */
+    public synchronized BufferedImage generateWaveformImageSnapshot() {
+        if (waveformPeaks.getBucketCount() > 0) {
+            return generateWaveformImage(waveformPeaks.snapshotByChannel(), waveformPeaks.getFramesPerBucket());
+        }
+        return null;
     }
 
     /**
@@ -109,7 +139,7 @@ public class AudioData {
      *
      * @return A BufferedImage representing our audio, or null if we have no audio.
      */
-    private BufferedImage generateWaveformImage(int[][] audioData) {
+    private BufferedImage generateWaveformImage(int[][] audioData, int frameMultiplier) {
         BufferedImage waveform = null;
         if (audioData == null) {
             return waveform;
@@ -122,7 +152,17 @@ public class AudioData {
         topChannelIndex = (topChannelIndex >= audioData.length) ? audioData.length - 1 : topChannelIndex;
         btmChannelIndex = (btmChannelIndex >= audioData.length) ? audioData.length - 1 : btmChannelIndex;
 
-        // Go through the data and find our highest y values:
+        // Determine the horizontal sampling scale we will use in both passes.
+        int xScale = Math.max(1, config.getCompression().getXValue() / Math.max(1, frameMultiplier));
+        int width = Math.max(1, audioData[0].length / xScale);
+        if (width > config.getWidthLimit().getLimit()) {
+            width = config.getWidthLimit().getLimit();
+            xScale = Math.max(1, audioData[0].length / config.getWidthLimit().getLimit());
+            logger.log(Level.INFO, "AudioUtil: scaling waveform image down to fit X limit of {2} (you can change this in settings).",
+                       new Object[]{config.getCompression().getXValue(), xScale, config.getWidthLimit().getLimit()});
+        }
+
+        // Go through the data and find our highest y values using the final xScale:
         int averagedSample1 = 0;
         int averagedSample2 = 0;
         int averagedSampleCount = 0;
@@ -135,7 +175,7 @@ public class AudioData {
             averagedSample1 += sample1;
             averagedSample2 += sample2;
             averagedSampleCount++;
-            if (averagedSampleCount > config.getCompression().getXValue()) {
+            if (averagedSampleCount >= xScale) {
                 averagedSample1 /= averagedSampleCount;
                 averagedSample2 /= averagedSampleCount;
 
@@ -147,15 +187,6 @@ public class AudioData {
             }
         }
 
-        // We can now create a blank image of the appropriate size based on this scale:
-        int xScale = config.getCompression().getXValue();
-        int width = audioData[0].length / config.getCompression().getXValue();
-        if (width > config.getWidthLimit().getLimit()) {
-            width = config.getWidthLimit().getLimit();
-            xScale = audioData[0].length / config.getWidthLimit().getLimit();
-            logger.log(Level.INFO, "AudioUtil: scaling waveform image down to fit X limit of {2} (you can change this in settings).",
-                       new Object[]{config.getCompression().getXValue(), xScale, config.getWidthLimit().getLimit()});
-        }
         int height = maxY1 + maxY2;
         height = (height <= 0) ? 100 : height; // height can be zero if there's no audio data.
         int verticalMargin = 0; // (int)((maxY1+maxY2)*0.1); // disabling margin for now
@@ -171,12 +202,12 @@ public class AudioData {
         int previousSample1 = 0;
         int previousSample2 = 0;
         int x = 0;
-        for (int sample = 0; sample < audioData[0].length; sample++) {
+        for (int sample = 0; sample < audioData[0].length && x < width; sample++) {
             averagedSample1 += Math.abs(audioData[topChannelIndex][sample] / config.getCompression().getYValue());
             averagedSample2 += Math.abs(audioData[btmChannelIndex][sample] / config.getCompression().getYValue());
             averagedSampleCount++;
 
-            if (averagedSampleCount > xScale) {
+            if (averagedSampleCount >= xScale) {
                 averagedSample1 /= averagedSampleCount;
                 averagedSample2 /= averagedSampleCount;
 
@@ -246,41 +277,4 @@ public class AudioData {
         return config;
     }
 
-    /**
-     * Id3 tags apparently encode the track duration in microseconds, which seems overkillish
-     * to me, but okay. This method will convert some ungodly huge number to a human-readable
-     * time string.
-     *
-     * @param value A value in microseconds.
-     * @return A human readable string in the form [[HH:]MM:]SS
-     */
-    private String formatMicroseconds(Long value) {
-        if (value == null) {
-            return " (n/a) ";
-        }
-
-        int seconds = (int) (value / 1000 / 1000);
-        int hours = 0;
-        int minutes = 0;
-        while (seconds > 3600) {
-            seconds -= 3600;
-            hours++;
-        }
-        while (seconds > 60) {
-            seconds -= 60;
-            minutes++;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        if (hours > 0) {
-            sb.append(hours);
-            sb.append(":");
-        }
-        if (hours > 0 || minutes > 0) {
-            sb.append(String.format("%02d", minutes));
-            sb.append(":");
-        }
-        sb.append(String.format("%02d", seconds));
-        return sb.toString();
-    }
 }

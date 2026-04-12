@@ -142,10 +142,10 @@ public final class Actions {
         button.setContentAreaFilled(false);
         button.setFocusable(false);
         button.setPreferredSize(new Dimension(btnSize, btnSize));
+        button.setToolTipText(action.description);
         BufferedImage iconImage = MainWindow.loadIconResource(action.iconResource, iconSize, iconSize);
         ImageIcon icon = new ImageIcon(iconImage, action.description);
         button.setIcon(icon);
-        button.setToolTipText(action.description);
 
         return button;
     }

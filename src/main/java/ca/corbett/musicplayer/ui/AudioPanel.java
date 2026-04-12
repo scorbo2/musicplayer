@@ -11,6 +11,7 @@ import ca.corbett.musicplayer.audio.AudioUtil;
 
 import javax.sound.sampled.LineUnavailableException;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -33,11 +34,6 @@ import java.util.logging.Logger;
  * track, along with controls like next, prev, play, pause, and so on. Our list of control
  * buttons also reaches out to the extension manager so that extensions can register additional
  * action buttons for us to display on our control panel.
- * <p>
- * TODO saw an intermittent issue where if you set a manual mark position towards the
- *      very end of the clip and hit play, it won't play right to the end.
- *      Not sure, but seems like the playback thread might be miscalculating offset position.
- *      </p>
  *
  * @author scorbo2
  * @since 2025-03-23
@@ -59,13 +55,17 @@ public class AudioPanel extends JPanel implements UIReloadable {
     private AudioData audioData;
     private PlaybackThread playbackThread;
     private float playbackPosition; // 0f==start, 1f==end
-    private final PlaybackListener playbackListener;
     private final VisualizationTrackInfo trackInfo;
+    private volatile long currentRequestId;
+    private volatile long activePlaybackRequestId;
+    private volatile long playbackGeneration;
 
     private float markPosition;
 
     private final ImagePanel imagePanel;
     private BufferedImage waveformImage;
+    private volatile boolean waveformRefreshInProgress;
+    private volatile boolean waveformRefreshPending;
 
     private final List<AudioPanelListener> panelListeners;
     private PanelState panelState;
@@ -106,36 +106,14 @@ public class AudioPanel extends JPanel implements UIReloadable {
         panelState = PanelState.IDLE;
         playbackPosition = 0f;
         markPosition = 0f;
+        currentRequestId = 0L;
+        activePlaybackRequestId = 0L;
+        playbackGeneration = 0L;
         trackInfo = new VisualizationTrackInfo();
         trackInfo.reset();
-        playbackListener = new PlaybackListener() {
-            @Override
-            public void started() {
-            }
-
-            @Override
-            public void stopped(PlaybackThread.StopReason stopReason) {
-                // If we stopped because we ran out of audio data, hit next()
-                if (panelState == PanelState.PLAYING && stopReason != PlaybackThread.StopReason.INTERRUPTED) {
-                    next();
-                }
-            }
-
-            @Override
-            public boolean updateProgress(long curMillis, long totalMillis) {
-                if (audioData == null) {
-                    return false;
-                }
-                setPlaybackPosition((float) curMillis / (float) totalMillis);
-                trackInfo.setSourceFile(audioData.getSourceFile());
-                trackInfo.setCurrentTimeSeconds((int) (curMillis / 1000));
-                trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
-                VisualizationWindow.getInstance().setTrackInfo(trackInfo);
-                return true;
-            }
-
-        };
         panelListeners = new ArrayList<>();
+        waveformRefreshInProgress = false;
+        waveformRefreshPending = false;
 
         // Lay out the UI:
         initComponents();
@@ -184,15 +162,79 @@ public class AudioPanel extends JPanel implements UIReloadable {
     }
 
     public void setAudioData(AudioData data) {
+        if (data == null) {
+            currentRequestId = 0L;
+        }
+        setAudioDataInternal(data);
+    }
+
+    public boolean applyLoadedAudioData(long requestId, AudioData data) {
+        if (!AudioLoadCoordinator.getInstance().isCurrentRequest(requestId)) {
+            return false;
+        }
+
+        setAudioDataInternal(data);
+        currentRequestId = requestId;
+        return true;
+    }
+
+    public void playRequest(long requestId) {
+        if (audioData == null || currentRequestId != requestId || !AudioLoadCoordinator.getInstance().isCurrentRequest(requestId)) {
+            return;
+        }
+
+        play();
+    }
+
+    public void refreshWaveformForRequest(long requestId) {
+        if (audioData == null || currentRequestId != requestId || !AudioLoadCoordinator.getInstance().isCurrentRequest(requestId)) {
+            return;
+        }
+
+        if (waveformRefreshInProgress) {
+            waveformRefreshPending = true;
+            return;
+        }
+
+        waveformRefreshInProgress = true;
+        waveformRefreshPending = false;
+        AudioData requestedData = audioData;
+        Thread worker = new Thread(() -> {
+            BufferedImage rendered = requestedData.generateWaveformImageSnapshot();
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    if (audioData == requestedData
+                        && currentRequestId == requestId
+                        && AudioLoadCoordinator.getInstance().isCurrentRequest(requestId)) {
+                        waveformImage = rendered;
+                        redrawWaveform();
+                    }
+                }
+                finally {
+                    waveformRefreshInProgress = false;
+                    if (waveformRefreshPending) {
+                        waveformRefreshPending = false;
+                        refreshWaveformForRequest(requestId);
+                    }
+                }
+            });
+        }, "musicplayer-waveform-refresh");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private void setAudioDataInternal(AudioData data) {
         // If we already had data, make sure we're stopped:
         if (audioData != null || panelState != PanelState.IDLE) {
-            stop();
+            stop(false);
             audioData = null;
             trackInfo.reset();
         }
 
         // If the new data is null, switch on the idle animation:
         if (data == null) {
+            waveformRefreshInProgress = false;
+            waveformRefreshPending = false;
             AudioPanelIdleAnimation.getInstance().go();
             return;
         }
@@ -250,10 +292,10 @@ public class AudioPanel extends JPanel implements UIReloadable {
         // Set starting offset if set:
         long startOffset = 0;
         if (markPosition > 0f) {
-            startOffset = (long) (markPosition * (audioData.getRawData()[0].length / (audioData.getSampleRate() / 1000)));
+            startOffset = positionToMillis(markPosition);
         }
 
-        internalPlay(startOffset);
+        internalPlay(currentRequestId, startOffset);
     }
 
     public void next() {
@@ -293,23 +335,26 @@ public class AudioPanel extends JPanel implements UIReloadable {
     public void pause() {
         // Wonky case maybe, but let's avoid NullPointerExceptions if someone tries
         // to pause us when nothing is loaded:
-        if (audioData == null || audioData.getRawData() == null) {
+        if (audioData == null) {
             return;
         }
 
-        final float audioLength = audioData.getRawData()[0].length / (audioData.getSampleRate() / 1000f);
+        final long durationMillis = getDurationMillis();
+
         // If we were already paused, treat this as "resume":
         if (panelState == PanelState.PAUSED) {
-            long startOffset = (long) (markPosition * audioLength);
-            internalPlay(startOffset);
+            long startOffset = positionToMillis(markPosition);
+            internalPlay(currentRequestId, startOffset);
             return;
         }
 
         // If we were playing, treat this as a "pause":
         if (panelState == PanelState.PLAYING) {
             panelState = PanelState.PAUSED;
+            playbackGeneration++;
+            activePlaybackRequestId = 0L;
             playbackThread.stop();
-            markPosition = (float) playbackThread.getCurrentOffset() / audioLength;
+            markPosition = millisToPosition(playbackThread.getCurrentOffset(), durationMillis);
             playbackThread = null;
             redrawWaveform();
         }
@@ -321,10 +366,20 @@ public class AudioPanel extends JPanel implements UIReloadable {
      * if the control panel is visible and the user clicks it.
      */
     public void stop() {
+        stop(true);
+    }
+
+    private void stop(boolean cancelPendingLoads) {
         panelState = PanelState.IDLE;
+        playbackGeneration++;
+        activePlaybackRequestId = 0L;
         if (playbackThread != null) {
             playbackThread.stop();
             playbackThread = null;
+        }
+
+        if (cancelPendingLoads) {
+            AudioLoadCoordinator.getInstance().cancelPendingRequests();
         }
 
         VisualizationWindow.getInstance().setTrackInfo(null);
@@ -507,9 +562,15 @@ public class AudioPanel extends JPanel implements UIReloadable {
      * @param startOffset The offset from which to begin playing.
      */
     private void internalPlay(long startOffset) {
+        internalPlay(currentRequestId, startOffset);
+    }
+
+    private void internalPlay(long requestId, long startOffset) {
         try {
             panelState = PanelState.PLAYING;
-            playbackThread = AudioUtil.play(audioData, startOffset, playbackListener);
+            long generation = ++playbackGeneration;
+            activePlaybackRequestId = requestId;
+            playbackThread = AudioUtil.play(audioData, startOffset, createPlaybackListener(requestId, generation));
             fireStateChangedEvent();
         } catch (IOException | LineUnavailableException exc) {
             getMessageUtil().error("Playback error", "Problem playing audio: " + exc.getMessage(), exc);
@@ -517,6 +578,88 @@ public class AudioPanel extends JPanel implements UIReloadable {
             panelState = PanelState.IDLE;
             fireStateChangedEvent();
         }
+    }
+
+    private PlaybackListener createPlaybackListener(long requestId, long generation) {
+        return new PlaybackListener() {
+            @Override
+            public void started() {
+            }
+
+            @Override
+            public void stopped(PlaybackThread.StopReason stopReason) {
+                runIfCurrentOnEdt(requestId, generation, () -> {
+                    // If we stopped because we ran out of audio data, hit next()
+                    if (panelState == PanelState.PLAYING && stopReason != PlaybackThread.StopReason.INTERRUPTED) {
+                        next();
+                    }
+                });
+            }
+
+            @Override
+            public boolean updateProgress(long curMillis, long totalMillis) {
+                if (!isCurrentPlayback(requestId, generation) || audioData == null) {
+                    return false;
+                }
+
+                long safeTotal = totalMillis > 0 ? totalMillis : getDurationMillis();
+                float pos = millisToPosition(curMillis, safeTotal);
+
+                runIfCurrentOnEdt(requestId, generation, () -> {
+                    setPlaybackPosition(pos);
+                    trackInfo.setSourceFile(audioData.getSourceFile());
+                    trackInfo.setCurrentTimeSeconds((int) (curMillis / 1000));
+                    trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
+                    VisualizationWindow.getInstance().setTrackInfo(trackInfo);
+                });
+                return true;
+            }
+        };
+    }
+
+    private long getDurationMillis() {
+        if (audioData == null) {
+            return 1L;
+        }
+
+        int seconds = audioData.getDurationSeconds();
+        if (seconds <= 0 && audioData.getMetadata() != null) {
+            seconds = audioData.getMetadata().getDurationSeconds();
+        }
+        return Math.max(1L, seconds * 1000L);
+    }
+
+    private long positionToMillis(float pos) {
+        float clamped = Math.max(0f, Math.min(pos, 1f));
+        return (long) (clamped * getDurationMillis());
+    }
+
+    private float millisToPosition(long millis, long totalMillis) {
+        long safeTotal = Math.max(1L, totalMillis);
+        float raw = (float) millis / (float) safeTotal;
+        return Math.max(0f, Math.min(raw, 1f));
+    }
+
+    private void runIfCurrentOnEdt(long requestId, long generation, Runnable task) {
+        Runnable guardedTask = () -> {
+            if (!isCurrentPlayback(requestId, generation)) {
+                return;
+            }
+            task.run();
+        };
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            guardedTask.run();
+        }
+        else {
+            SwingUtilities.invokeLater(guardedTask);
+        }
+    }
+
+    private boolean isCurrentPlayback(long requestId, long generation) {
+        return playbackGeneration == generation
+            && activePlaybackRequestId == requestId
+            && currentRequestId == requestId;
     }
 
     private MessageUtil getMessageUtil() {
