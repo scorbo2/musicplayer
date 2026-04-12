@@ -286,8 +286,17 @@ public class AudioPanel extends JPanel implements UIReloadable {
      * from the mark position, whether it was explicitly set by the user or
      * calculated by us when the pause button was hit.
      * </p>
+     * <p>
+     *     Note: if the current player state is IDLE, this does nothing.
+     * </p>
      */
     public void pause() {
+        // Wonky case maybe, but let's avoid NullPointerExceptions if someone tries
+        // to pause us when nothing is loaded:
+        if (audioData == null || audioData.getRawData() == null) {
+            return;
+        }
+
         final float audioLength = audioData.getRawData()[0].length / (audioData.getSampleRate() / 1000f);
         // If we were already paused, treat this as "resume":
         if (panelState == PanelState.PAUSED) {

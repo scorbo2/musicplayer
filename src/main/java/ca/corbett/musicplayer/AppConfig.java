@@ -13,6 +13,7 @@ import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
+import ca.corbett.extras.properties.KeyStrokeProperty;
 import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.extras.properties.PropertiesManager;
 import ca.corbett.extras.properties.ShortTextProperty;
@@ -427,6 +428,16 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     public int getVisualizerOldHardwareDelay() {
         return getOldHardwareDelayFromStringOption(visualizerOldHardwareDelay.getSelectedItem());
     }
+
+    /**
+     * Returns the subset of all our configuration properties that are KeyStrokeProperties.
+     */
+    public List<KeyStrokeProperty> getKeyStrokeProperties() {
+        List<KeyStrokeProperty> list = new ArrayList<>();
+        list.addAll(MusicPlayerExtensionManager.getInstance().getKeyStrokeProperties());
+        return list;
+    }
+
 
     @Override
     protected List<AbstractProperty> createInternalProperties() {

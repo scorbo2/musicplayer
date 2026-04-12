@@ -1,6 +1,7 @@
 package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.ExtensionManager;
+import ca.corbett.extras.properties.KeyStrokeProperty;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
@@ -14,7 +15,6 @@ import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -220,20 +220,20 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
     }
 
     /**
-     * Invoked when the application receives a keyboard shortcut. All extensions will be given
-     * a chance to respond to the KeyEvent. Processing does not stop if one extension reports
-     * that it did something with the KeyEvent, so in theory, multiple extensions could respond
-     * to the same KeyEvent.
+     * Returns all KeyStrokeProperty instances supplied by enabled extensions.
+     * Extensions can supply KeyStrokeProperty instances as part of their usual
+     * configuration properties. We have a separate getter for them here as a
+     * convenience when registering keyboard shortcuts with our KeyStrokeManager.
+     * Properties from currently-disabled extensions will not be included.
      *
-     * @param keyEvent The KeyEvent that triggered this message.
-     * @return true if any registered extension handled the KeyEvent.
+     * @return A List of KeyStrokeProperty instances supplied by enabled extensions.
      */
-    public boolean handleKeyEvent(KeyEvent keyEvent) {
-        boolean handled = false;
-        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
-            handled = handled || extension.handleKeyEvent(keyEvent);
-        }
-        return handled;
+    public List<KeyStrokeProperty> getKeyStrokeProperties() {
+        return getAllEnabledExtensionProperties()
+            .stream()
+            .filter(p -> p instanceof KeyStrokeProperty)
+            .map(p -> (KeyStrokeProperty)p)
+            .toList();
     }
 
     /**

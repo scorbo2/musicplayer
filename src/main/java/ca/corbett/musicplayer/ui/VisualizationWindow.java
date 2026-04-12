@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.image.ImagePanel;
 import ca.corbett.extras.image.ImagePanelConfig;
+import ca.corbett.extras.io.KeyStrokeManager;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
@@ -60,6 +61,7 @@ public class VisualizationWindow implements UIReloadable {
     }
 
     private GraphicsDevice graphicsDevice;
+    private KeyStrokeManager keyStrokeManager;
     private boolean isFullscreenSupported;
     private static VisualizationWindow instance;
     private final VisualizationThread thread = new VisualizationThread();
@@ -80,7 +82,6 @@ public class VisualizationWindow implements UIReloadable {
     public void reloadUI() {
         initializeDisplay();
         fullScreenModeSwitchDelay = AppConfig.getInstance().getVisualizerOldHardwareDelay();
-        ;
     }
 
     /**
@@ -144,6 +145,8 @@ public class VisualizationWindow implements UIReloadable {
 
         thread.setFullScreen(isFullscreenSupported);
         visFrame = buildVisualizationWindow();
+        keyStrokeManager = new KeyStrokeManager(visFrame);
+        MainWindow.registerKeyStrokes(keyStrokeManager);
         thread.setVisFrame(visFrame);
         if (isFullscreenSupported) {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -194,7 +197,9 @@ public class VisualizationWindow implements UIReloadable {
 
         if (visFrame != null) {
             visFrame.dispose();
+            keyStrokeManager.dispose();
             visFrame = null;
+            keyStrokeManager = null;
         }
         thread.setVisFrame(null);
     }
@@ -237,7 +242,6 @@ public class VisualizationWindow implements UIReloadable {
         window.setIconImage(MainWindow.loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
         DisplayMode displayMode = graphicsDevice.getDisplayMode();
         window.setSize(displayMode.getWidth(), displayMode.getHeight()); // apparently initial size matters
-        KeyboardManager.addGlobalKeyListener(window);
 
         if (isFullscreenSupported) {
             // We don't need or want AWT paint messages as we will handle our own display:

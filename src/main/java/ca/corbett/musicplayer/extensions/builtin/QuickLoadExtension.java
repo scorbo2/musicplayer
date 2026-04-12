@@ -1,14 +1,16 @@
 package ca.corbett.musicplayer.extensions.builtin;
 
 import ca.corbett.extensions.AppExtensionInfo;
+import ca.corbett.extras.EnhancedAction;
+import ca.corbett.extras.io.KeyStrokeManager;
 import ca.corbett.extras.properties.AbstractProperty;
 import ca.corbett.extras.properties.DirectoryProperty;
+import ca.corbett.extras.properties.KeyStrokeProperty;
 import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +76,16 @@ public class QuickLoadExtension extends MusicPlayerExtension {
         File defaultDir = new File(System.getProperty("user.home"), DEFAULT_DIR);
         props.add(new DirectoryProperty("Quickload.General.quickDir", "Directory:", false, defaultDir));
 
+        KeyStrokeProperty keyProp = new KeyStrokeProperty("Quickload.General.quickLoadKey", "Quickload shortcut key:",
+                                                          KeyStrokeManager.parseKeyStroke("L"), new QuickLoadAction());
+        keyProp.setExposed(false); // not user-customizable
+        props.add(keyProp);
+
+        keyProp = new KeyStrokeProperty("Quickload.General.quickSaveKey", "Quicksave shortcut key:",
+                                        KeyStrokeManager.parseKeyStroke("S"), new QuickSaveAction());
+        keyProp.setExposed(false); // not user-customizable
+        props.add(keyProp);
+
         return props;
     }
 
@@ -81,16 +93,17 @@ public class QuickLoadExtension extends MusicPlayerExtension {
         return ((DirectoryProperty) AppConfig.getInstance().getPropertiesManager().getProperty(QuickLoadExtension.DIR_PROP)).getDirectory();
     }
 
-    @Override
-    public boolean handleKeyEvent(KeyEvent keyEvent) {
-        if (keyEvent.getKeyCode() == KeyEvent.VK_L) {
+    private static class QuickLoadAction extends EnhancedAction {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent e) {
             QuickLoadDialog.getInstance().setVisible(true);
-            return true;
-        } else if (keyEvent.getKeyCode() == KeyEvent.VK_S) {
-            QuickSaveDialog.getInstance().setVisible(true);
-            return true;
         }
+    }
 
-        return false;
+    private static class QuickSaveAction extends EnhancedAction {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent e) {
+            QuickSaveDialog.getInstance().setVisible(true);
+        }
     }
 }
