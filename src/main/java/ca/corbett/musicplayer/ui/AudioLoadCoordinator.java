@@ -200,13 +200,34 @@ public final class AudioLoadCoordinator {
         }
     }
 
+    /**
+     * Returns true if a waveform UI refresh should be skipped due to throttling.
+     * Package-private to allow unit testing of the throttle logic.
+     */
+    boolean isWaveformRefreshThrottled(boolean forceRefresh) {
+        if (forceRefresh) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        return waveformRefreshQueued || (now - lastWaveformUiRefreshMillis) < MIN_WAVEFORM_REFRESH_INTERVAL_MS;
+    }
+
+    /** For testing only: sets the last waveform UI refresh timestamp. */
+    void setLastWaveformRefreshMillisForTesting(long millis) {
+        lastWaveformUiRefreshMillis = millis;
+    }
+
+    /** For testing only: sets the waveform refresh queued flag. */
+    void setWaveformRefreshQueuedForTesting(boolean queued) {
+        waveformRefreshQueued = queued;
+    }
+
     private void requestWaveformRefresh(long requestId, boolean forceRefresh) {
         if (!running || !isCurrentRequest(requestId) || waveformRequestId != requestId) {
             return;
         }
 
-        long now = System.currentTimeMillis();
-        if (!forceRefresh && (waveformRefreshQueued || (now - lastWaveformUiRefreshMillis) < MIN_WAVEFORM_REFRESH_INTERVAL_MS)) {
+        if (isWaveformRefreshThrottled(forceRefresh)) {
             return;
         }
 
