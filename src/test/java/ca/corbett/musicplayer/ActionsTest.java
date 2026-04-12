@@ -86,7 +86,8 @@ class ActionsTest {
         @Override
         public List<Actions.MPAction> getMediaPlayerActions() {
             List<Actions.MPAction> list = new ArrayList<>();
-            list.add(new Actions.MPAction("TESTMP", "TESTMP", "", new AbstractAction() {
+            list.add(new Actions.MPAction("TESTMP", "TESTMP", "media-playback-stop.png",
+                                          new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                 }
@@ -97,7 +98,8 @@ class ActionsTest {
         @Override
         public List<Actions.MPAction> getPlaylistActions() {
             List<Actions.MPAction> list = new ArrayList<>();
-            list.add(new Actions.MPAction("TESTPL", "TESTPL", "", new AbstractAction() {
+            list.add(new Actions.MPAction("TESTPL", "TESTPL", "media-playback-stop.png",
+                                          new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                 }
