@@ -9,6 +9,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 
 /**
  * A wrapper class to encapsulate a single audio clip.
@@ -23,6 +26,9 @@ import java.util.logging.Logger;
 public class AudioData {
 
     private static final Logger logger = Logger.getLogger(AudioData.class.getName());
+    private static final int DEFAULT_WAVEFORM_CHANNELS = 2;
+    private static final float DEFAULT_WAVEFORM_SAMPLE_RATE = 44100f;
+    private static final int DEFAULT_WAVEFORM_FRAMES_PER_BUCKET = 512;
 
     private final File sourceFile;
     private BufferedImage waveformImage;
@@ -37,7 +43,25 @@ public class AudioData {
         this.sourceFile = sourceFile;
         this.metadata = AudioMetadata.fromFile(sourceFile);
         this.durationSeconds = Math.max(0, this.metadata.getDurationSeconds());
-        this.waveformPeaks = new WaveformPeaks(2, 44100f, 512);
+        this.waveformPeaks = createWaveformPeaks(sourceFile);
+    }
+
+    private static WaveformPeaks createWaveformPeaks(File sourceFile) {
+        try (AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(sourceFile)) {
+            AudioFormat format = audioInputStream.getFormat();
+            int channels = format.getChannels() > 0 ? format.getChannels() : DEFAULT_WAVEFORM_CHANNELS;
+            float sampleRate = format.getSampleRate() > 0 ? format.getSampleRate() : DEFAULT_WAVEFORM_SAMPLE_RATE;
+            return new WaveformPeaks(channels, sampleRate, DEFAULT_WAVEFORM_FRAMES_PER_BUCKET);
+        } catch (Exception ex) {
+            logger.log(Level.FINE,
+                    "Unable to determine audio format for waveform peak initialization, using defaults for "
+                            + sourceFile,
+                    ex);
+            return new WaveformPeaks(
+                    DEFAULT_WAVEFORM_CHANNELS,
+                    DEFAULT_WAVEFORM_SAMPLE_RATE,
+                    DEFAULT_WAVEFORM_FRAMES_PER_BUCKET);
+        }
     }
 
     public int getDurationSeconds() {
