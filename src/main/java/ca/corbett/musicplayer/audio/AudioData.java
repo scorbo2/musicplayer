@@ -4,14 +4,14 @@ import ca.corbett.extras.audio.WaveformConfig;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.ui.AppTheme;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
 
 /**
  * A wrapper class to encapsulate a single audio clip.
@@ -53,7 +53,7 @@ public class AudioData {
             float sampleRate = format.getSampleRate() > 0 ? format.getSampleRate() : DEFAULT_WAVEFORM_SAMPLE_RATE;
             return new WaveformPeaks(channels, sampleRate, DEFAULT_WAVEFORM_FRAMES_PER_BUCKET);
         } catch (Exception ex) {
-            logger.log(Level.FINE,
+            logger.log(Level.WARNING,
                     "Unable to determine audio format for waveform peak initialization, using defaults for "
                             + sourceFile,
                     ex);
