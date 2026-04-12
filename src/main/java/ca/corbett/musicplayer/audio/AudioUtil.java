@@ -60,6 +60,8 @@ public class AudioUtil {
     }
 
     /**
+     * @deprecated Legacy raw-buffer loading path kept for compatibility.
+     *             The active pipeline now uses lightweight metadata load plus background peak generation.
      * Invoked from AudioLoadThread when we have some audio data to be processed.
      * The current audio load implementation is a bit wonky and I'm not happy with it,
      * but it goes like this:
@@ -80,6 +82,7 @@ public class AudioUtil {
      * @throws UnsupportedAudioFileException Officially we support wav and mp3 but there's probably others not tested.
      * @throws IOException                   In case of i/o error.
      */
+    @Deprecated(since = "3.3", forRemoval = false)
     public static AudioData load(File sourceFile, File convertedFile) throws UnsupportedAudioFileException, IOException {
         AudioInputStream inputStream = AudioSystem.getAudioInputStream(convertedFile == null ? sourceFile : convertedFile);
 
@@ -174,12 +177,14 @@ public class AudioUtil {
     }
 
     /**
+     * @deprecated Legacy helper retained for compatibility; playback now streams directly from source files.
      * Constructs an AudioInputStream based on the parsed audio data. This is mainly used
      * to play a clip that has been parsed by one of the parseAudio methods in this class.
      *
      * @param audioData An AudioData instance.
      * @return An AudioInputStream ready to be read.
      */
+    @Deprecated(since = "3.3", forRemoval = false)
     public static AudioInputStream getAudioInputStream(AudioData audioData) {
         // Legacy helper retained for waveform-related code paths.
         // Audio saving code cobbled together from
@@ -204,6 +209,7 @@ public class AudioUtil {
     }
 
     /**
+     * @deprecated Legacy conversion helper retained for compatibility.
      * Invoked as needed from AudioLoadThread. If the file we're trying to load was in mp3
      * format, this will be invoked to convert it to wav format so we can process
      * the raw audio data.
@@ -212,9 +218,16 @@ public class AudioUtil {
      * @return A file in the system temp dir that contains the converted data in wav format
      * @throws IOException If something goes wrong.
      */
+    @Deprecated(since = "3.3", forRemoval = false)
     public static File convert(AudioInputStream inStream) throws IOException {
         AudioFormat sourceFormat = inStream.getFormat();
-        AudioFormat targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, sourceFormat.getSampleRate(), 16, sourceFormat.getChannels(), 4, sourceFormat.getFrameRate(), false);
+        AudioFormat targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+                                                   sourceFormat.getSampleRate(),
+                                                   16,
+                                                   sourceFormat.getChannels(),
+                                                   sourceFormat.getChannels() * 2,
+                                                   sourceFormat.getSampleRate(),
+                                                   false);
         if (!AudioSystem.isConversionSupported(targetFormat, inStream.getFormat())) {
             logger.severe("Audio conversion not possible for this track :(");
             return null;

@@ -358,6 +358,7 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
     private static void cleanup() {
         MainWindow.getInstance().keyStrokeManager.dispose();
         new StopAction().actionPerformed(null);
+        AudioLoadCoordinator.getInstance().shutdown();
         try {
             // If we're already on the UI thread, we can just stop fullscreen mode directly:
             if (SwingUtilities.isEventDispatchThread()) {

@@ -12,19 +12,14 @@ import java.util.logging.Logger;
 
 /**
  * A wrapper class to encapsulate a single audio clip.
- * Here, we track the original file, the converted file (if conversion was
- * done), the audio data associated with the clip, and metadata that we
- * managed to extract from the clip.
+ * The modern pipeline stores lightweight track metadata plus compact
+ * waveform peaks generated in the background.
+ *
+ * Legacy raw sample fields/methods are still present for compatibility,
+ * but they are no longer used by the active playback/rendering pipeline.
  * <p>
- * TODO I'm not happy with the wonky "convert from mp3 to wav and then play the wav" approach
- *      It's slow and monstrously memory unfriendly. Mostly I hate it because it's very slow,
- *      and results in a long gap of silence between tracks as the next track loads.
- *      But, without the raw wav data, I can't find a way to generate the audio waveform image,
- *      which is kind of a neat feature, and which also allows skipping forwards and backwards
- *      through the track by clicking on the waveform. Surely there's a middle of the road
- *      option where the application could have the best of both worlds - the speed of being
- *      able to stream audio directly from an mp3 file, while still being able to calculate
- *      a waveform image and allow clicking within it?
+ * TODO the remaining legacy raw-sample API can be removed in a future major
+ *      release once extension compatibility is no longer required.
  * </p>
  *
  * @author scorbo2
@@ -42,6 +37,7 @@ public class AudioData {
     private final int durationSeconds;
     private final WaveformPeaks waveformPeaks;
 
+    @Deprecated(since = "3.3", forRemoval = false)
     public AudioData(int[][] rawData, File sourceFile, float sampleRate) {
         this.rawData = rawData;
         this.sourceFile = sourceFile;
@@ -62,10 +58,12 @@ public class AudioData {
         this.waveformPeaks = new WaveformPeaks(2, this.sampleRate, 512);
     }
 
+    @Deprecated(since = "3.3", forRemoval = false)
     public int[][] getRawData() {
         return rawData;
     }
 
+    @Deprecated(since = "3.3", forRemoval = false)
     public float getSampleRate() {
         return sampleRate;
     }
