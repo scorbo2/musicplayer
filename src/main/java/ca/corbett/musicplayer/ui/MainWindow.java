@@ -17,6 +17,8 @@ import ca.corbett.musicplayer.actions.FullScreenStopAction;
 import ca.corbett.musicplayer.actions.NextAction;
 import ca.corbett.musicplayer.actions.PauseAction;
 import ca.corbett.musicplayer.actions.PlaylistOpenAction;
+import ca.corbett.musicplayer.actions.PlaylistRemoveAllAction;
+import ca.corbett.musicplayer.actions.PlaylistRemoveOneAction;
 import ca.corbett.musicplayer.actions.PlaylistSaveAction;
 import ca.corbett.musicplayer.actions.PrevAction;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
@@ -482,6 +484,8 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
         keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+O"), new PlaylistOpenAction());
         keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+Q"), new ExitAction());
         keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+S"), new PlaylistSaveAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Del"), new PlaylistRemoveOneAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+Del"), new PlaylistRemoveAllAction());
 
         // Now register whatever AppConfig knows about (this includes extension-supplied KeyStrokes, if any):
         for (KeyStrokeProperty prop : AppConfig.getInstance().getKeyStrokeProperties()) {
