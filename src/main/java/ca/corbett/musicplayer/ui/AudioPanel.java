@@ -56,9 +56,9 @@ public class AudioPanel extends JPanel implements UIReloadable {
     private PlaybackThread playbackThread;
     private float playbackPosition; // 0f==start, 1f==end
     private final VisualizationTrackInfo trackInfo;
-    private long currentRequestId;
-    private long activePlaybackRequestId;
-    private long playbackGeneration;
+    private volatile long currentRequestId;
+    private volatile long activePlaybackRequestId;
+    private volatile long playbackGeneration;
 
     private float markPosition;
 
