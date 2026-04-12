@@ -11,6 +11,7 @@ import ca.corbett.musicplayer.audio.AudioUtil;
 
 import javax.sound.sampled.LineUnavailableException;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -253,7 +254,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
         // Set starting offset if set:
         long startOffset = 0;
         if (markPosition > 0f) {
-            startOffset = (long) (markPosition * (audioData.getRawData()[0].length / (audioData.getSampleRate() / 1000)));
+            startOffset = positionToMillis(markPosition);
         }
 
         internalPlay(currentRequestId, startOffset);
@@ -296,14 +297,15 @@ public class AudioPanel extends JPanel implements UIReloadable {
     public void pause() {
         // Wonky case maybe, but let's avoid NullPointerExceptions if someone tries
         // to pause us when nothing is loaded:
-        if (audioData == null || audioData.getRawData() == null) {
+        if (audioData == null) {
             return;
         }
 
-        final float audioLength = audioData.getRawData()[0].length / (audioData.getSampleRate() / 1000f);
+        final long durationMillis = getDurationMillis();
+
         // If we were already paused, treat this as "resume":
         if (panelState == PanelState.PAUSED) {
-            long startOffset = (long) (markPosition * audioLength);
+            long startOffset = positionToMillis(markPosition);
             internalPlay(currentRequestId, startOffset);
             return;
         }
@@ -314,7 +316,7 @@ public class AudioPanel extends JPanel implements UIReloadable {
             playbackGeneration++;
             activePlaybackRequestId = 0L;
             playbackThread.stop();
-            markPosition = (float) playbackThread.getCurrentOffset() / audioLength;
+            markPosition = millisToPosition(playbackThread.getCurrentOffset(), durationMillis);
             playbackThread = null;
             redrawWaveform();
         }
@@ -548,14 +550,12 @@ public class AudioPanel extends JPanel implements UIReloadable {
 
             @Override
             public void stopped(PlaybackThread.StopReason stopReason) {
-                if (!isCurrentPlayback(requestId, generation)) {
-                    return;
-                }
-
-                // If we stopped because we ran out of audio data, hit next()
-                if (panelState == PanelState.PLAYING && stopReason != PlaybackThread.StopReason.INTERRUPTED) {
-                    next();
-                }
+                runIfCurrentOnEdt(requestId, generation, () -> {
+                    // If we stopped because we ran out of audio data, hit next()
+                    if (panelState == PanelState.PLAYING && stopReason != PlaybackThread.StopReason.INTERRUPTED) {
+                        next();
+                    }
+                });
             }
 
             @Override
@@ -563,14 +563,59 @@ public class AudioPanel extends JPanel implements UIReloadable {
                 if (!isCurrentPlayback(requestId, generation) || audioData == null) {
                     return false;
                 }
-                setPlaybackPosition((float) curMillis / (float) totalMillis);
-                trackInfo.setSourceFile(audioData.getSourceFile());
-                trackInfo.setCurrentTimeSeconds((int) (curMillis / 1000));
-                trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
-                VisualizationWindow.getInstance().setTrackInfo(trackInfo);
+
+                long safeTotal = totalMillis > 0 ? totalMillis : getDurationMillis();
+                float pos = millisToPosition(curMillis, safeTotal);
+
+                runIfCurrentOnEdt(requestId, generation, () -> {
+                    setPlaybackPosition(pos);
+                    trackInfo.setSourceFile(audioData.getSourceFile());
+                    trackInfo.setCurrentTimeSeconds((int) (curMillis / 1000));
+                    trackInfo.setTotalTimeSeconds(audioData.getDurationSeconds());
+                    VisualizationWindow.getInstance().setTrackInfo(trackInfo);
+                });
                 return true;
             }
         };
+    }
+
+    private long getDurationMillis() {
+        if (audioData == null) {
+            return 1L;
+        }
+
+        int seconds = audioData.getDurationSeconds();
+        if (seconds <= 0 && audioData.getMetadata() != null) {
+            seconds = audioData.getMetadata().getDurationSeconds();
+        }
+        return Math.max(1L, seconds * 1000L);
+    }
+
+    private long positionToMillis(float pos) {
+        float clamped = Math.max(0f, Math.min(pos, 1f));
+        return (long) (clamped * getDurationMillis());
+    }
+
+    private float millisToPosition(long millis, long totalMillis) {
+        long safeTotal = Math.max(1L, totalMillis);
+        float raw = (float) millis / (float) safeTotal;
+        return Math.max(0f, Math.min(raw, 1f));
+    }
+
+    private void runIfCurrentOnEdt(long requestId, long generation, Runnable task) {
+        Runnable guardedTask = () -> {
+            if (!isCurrentPlayback(requestId, generation)) {
+                return;
+            }
+            task.run();
+        };
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            guardedTask.run();
+        }
+        else {
+            SwingUtilities.invokeLater(guardedTask);
+        }
     }
 
     private boolean isCurrentPlayback(long requestId, long generation) {
