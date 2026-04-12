@@ -76,7 +76,7 @@ public final class AudioLoadCoordinator {
      * This is useful when the user hits stop while a background load is still running.
      */
     public void cancelPendingRequests() {
-        latestRequestId.incrementAndGet();
+        latestRequestId.set(requestCounter.incrementAndGet());
         synchronized (requestLock) {
             pendingRequest = null;
             requestLock.notifyAll();
