@@ -5,6 +5,9 @@ import java.util.List;
 
 /**
  * Compact waveform data represented as peak amplitudes per bucket.
+ *
+ * Instances are appended to by a background decode thread while the UI thread reads
+ * snapshots for rendering, so mutable operations are synchronized.
  */
 public class WaveformPeaks {
 
@@ -22,6 +25,12 @@ public class WaveformPeaks {
         this.complete = false;
     }
 
+    /**
+     * Adds a single peak bucket.
+     *
+     * If the source bucket is mono (length 1), the value is mirrored into all channels
+     * to preserve symmetric top/bottom waveform rendering.
+     */
     public synchronized void addBucket(short[] bucket) {
         if (bucket == null || bucket.length == 0) {
             return;
@@ -43,6 +52,9 @@ public class WaveformPeaks {
         buckets.add(copy);
     }
 
+    /**
+     * Returns an immutable-style snapshot arranged as [channel][bucketIndex].
+     */
     public synchronized int[][] snapshotByChannel() {
         int[][] out = new int[channels][buckets.size()];
         for (int i = 0; i < buckets.size(); i++) {
@@ -54,6 +66,9 @@ public class WaveformPeaks {
         return out;
     }
 
+    /**
+     * Returns the number of peak buckets currently collected.
+     */
     public synchronized int getBucketCount() {
         return buckets.size();
     }
@@ -70,6 +85,11 @@ public class WaveformPeaks {
         return framesPerBucket;
     }
 
+    /**
+     * Returns an estimated duration based on collected bucket count.
+     *
+     * This is most useful while background peak generation is still in progress.
+     */
     public long getDurationMillisEstimate() {
         return (long) ((getBucketCount() * (double) framesPerBucket / sampleRate) * 1000d);
     }

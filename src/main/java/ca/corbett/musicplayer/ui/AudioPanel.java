@@ -34,11 +34,6 @@ import java.util.logging.Logger;
  * track, along with controls like next, prev, play, pause, and so on. Our list of control
  * buttons also reaches out to the extension manager so that extensions can register additional
  * action buttons for us to display on our control panel.
- * <p>
- * TODO saw an intermittent issue where if you set a manual mark position towards the
- *      very end of the clip and hit play, it won't play right to the end.
- *      Not sure, but seems like the playback thread might be miscalculating offset position.
- *      </p>
  *
  * @author scorbo2
  * @since 2025-03-23

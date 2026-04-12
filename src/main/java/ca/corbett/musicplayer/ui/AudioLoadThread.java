@@ -9,12 +9,11 @@ import java.util.function.BooleanSupplier;
 import java.util.logging.Logger;
 
 /**
- * A simple worker thread to load audio data from a given file.
- * Upon completion, the audio data will be loaded into the audio
- * panel and played automatically. If something goes wrong, an
- * error will be logged and displayed to the user.
- * A progress monitor is supplied so the user has some idea
- * that work is being done.
+ * A simple worker that performs lightweight track loading for a given file.
+ *
+ * The current implementation only parses metadata and creates an {@link AudioData}
+ * wrapper. Waveform peak extraction is performed later on a separate background
+ * thread managed by {@link AudioLoadCoordinator}.
  *
  * @author scorbo2
  * @since 2025-04-02

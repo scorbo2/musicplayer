@@ -2,7 +2,7 @@
 
 ## Repository Summary
 
-**MusicPlayer** is a Java 17 music player with Swing UI featuring customizable visualizations and extension support via the [swing-extras](https://github.com/scorbo2/swing-extras) library. Built with Maven 3.9+, containing 53 Java files (~8,337 LOC), tested with JUnit 5. Main class: `ca.corbett.musicplayer.Main`.
+**MusicPlayer** is a Java 17 music player with Swing UI featuring customizable visualizations and extension support via the [swing-extras](https://github.com/scorbo2/swing-extras) library. Built with Maven 3.9+, tested with JUnit 5. Main class: `ca.corbett.musicplayer.Main`.
 
 ## Critical Build Requirements & Known Issues
 
@@ -39,11 +39,11 @@ Set environment variables `GITHUB_ACTOR` (your GitHub username) and `GITHUB_TOKE
 
 **Commands (run in order):**
 1. `mvn clean` - Clean project
-2. `mvn package` - Build + tests (~30-60s first run) → `target/musicplayer-3.0.jar` + `target/lib/`
+2. `mvn package` - Build + tests (~30-60s first run) → `target/musicplayer-<version>.jar` + `target/lib/`
 3. `mvn package -DskipTests` - Build without tests
 4. `mvn test` - Run tests only (6 test classes in `src/test/java/ca/corbett/musicplayer/`)
 
-**Run:** `cd target && java -jar musicplayer-3.0.jar` (requires display, not headless)
+**Run:** `cd target && java -jar musicplayer-<version>.jar` (requires display, not headless)
 
 **Optional:** If `~/bin/make-installer` exists on Linux, build auto-generates installer tarball (config: `installer.props`).
 
@@ -56,16 +56,19 @@ src/main/java/ca/corbett/musicplayer/
 ├── AppConfig.java          # Config (extends AppProperties from swing-extras)
 ├── Actions.java            # Media player and playlist commands (unrelated to the actions/ package)
 ├── actions/                # 18 UI action classes
-├── audio/                  # Audio playback, playlist (3 classes)
+├── audio/                  # Audio metadata, streaming playback helpers, waveform peak model
 ├── extensions/             # Extension system (MusicPlayerExtension, MusicPlayerExtensionManager, builtin/)
-└── ui/                     # 19 Swing components (MainWindow, AudioPanel, ControlPanel, Playlist, etc.)
+└── ui/                     # Swing components + async load/waveform worker threads
 ```
 
 **Architecture:**
 - **Extensions:** `swing-extras` ExtensionManager loads jars from `EXTENSIONS_DIR` (~/.MusicPlayer/extensions/)
 - **Config:** AppProperties auto-generates UI from properties in `AppConfig.java` → saved to `~/.MusicPlayer/MusicPlayer.props`
 - **Actions:** 18 Swing Actions in `actions/` - note that these are not related to `Actions.java` which is unrelated.
-- **Audio:** MP3 decoded via mp3spi → WAV → Java Sound API (see TODO in `AudioData.java`)
+- **Audio playback:** `AudioUtil.openPlaybackStream(...)` streams decoded PCM directly from source files (MP3/WAV) via Java Sound SPI.
+- **Audio loading:** `AudioLoadThread` performs lightweight metadata/file wrapper setup (`AudioData(File)`) only.
+- **Waveform generation:** `WaveformBuildThread` builds compact `WaveformPeaks` in the background; `AudioPanel` redraws progressively.
+- **Concurrency safety:** `AudioLoadCoordinator` serializes load requests and applies request-id stale checks to avoid outdated UI/playback updates during rapid next/prev activity.
 
 **Config Files:** `pom.xml` (Maven), `.editorconfig` (4-space indent, 120 char lines), `logging.properties`, `installer.props`
 
@@ -74,8 +77,6 @@ src/main/java/ca/corbett/musicplayer/
 **No CI/CD configured.** Manual validation: `mvn clean package` succeeds, tests pass, follow .editorconfig style.
 
 **Key Dependencies:** swing-extras (2.6.0), mp3spi (1.9.14), sqlite-jdbc (3.49.1.0), jackson (2.18.3), junit-jupiter (5.12.1)
-
-**Code Quality:** TODOs in AudioPanel, VisualizationThread, AudioData, AudioUtil. MP3→WAV conversion approach needs improvement (see AudioData.java).
 
 ## Development Tasks
 

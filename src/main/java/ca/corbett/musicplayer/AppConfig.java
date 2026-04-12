@@ -14,10 +14,8 @@ import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
 import ca.corbett.extras.properties.KeyStrokeProperty;
-import ca.corbett.extras.properties.LabelProperty;
 import ca.corbett.extras.properties.PropertiesManager;
 import ca.corbett.extras.properties.ShortTextProperty;
-import ca.corbett.extras.properties.SliderProperty;
 import ca.corbett.extras.properties.dialog.PropertiesDialog;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
@@ -118,7 +116,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ColorProperty visualizerOverlayProgressBackground;
     private ColorProperty visualizerOverlayProgressForeground;
     private ComboProperty<String> visualizerOldHardwareDelay;
-    private SliderProperty loadProgressBarShowDelayMS;
 
     /**
      * This is only used for setting default waveform prefs.
@@ -409,10 +406,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return visualizerScreensaverPrevention.getValue();
     }
 
-    public int getLoadProgressBarShowDelayMS() {
-        return loadProgressBarShowDelayMS.getValue();
-    }
-
     /**
      * Older or less capable graphics hardware needs 100-200 milliseconds to effect a
      * display mode switch (switching to fullscreen mode) - that means we sometimes
@@ -453,11 +446,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                                                    "Only allow a single instance of MusicPlayer",
                                                    true);
 
-        LabelProperty label = new LabelProperty("UI.General.progressBarDelayMSLabel",
-                                                "Optional delay before showing the audio load progress bar:");
-        loadProgressBarShowDelayMS = new SliderProperty("UI.General.progressBarDelay", "", 0, 5000, 1000);
-        loadProgressBarShowDelayMS.setShouldExpand(false);
-        loadProgressBarShowDelayMS.setLabels(List.of("no delay", "1s", "2s", "3s", "4s", "5s"), false);
 
         // Make sure we respond to change events properly, to enable or disable the override fields:
         overrideAppThemeWaveform.addFormFieldChangeListener(event -> {
@@ -595,8 +583,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        controlAlignment,
                        idleAnimation,
                        enableSingleInstance,
-                       label,
-                       loadProgressBarShowDelayMS,
                        overrideAppThemeWaveform,
                        waveformBgColor,
                        waveformFillColor,

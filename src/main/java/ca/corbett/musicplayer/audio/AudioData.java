@@ -12,15 +12,10 @@ import java.util.logging.Logger;
 
 /**
  * A wrapper class to encapsulate a single audio clip.
- * The modern pipeline stores lightweight track metadata plus compact
- * waveform peaks generated in the background.
- *
- * Legacy raw sample fields/methods are still present for compatibility,
- * but they are no longer used by the active playback/rendering pipeline.
- * <p>
- * TODO the remaining legacy raw-sample API can be removed in a future major
- *      release once extension compatibility is no longer required.
- * </p>
+ * The current pipeline keeps this object lightweight:
+ * source file identity + parsed metadata + compact waveform peaks.
+ * Playback streams directly from the source file and waveform data is
+ * generated asynchronously by {@link ca.corbett.musicplayer.ui.WaveformBuildThread}.
  *
  * @author scorbo2
  * @since 2025-03-23
@@ -29,43 +24,20 @@ public class AudioData {
 
     private static final Logger logger = Logger.getLogger(AudioData.class.getName());
 
-    private final int[][] rawData;
     private final File sourceFile;
     private BufferedImage waveformImage;
     private AudioMetadata metadata;
-    private final float sampleRate;
     private final int durationSeconds;
     private final WaveformPeaks waveformPeaks;
-
-    @Deprecated(since = "3.3", forRemoval = false)
-    public AudioData(int[][] rawData, File sourceFile, float sampleRate) {
-        this.rawData = rawData;
-        this.sourceFile = sourceFile;
-        this.sampleRate = (sampleRate < 0) ? 44100f : sampleRate;
-        this.durationSeconds = (int) (rawData[0].length / sampleRate);
-        this.waveformPeaks = new WaveformPeaks(rawData.length, this.sampleRate, 512);
-    }
 
     /**
      * Lightweight constructor used by the new streaming pipeline.
      */
     public AudioData(File sourceFile) {
-        this.rawData = null;
         this.sourceFile = sourceFile;
         this.metadata = AudioMetadata.fromFile(sourceFile);
-        this.sampleRate = 44100f;
         this.durationSeconds = Math.max(0, this.metadata.getDurationSeconds());
-        this.waveformPeaks = new WaveformPeaks(2, this.sampleRate, 512);
-    }
-
-    @Deprecated(since = "3.3", forRemoval = false)
-    public int[][] getRawData() {
-        return rawData;
-    }
-
-    @Deprecated(since = "3.3", forRemoval = false)
-    public float getSampleRate() {
-        return sampleRate;
+        this.waveformPeaks = new WaveformPeaks(2, 44100f, 512);
     }
 
     public int getDurationSeconds() {
@@ -135,7 +107,7 @@ public class AudioData {
         if (waveformPeaks.getBucketCount() > 0) {
             return generateWaveformImage(waveformPeaks.snapshotByChannel(), waveformPeaks.getFramesPerBucket());
         }
-        return generateWaveformImage(rawData, 1);
+        return null;
     }
 
     /**
