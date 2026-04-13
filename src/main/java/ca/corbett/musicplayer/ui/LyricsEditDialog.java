@@ -20,6 +20,7 @@ public abstract class LyricsEditDialog extends JDialog {
     public LyricsEditDialog(AudioMetadata track) {
         super(MainWindow.getInstance(), "Lyrics editor - " + track.getTitle(), true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(MainWindow.getInstance());
         this.track = track;
     }
 }
