@@ -2,6 +2,7 @@ package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.AppExtension;
 import ca.corbett.musicplayer.Actions;
+import ca.corbett.musicplayer.audio.AudioMetadata;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
 import ca.corbett.musicplayer.ui.TrackInfoDialog;
@@ -135,9 +136,10 @@ public abstract class MusicPlayerExtension extends AppExtension {
      * File, if this extension is capable of displaying detailed track
      * information for an audio file.
      *
+     * @param metadata The metadata for the track to be displayed.
      * @return a TrackInfoDialog instance, or null if this extension doesn't supply one.
      */
-    public TrackInfoDialog getTrackInfoDialog(File trackFile) {
+    public TrackInfoDialog getTrackInfoDialog(AudioMetadata metadata) {
         return null;
     }
 }

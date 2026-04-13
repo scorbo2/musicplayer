@@ -5,6 +5,7 @@ Author: Steve Corbett
 Version 3.3 [TODO release date goes here] - Maintenance release
   #99 Wire up a FallbackExceptionHandler
   #98 Wire up a KeyStrokeManager (replaces old KeyboardManager)
+  #91 Add basic ID3 editing support
   #90 Use new StringFormatter utility method in swing-extras
   #88 Add playlist deletion keyboard shortcuts
   #87 AboutDialog was not showing application update information
