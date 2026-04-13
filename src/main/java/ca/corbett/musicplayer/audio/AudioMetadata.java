@@ -390,12 +390,13 @@ public class AudioMetadata {
             && Objects.equals(album, that.album)
             && Objects.equals(genre, that.genre)
             && Objects.equals(trackNumber, that.trackNumber)
-            && Objects.equals(sourceFile, that.sourceFile);
+            && Objects.equals(sourceFile, that.sourceFile)
+            && Objects.equals(lyrics, that.lyrics);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, author, album, genre, durationSeconds, sourceFile, trackNumber);
+        return Objects.hash(title, author, album, genre, durationSeconds, sourceFile, trackNumber, lyrics);
     }
 
     private void fireChangeEvent() {
