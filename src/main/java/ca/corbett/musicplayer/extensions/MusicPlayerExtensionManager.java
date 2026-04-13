@@ -4,6 +4,7 @@ import ca.corbett.extensions.ExtensionManager;
 import ca.corbett.extras.properties.KeyStrokeProperty;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.Version;
+import ca.corbett.musicplayer.audio.AudioMetadata;
 import ca.corbett.musicplayer.audio.PlaylistUtil;
 import ca.corbett.musicplayer.extensions.builtin.ExtraAnimations;
 import ca.corbett.musicplayer.extensions.builtin.ExtraThemes;
@@ -241,13 +242,13 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
      * for the given audio file. The first extension that returns one will be used.
      * If no extension supports this feature, null is returned.
      *
-     * @param trackFile The audio file in question.
+     * @param metadata The metadata for the track to be displayed.
      * @return A TrackInfoDialog instance, or null.
      */
-    public TrackInfoDialog getTrackInfoDialog(File trackFile) {
+    public TrackInfoDialog getTrackInfoDialog(AudioMetadata metadata) {
         TrackInfoDialog dialog = null;
         for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
-            dialog = extension.getTrackInfoDialog(trackFile);
+            dialog = extension.getTrackInfoDialog(metadata);
             if (dialog != null) {
                 break;
             }

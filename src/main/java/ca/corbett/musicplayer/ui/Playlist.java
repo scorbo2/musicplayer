@@ -109,6 +109,7 @@ public class Playlist extends JPanel implements UIReloadable {
 
         initComponents();
         ReloadUIAction.getInstance().registerReloadable(this);
+        AudioMetadata.addChangeListener(this::metadataChanged);
     }
 
     public static Playlist getInstance() {
@@ -284,6 +285,19 @@ public class Playlist extends JPanel implements UIReloadable {
         if (fileList.getSelectedIndex() != -1) {
             AudioMetadata meta = fileList.getSelectedValue();
             return (meta != null) ? meta.getSourceFile() : null;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the AudioMetadata object associated with the currently selected track, if there
+     * is a track selected, otherwise null.
+     *
+     * @return An AudioMetadata object, or null.
+     */
+    public AudioMetadata getSelectedTrackMetadata() {
+        if (fileList.getSelectedIndex() != -1) {
+            return fileList.getSelectedValue();
         }
         return null;
     }
@@ -693,6 +707,16 @@ public class Playlist extends JPanel implements UIReloadable {
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private void metadataChanged(AudioMetadata metadata) {
+        // This is a bit of a hack to trigger a repaint of the playlist when metadata changes.
+        // We have to do this because the metadata objects are mutable and can change after
+        // they've been added to the playlist, and the playlist needs to update itself when
+        // that happens. The AudioMetadata class will broadcast a change event whenever its
+        // data changes, so we can listen for those events and trigger a repaint of the
+        // playlist when they occur.
+        fileList.repaint();
     }
 
     /**

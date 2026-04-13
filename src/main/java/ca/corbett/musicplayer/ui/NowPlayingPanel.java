@@ -22,6 +22,7 @@ import java.awt.Insets;
 public class NowPlayingPanel extends JPanel implements UIReloadable {
     private static NowPlayingPanel instance;
 
+    private AudioMetadata currentTrack;
     private final JLabel titleLabel;
     private final JLabel titleValue;
     private final JLabel durationLabel;
@@ -31,6 +32,7 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
 
     private NowPlayingPanel() {
         setLayout(new GridBagLayout());
+        currentTrack = null;
         titleLabel = buildLabel("Title:", Font.BOLD, SwingConstants.RIGHT);
         durationLabel = buildLabel("Duration:", Font.BOLD, SwingConstants.RIGHT);
         artistLabel = buildLabel("Artist:", Font.BOLD, SwingConstants.RIGHT);
@@ -41,6 +43,7 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
         reloadUI();
         setNowPlaying(null);
         ReloadUIAction.getInstance().registerReloadable(this);
+        AudioMetadata.addChangeListener(this::metadataChanged);
     }
 
     public static NowPlayingPanel getInstance() {
@@ -53,6 +56,7 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
 
     public void setNowPlaying(AudioData data) {
         AudioMetadata meta = data == null ? AudioMetadata.NOTHING_PLAYING : data.getMetadata();
+        currentTrack = meta;
         titleValue.setText(meta.getTitle());
         artistValue.setText(meta.getAuthor());
         durationValue.setText(" " + meta.getDurationFormatted() + " ");
@@ -110,5 +114,13 @@ public class NowPlayingPanel extends JPanel implements UIReloadable {
         label.setFont(label.getFont().deriveFont(fontStyle));
         label.setHorizontalTextPosition(textAlign);
         return label;
+    }
+
+    private void metadataChanged(AudioMetadata newMetadata) {
+        if (currentTrack != null && currentTrack.hasSameSourceFile(newMetadata)) {
+            currentTrack = newMetadata;
+            titleValue.setText(newMetadata.getTitle());
+            artistValue.setText(newMetadata.getAuthor());
+        }
     }
 }
