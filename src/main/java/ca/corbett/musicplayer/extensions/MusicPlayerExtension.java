@@ -146,8 +146,7 @@ public abstract class MusicPlayerExtension extends AppExtension {
 
     /**
      * Returns a LyricsEditDialog (or some derived instance) for the given
-     * File, if this extension is capable of displaying a lyrics editor
-     * for an audio file.
+     * AudioMetadata, if this extension is capable of displaying a lyrics editor.
      *
      * @param metadata The metadata for the track to be edited.
      * @return a LyricsEditDialog instance, or null if this extension doesn't supply one.
