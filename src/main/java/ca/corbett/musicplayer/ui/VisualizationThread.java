@@ -81,6 +81,7 @@ public class VisualizationThread implements Runnable {
     private VisualizationTrackInfo trackInfo;
     private VisualizationManager.Visualizer effectiveVisualizer;
     private List<VisualizationManager.Visualizer> visualizerRotation;
+    private final AudioMetadata.ChangeListener onMetadataChange = this::metadataChanged;
     private File currentSongFile;
     private int width;
     private int height;
@@ -250,7 +251,7 @@ public class VisualizationThread implements Runnable {
      */
     @Override
     public void run() {
-        AudioMetadata.addChangeListener(this::metadataChanged);
+        AudioMetadata.addChangeListener(onMetadataChange);
         running = true;
 
         // Get a handle on the buffer strategy (created by VisualizationWindow):
@@ -436,7 +437,7 @@ public class VisualizationThread implements Runnable {
 
         effectiveVisualizer.stop();
         effectiveVisualizer = null;
-        AudioMetadata.removeChangeListener(this::metadataChanged);
+        AudioMetadata.removeChangeListener(onMetadataChange);
     }
 
     /**
