@@ -44,6 +44,7 @@ public class AudioMetadata {
     private String author = "";
     private String album = "";
     private String genre = "";
+    private String lyrics = "";
     private int durationSeconds = 0;
     private File sourceFile;
     private int trackNumber = 0;
@@ -54,6 +55,7 @@ public class AudioMetadata {
         NOTHING_PLAYING.author = "(n/a)";
         NOTHING_PLAYING.album = "(n/a)";
         NOTHING_PLAYING.genre = "(n/a)";
+        NOTHING_PLAYING.lyrics = "";
         NOTHING_PLAYING.durationSeconds = 0;
         NOTHING_PLAYING.trackNumber = 0;
     }
@@ -122,6 +124,7 @@ public class AudioMetadata {
                 meta.title = tag.getFirst(FieldKey.TITLE);
                 meta.album = tag.getFirst(FieldKey.ALBUM);
                 meta.genre = tag.getFirst(FieldKey.GENRE);
+                meta.lyrics = tag.getFirst(FieldKey.LYRICS);
                 meta.trackNumber = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
             }
         }
@@ -143,6 +146,9 @@ public class AudioMetadata {
         }
         if (meta.author == null) {
             meta.author = "";
+        }
+        if (meta.lyrics == null) {
+            meta.lyrics = "";
         }
 
         return meta;
@@ -167,6 +173,7 @@ public class AudioMetadata {
             tag.setField(FieldKey.ALBUM, getAlbum());
             tag.setField(FieldKey.GENRE, getGenre());
             tag.setField(FieldKey.TRACK, Integer.toString(getTrackNumber()));
+            tag.setField(FieldKey.LYRICS, getLyrics());
             audioFile.commit();
             fireChangeEvent(); // Only send a change event after a successful save, not when our fields are updated.
         }
@@ -188,6 +195,17 @@ public class AudioMetadata {
                                               File sourceFile,
                                               int duration,
                                               int trackNumber) {
+        return fromRawValues(title, album, author, genre, sourceFile, duration, trackNumber, "");
+    }
+
+    public static AudioMetadata fromRawValues(String title,
+                                              String album,
+                                              String author,
+                                              String genre,
+                                              File sourceFile,
+                                              int duration,
+                                              int trackNumber,
+                                              String lyrics) {
         AudioMetadata meta = new AudioMetadata();
         meta.title = title;
         meta.album = album;
@@ -196,12 +214,14 @@ public class AudioMetadata {
         meta.durationSeconds = duration;
         meta.sourceFile = sourceFile;
         meta.trackNumber = trackNumber;
+        meta.lyrics = lyrics;
         return meta;
     }
 
     /**
      * Returns a formatted string representing this track's metadata.
      * The format string is provided as an argument.
+     * Note: lyrics are not available as a format string option (too long to display).
      */
     public String getFormatted(String formatString) {
         if (formatString == null) {
@@ -301,24 +321,28 @@ public class AudioMetadata {
         return genre;
     }
 
+    public String getLyrics() {
+        return lyrics;
+    }
+
     public void setTitle(String title) {
-        this.title = title;
+        this.title = title == null ? "" : title;
     }
 
     public void setAuthor(String author) {
-        this.author = author;
+        this.author = author == null ? "" : author;
     }
 
     public void setAlbum(String album) {
-        this.album = album;
+        this.album = album == null ? "" : album;
     }
 
     public void setGenre(String genre) {
-        this.genre = genre;
+        this.genre = genre == null ? "" : genre;
     }
 
     public void setTrackNumber(int trackNumber) {
-        this.trackNumber = trackNumber;
+        this.trackNumber = Math.max(trackNumber, 0); // negative track numbers don't make sense
     }
 
     public int getDurationSeconds() {
@@ -331,6 +355,10 @@ public class AudioMetadata {
 
     public int getTrackNumber() {
         return trackNumber;
+    }
+
+    public void setLyrics(String lyrics) {
+        this.lyrics = lyrics == null ? "" : lyrics;
     }
 
     /**
