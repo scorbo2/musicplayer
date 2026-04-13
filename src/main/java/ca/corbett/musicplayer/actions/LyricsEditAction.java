@@ -38,6 +38,10 @@ public class LyricsEditAction extends EnhancedAction {
             JOptionPane.showMessageDialog(MainWindow.getInstance(), "Nothing selected.");
             return;
         }
+        if (!selectedTrack.isMp3()) {
+            JOptionPane.showMessageDialog(MainWindow.getInstance(), "Lyrics editing is only supported for mp3 files.");
+            return;
+        }
 
         // See if any registered extensions can do this work for us:
         LyricsEditDialog dialog = MusicPlayerExtensionManager.getInstance().getLyricsEditDialog(selectedTrack);
