@@ -456,6 +456,7 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
     @Override
     public void stateChanged(AudioPanel sourcePanel, AudioPanel.PanelState state) {
         if (state == AudioPanel.PanelState.IDLE) {
+            currentMetadata = null;
             metadataChanged(null);
         } else if (state == AudioPanel.PanelState.PLAYING) {
             // Update title when playing starts, in case track was already loaded
