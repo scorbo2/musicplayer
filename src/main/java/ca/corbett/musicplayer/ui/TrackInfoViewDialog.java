@@ -29,7 +29,7 @@ public class TrackInfoViewDialog extends TrackInfoDialog {
         FormPanel formPanel = new FormPanel(Alignment.CENTER);
         File trackFile = metadata.getSourceFile();
         if (trackFile == null) {
-            formPanel.add(new LabelField("File name:", "(no file specified"));
+            formPanel.add(new LabelField("File name:", "(no file specified)"));
         }
         else {
             formPanel.add(new LabelField("File name:", trimString(trackFile.getName())));
