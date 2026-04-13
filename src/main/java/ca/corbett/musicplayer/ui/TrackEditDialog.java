@@ -87,6 +87,7 @@ public class TrackEditDialog extends TrackInfoDialog {
         if (okay) {
             if (metadata.isMp3()) {
                 if (formPanel.isFormValid()) {
+                    AudioMetadata snapshot = createSnapshot(metadata);
                     metadata.setTitle(titleField.getText());
                     metadata.setAuthor(authorField.getText());
                     metadata.setAlbum(albumField.getText());
@@ -100,6 +101,15 @@ public class TrackEditDialog extends TrackInfoDialog {
                     }
                     catch (IOException ioe) {
                         getMessageUtil().error("Save error", "Unable to save audio metadata: " + ioe.getMessage(), ioe);
+
+                        // Restore our snapshotted values, so we haven't mutated the metadata in-memory
+                        // due to our failed save attempt:
+                        metadata.setTitle(snapshot.getTitle());
+                        metadata.setAuthor(snapshot.getAuthor());
+                        metadata.setAlbum(snapshot.getAlbum());
+                        metadata.setGenre(snapshot.getGenre());
+                        metadata.setTrackNumber(snapshot.getTrackNumber());
+
                         return; // keep dialog open so user can try again or cancel
                     }
                 }
@@ -127,6 +137,22 @@ public class TrackEditDialog extends TrackInfoDialog {
         buttonPanel.add(button);
         buttonPanel.setBorder(BorderFactory.createRaisedBevelBorder());
         return buttonPanel;
+    }
+
+    private static AudioMetadata createSnapshot(AudioMetadata input) {
+        if (input == null) {
+            return null;
+        }
+
+        return AudioMetadata.fromRawValues(
+            input.getTitle(),
+            input.getAlbum(),
+            input.getAuthor(),
+            input.getGenre(),
+            input.getSourceFile(),
+            input.getDurationSeconds(),
+            input.getTrackNumber()
+        );
     }
 
     private MessageUtil getMessageUtil() {
