@@ -3,6 +3,7 @@ package ca.corbett.musicplayer;
 import ca.corbett.musicplayer.actions.AboutAction;
 import ca.corbett.musicplayer.actions.ExtensionsManagerAction;
 import ca.corbett.musicplayer.actions.FullScreenAction;
+import ca.corbett.musicplayer.actions.LyricsEditAction;
 import ca.corbett.musicplayer.actions.NextAction;
 import ca.corbett.musicplayer.actions.PauseAction;
 import ca.corbett.musicplayer.actions.PlayAction;
@@ -44,27 +45,28 @@ import java.util.List;
 public final class Actions {
 
     public static final MPAction[] mediaPlayerActions = {
-            new MPAction("Play", "Play (space)", "media-playback-start.png", new PlayAction()),
-            new MPAction("Pause", "Pause (space)", "media-playback-pause.png", new PauseAction()),
-            new MPAction("Stop", "Stop (esc)", "media-playback-stop.png", new StopAction()),
-            new MPAction("Previous", "Previous (left)", "media-skip-backward.png", new PrevAction()),
-            new MPAction("Next", "Next (right)", "media-skip-forward.png", new NextAction()),
-            new MPAction("Fullscreen", "Fullscreen (v)", "icon-fullscreen.png", new FullScreenAction()),
-            new MPAction("Settings", "Preferences (ctrl+p)", "icon-preferences.png", new SettingsAction()),
-            new MPAction("Extensions", "Extension Manager", "icon-extensions2.png", new ExtensionsManagerAction()),
-            new MPAction("About", "About (ctrl+a)", "logo.png", new AboutAction())
+        new MPAction("Play", "Play (space)", "media-playback-start.png", new PlayAction()),
+        new MPAction("Pause", "Pause (space)", "media-playback-pause.png", new PauseAction()),
+        new MPAction("Stop", "Stop (esc)", "media-playback-stop.png", new StopAction()),
+        new MPAction("Previous", "Previous (left)", "media-skip-backward.png", new PrevAction()),
+        new MPAction("Next", "Next (right)", "media-skip-forward.png", new NextAction()),
+        new MPAction("Fullscreen", "Fullscreen (v)", "icon-fullscreen.png", new FullScreenAction()),
+        new MPAction("Settings", "Preferences (ctrl+p)", "icon-preferences.png", new SettingsAction()),
+        new MPAction("Extensions", "Extension Manager", "icon-extensions2.png", new ExtensionsManagerAction()),
+        new MPAction("About", "About (ctrl+a)", "logo.png", new AboutAction())
     };
 
     public static final MPAction[] playlistActions = {
-            new MPAction("Open", "Open (ctrl+o)", "icon-open.png", new PlaylistOpenAction()),
-            new MPAction("Save", "Save (ctrl+s)", "icon-save.png", new PlaylistSaveAction()),
-            new MPAction("Add", "Add to playlist", "icon-add.png", new PlaylistAddAction()),
-            new MPAction("Remove selected", "Remove selected", "icon-remove-single.png", new PlaylistRemoveOneAction()),
-            new MPAction("Clear", "Clear playlist", "icon-remove-all.png", new PlaylistRemoveAllAction()),
+        new MPAction("Open", "Open (ctrl+o)", "icon-open.png", new PlaylistOpenAction()),
+        new MPAction("Save", "Save (ctrl+s)", "icon-save.png", new PlaylistSaveAction()),
+        new MPAction("Add", "Add to playlist", "icon-add.png", new PlaylistAddAction()),
+        new MPAction("Remove selected", "Remove selected", "icon-remove-single.png", new PlaylistRemoveOneAction()),
+        new MPAction("Clear", "Clear playlist", "icon-remove-all.png", new PlaylistRemoveAllAction()),
         new MPAction("Playlist sort", "Sort playlist", "icon-sort.png", new PlaylistSortAction()),
-            new MPAction("Track info", "Track info", "icon-popup.png", new PlaylistTrackInfoAction()),
-            new MPAction("Shuffle", "Shuffle", "media-playlist-shuffle.png", new ShuffleAction()),
-            new MPAction("Repeat", "Repeat", "media-playlist-repeat.png", new RepeatAction())
+        new MPAction("Track info", "Track info", "icon-popup.png", new PlaylistTrackInfoAction()),
+        new MPAction("Lyrics", "Lyrics editor", "icon-lines.png", new LyricsEditAction()),
+        new MPAction("Shuffle", "Shuffle", "media-playlist-shuffle.png", new ShuffleAction()),
+        new MPAction("Repeat", "Repeat", "media-playlist-repeat.png", new RepeatAction())
     };
 
     /**

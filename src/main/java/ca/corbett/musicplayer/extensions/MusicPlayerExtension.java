@@ -5,6 +5,7 @@ import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.audio.AudioMetadata;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
+import ca.corbett.musicplayer.ui.LyricsEditDialog;
 import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
@@ -140,6 +141,17 @@ public abstract class MusicPlayerExtension extends AppExtension {
      * @return a TrackInfoDialog instance, or null if this extension doesn't supply one.
      */
     public TrackInfoDialog getTrackInfoDialog(AudioMetadata metadata) {
+        return null;
+    }
+
+    /**
+     * Returns a LyricsEditDialog (or some derived instance) for the given
+     * AudioMetadata, if this extension is capable of displaying a lyrics editor.
+     *
+     * @param metadata The metadata for the track to be edited.
+     * @return a LyricsEditDialog instance, or null if this extension doesn't supply one.
+     */
+    public LyricsEditDialog getLyricsEditDialog(AudioMetadata metadata) {
         return null;
     }
 }

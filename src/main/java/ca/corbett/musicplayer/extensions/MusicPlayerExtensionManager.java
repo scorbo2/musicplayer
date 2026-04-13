@@ -12,6 +12,7 @@ import ca.corbett.musicplayer.extensions.builtin.ExtraVisualizers;
 import ca.corbett.musicplayer.extensions.builtin.QuickLoadExtension;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
+import ca.corbett.musicplayer.ui.LyricsEditDialog;
 import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
@@ -249,6 +250,25 @@ public class MusicPlayerExtensionManager extends ExtensionManager<MusicPlayerExt
         TrackInfoDialog dialog = null;
         for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
             dialog = extension.getTrackInfoDialog(metadata);
+            if (dialog != null) {
+                break;
+            }
+        }
+        return dialog;
+    }
+
+    /**
+     * Queries all extensions to see if any of them care to provide a LyricsEditDialog
+     * for the given audio file. The first extension that returns one will be used.
+     * If no extension supports this feature, null is returned.
+     *
+     * @param metadata The metadata for the track to be edited.
+     * @return A LyricsEditDialog instance, or null.
+     */
+    public LyricsEditDialog getLyricsEditDialog(AudioMetadata metadata) {
+        LyricsEditDialog dialog = null;
+        for (MusicPlayerExtension extension : getEnabledLoadedExtensions()) {
+            dialog = extension.getLyricsEditDialog(metadata);
             if (dialog != null) {
                 break;
             }
