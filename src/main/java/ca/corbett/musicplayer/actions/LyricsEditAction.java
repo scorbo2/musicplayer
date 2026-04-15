@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  * An action to bring up the lyrics editor for the selected track in the playlist.
  *
  * @author <a href="https://github.com/scorbo2">scorbo2</a>
- * @since MusicPlayer 3.3
+ * @since MusicPlayer 4.0
  */
 public class LyricsEditAction extends EnhancedAction {
 

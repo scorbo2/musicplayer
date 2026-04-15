@@ -2,7 +2,6 @@
 
 This is "MusicPlayer", a 100% Java music player with a UI written in Java Swing. 
 
-TODO update screenshot for 3.3 release
 ![MusicPlayer](docs/musicplayer.jpg "MusicPlayer")
 
 Features:
@@ -24,7 +23,7 @@ also used MusicPlayer as a testbed for my own app-extensions library
 so I could test out ways to make an application incredibly customizable via dynamically-loaded extensions. I also 
 wanted to prove out the `AppProperties` class from `app-extensions` to really demonstrate how to develop an extremely 
 customizable application while writing surprisingly little UI code (in the case of the properties dialog, and
-the extension manager, almost literally none). With version 3.0, I'm also using this application as a testbed
+the extension manager, almost literally none). Starting with version 3.0, I'm also using this application as a testbed
 for the new "dynamic extension discovery and download" feature from my swing-extras library. This allows
 users to download, install, and update extensions right from within the UI of the application, without having
 to clone, build, and install them manually. In the 3.1 release, MusicPlayer is the testbed for the new
@@ -35,11 +34,10 @@ with nice visualizations for my own personal use.
 
 ## How do I get it?
 
-You can download an installer tarball for Linux here: (TODO update tarball link and hashes for 3.3 release)
-- [http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz](http://www.corbett.ca/apps/MusicPlayer-3.2.tar.gz)
+You can download an installer tarball for Linux here:
+- [http://www.corbett.ca/apps/MusicPlayer-4.0.tar.gz](http://www.corbett.ca/apps/MusicPlayer-4.0.tar.gz)
 - Size: 23MB
-- SHA-1: `9a1f937eca69df53bccb0089579f09e3882c9066`
-- SHA-256: `0a83c64a706a2fa516856ab9828dcff638b9bf33761907ae07db0ef34359eae9`
+- SHA-256: `b7e0d884788150db9301e828dc2c13dd508b045e3227b59dc977fc76584be22d`
 
 Alternatively, you can clone the repo and build the project locally:
 
@@ -48,7 +46,7 @@ git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
 mvn package
 cd target
-java -jar musicplayer-3.3.jar # Launch the application manually
+java -jar musicplayer-4.0.jar # Launch the application manually
 ```
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building

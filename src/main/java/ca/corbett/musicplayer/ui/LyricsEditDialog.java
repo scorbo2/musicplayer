@@ -11,7 +11,7 @@ import javax.swing.JDialog;
  * editing dialog, which will be used instead, if the extension is enabled.
  *
  * @author <a href="https://github.com/scorbo2">scorbo2</a>
- * @since MusicPlayer 3.3
+ * @since MusicPlayer 4.0
  */
 public abstract class LyricsEditDialog extends JDialog {
 
