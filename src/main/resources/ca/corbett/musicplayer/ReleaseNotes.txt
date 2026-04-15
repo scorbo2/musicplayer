@@ -2,7 +2,7 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
-Version 3.3 [TODO release date goes here] - Maintenance release
+Version 4.0 [2026-04-14] - New audio load pipeline
   #99 Wire up a FallbackExceptionHandler
   #98 Wire up a KeyStrokeManager (replaces old KeyboardManager)
   #92 Lyrics editor
