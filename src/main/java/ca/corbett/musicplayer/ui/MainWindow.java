@@ -4,12 +4,27 @@ import ca.corbett.extras.MessageUtil;
 import ca.corbett.extras.SingleInstanceManager;
 import ca.corbett.extras.audio.PlaybackThread;
 import ca.corbett.extras.image.ImageUtil;
+import ca.corbett.extras.io.KeyStrokeManager;
 import ca.corbett.extras.logging.LogConsole;
+import ca.corbett.extras.properties.KeyStrokeProperty;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.Main;
 import ca.corbett.musicplayer.Version;
+import ca.corbett.musicplayer.actions.AboutAction;
+import ca.corbett.musicplayer.actions.ExitAction;
+import ca.corbett.musicplayer.actions.FullScreenAction;
+import ca.corbett.musicplayer.actions.FullScreenStopAction;
+import ca.corbett.musicplayer.actions.NextAction;
+import ca.corbett.musicplayer.actions.PauseAction;
+import ca.corbett.musicplayer.actions.PlaylistOpenAction;
+import ca.corbett.musicplayer.actions.PlaylistRemoveAllAction;
+import ca.corbett.musicplayer.actions.PlaylistRemoveOneAction;
+import ca.corbett.musicplayer.actions.PlaylistSaveAction;
+import ca.corbett.musicplayer.actions.PrevAction;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
+import ca.corbett.musicplayer.actions.SettingsAction;
 import ca.corbett.musicplayer.actions.StopAction;
+import ca.corbett.musicplayer.audio.AudioMetadata;
 import ca.corbett.musicplayer.audio.AudioUtil;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 import ca.corbett.updates.UpdateManager;
@@ -62,6 +77,8 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
     private final Timer resizeTimer;
     private UpdateManager updateManager;
     private boolean isSingleInstanceModeEnabled;
+    private final KeyStrokeManager keyStrokeManager;
+    private AudioMetadata currentMetadata;
 
     private MainWindow() {
         super(Version.FULL_NAME);
@@ -70,6 +87,7 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         setIconImage(loadIconResource("/ca/corbett/musicplayer/images/logo.png", 64, 64));
         setLayout(new BorderLayout());
+        this.keyStrokeManager = new KeyStrokeManager(this);
         resizeTimer = new Timer(250, e -> saveWindowState());
         resizeTimer.setRepeats(false);
         resizeTimer.setCoalesce(false);
@@ -80,9 +98,12 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
             }
         });
 
+        currentMetadata = null;
         add(AudioPanel.getInstance(), BorderLayout.NORTH);
         add(Playlist.getInstance(), BorderLayout.CENTER);
         AudioPanel.getInstance().addAudioPanelListener(this);
+        AudioMetadata.addChangeListener(this::metadataChanged);
+        registerKeyStrokes(keyStrokeManager);
     }
 
     /**
@@ -174,6 +195,7 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
                 UpdateSources updateSources = UpdateSources.fromFile(Version.UPDATE_SOURCES_FILE);
                 updateManager = new UpdateManager(updateSources);
                 updateManager.registerShutdownHook(MainWindow::cleanup);
+                Version.getAboutInfo().updateManager = updateManager;
                 logger.info("Update sources provided. Dynamic extension discovery is enabled.");
             }
             catch (Exception e) {
@@ -307,9 +329,6 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
         if (instance == null) {
             instance = new MainWindow();
 
-            // Set up our global key listener once:
-            KeyboardManager.addGlobalKeyListener(instance);
-
             // Add our WindowAdapter once:
             instance.addWindowListener(new WindowAdapter() {
                 /**
@@ -341,8 +360,25 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
      * Performs shutdown and cleanup tasks prior to the application exiting.
      */
     private static void cleanup() {
+        MainWindow.getInstance().keyStrokeManager.dispose();
         new StopAction().actionPerformed(null);
-        VisualizationWindow.getInstance().stopFullScreen();
+        AudioLoadCoordinator.getInstance().shutdown();
+        try {
+            // If we're already on the UI thread, we can just stop fullscreen mode directly:
+            if (SwingUtilities.isEventDispatchThread()) {
+                VisualizationWindow.getInstance().stopFullScreen();
+            }
+
+            else {
+                // Otherwise, we have to be a bit careful about it.
+                // We can't invokeLater(), because the UpdateManager won't wait for it to finish.
+                // So, we will block until fullscreen mode is properly stopped, if it is active:
+                SwingUtilities.invokeAndWait(() -> VisualizationWindow.getInstance().stopFullScreen());
+            }
+        }
+        catch (Exception e) {
+            logger.log(Level.WARNING, "Error while stopping fullscreen during cleanup: " + e.getMessage(), e);
+        }
         MusicPlayerExtensionManager.getInstance().deactivateAll();
         SingleInstanceManager.getInstance().release();
         logger.info("Application cleanup finished. Exiting normally.");
@@ -379,6 +415,9 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
      */
     @Override
     public void reloadUI() {
+        // Update our keystrokes, if any of them changed:
+        registerKeyStrokes(keyStrokeManager);
+
         boolean newValue = AppConfig.getInstance().isSingleInstanceEnabled();
         
         // If the user did not change the setting, do nothing
@@ -417,22 +456,70 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
     @Override
     public void stateChanged(AudioPanel sourcePanel, AudioPanel.PanelState state) {
         if (state == AudioPanel.PanelState.IDLE) {
-            setTitle(Version.FULL_NAME);
+            currentMetadata = null;
+            metadataChanged(null);
         } else if (state == AudioPanel.PanelState.PLAYING) {
             // Update title when playing starts, in case track was already loaded
+            currentMetadata = sourcePanel.getAudioData() != null ? sourcePanel.getAudioData().getMetadata() : null;
             updateTitleFromAudioData(sourcePanel);
         }
     }
 
     /**
-     * Updates the window title using the formatted metadata from the given AudioPanel's audio data.
+     * Register our keystrokes with the given KeyStrokeManager.
+     * This method is safe to invoke even if it has already been invoked.
+     * <p>
+     * Technical note: KeyStrokeManager allows us to expose keystrokes to the
+     * user for customization. This method is wired up such that it is invoked
+     * whenever the user hits OK on the application properties dialog.
+     * Currently, we don't expose any keystrokes for user customization,
+     * but if we ever do, they will automatically be re-registered here
+     * when the user changes them.
+     * </p>
+     */
+    public static void registerKeyStrokes(KeyStrokeManager keyStrokeManager) {
+        keyStrokeManager.clear();
+
+        // Register all the ones that are not configurable:
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Left"), new PrevAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Right"), new NextAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Space"), new PauseAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("V"), new FullScreenAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Esc"), new FullScreenStopAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+P"), new SettingsAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+A"), new AboutAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+O"), new PlaylistOpenAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+Q"), new ExitAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+S"), new PlaylistSaveAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Del"), new PlaylistRemoveOneAction());
+        keyStrokeManager.registerHandler(KeyStrokeManager.parseKeyStroke("Ctrl+Del"), new PlaylistRemoveAllAction());
+
+        // Now register whatever AppConfig knows about (this includes extension-supplied KeyStrokes, if any):
+        for (KeyStrokeProperty prop : AppConfig.getInstance().getKeyStrokeProperties()) {
+            // If there's no Action attached, or if there is no keystroke assigned to it, skip it:
+            // (this is a valid scenario! the user can "un-map" a keystroke if they don't want one for a given action).
+            if (prop.getAction() == null || prop.getKeyStroke() == null) {
+                continue;
+            }
+
+            // Register it! This will automatically update the shortcut attached to any menu items as well:
+            // Note that KeyStrokeManager can handle duplicate registrations, so it's not technically
+            // a problem if one of these conflicts with one of ours above.
+            keyStrokeManager.registerHandler(prop.getKeyStroke(), prop.getAction());
+        }
+    }
+
+    /**
+     * Updates the window title using the formatted metadata from our AudioPanel's audio data.
      */
     private void updateTitleFromAudioData(AudioPanel sourcePanel) {
         if (sourcePanel != null
                 && sourcePanel.getAudioData() != null
                 && sourcePanel.getAudioData().getMetadata() != null) {
-            String formattedTitle = sourcePanel.getAudioData().getMetadata().getFormatted();
-            setTitle(formattedTitle);
+            metadataChanged(sourcePanel.getAudioData().getMetadata());
+        }
+        else {
+            metadataChanged(null);
         }
     }
 
@@ -442,6 +529,26 @@ public class MainWindow extends JFrame implements UIReloadable, AudioPanelListen
      */
     @Override
     public void audioLoaded(AudioPanel sourcePanel, VisualizationTrackInfo trackInfo) {
+        currentMetadata = sourcePanel.getAudioData() != null ? sourcePanel.getAudioData().getMetadata() : null;
         updateTitleFromAudioData(sourcePanel);
+    }
+
+    /**
+     * We need to respond when our current audio metadata changes, so that we
+     * can keep the window title updated.
+     *
+     * @param newData AudioMetadata to use. Can be null, meaning no track is loaded.
+     */
+    private void metadataChanged(AudioMetadata newData) {
+        if (newData == null) {
+            setTitle(Version.FULL_NAME);
+            return;
+        }
+
+        // If this is the same metadata we already have, update our title.
+        // Otherwise, we'll just ignore this.
+        if (newData.hasSameSourceFile(currentMetadata)) {
+            setTitle(newData.getFormatted());
+        }
     }
 }

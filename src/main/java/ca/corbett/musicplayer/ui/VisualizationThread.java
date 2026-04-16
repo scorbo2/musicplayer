@@ -2,7 +2,7 @@ package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.image.ImagePanel;
 import ca.corbett.musicplayer.AppConfig;
-import ca.corbett.musicplayer.actions.ReloadUIAction;
+import ca.corbett.musicplayer.audio.AudioMetadata;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
 
 import javax.swing.JFrame;
@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  * @author scorbo2
  * @since 2017-12-05
  */
-public class VisualizationThread implements Runnable, UIReloadable {
+public class VisualizationThread implements Runnable {
 
     private static final Logger logger = Logger.getLogger(VisualizationThread.class.getName());
 
@@ -81,6 +81,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
     private VisualizationTrackInfo trackInfo;
     private VisualizationManager.Visualizer effectiveVisualizer;
     private List<VisualizationManager.Visualizer> visualizerRotation;
+    private final AudioMetadata.ChangeListener onMetadataChange = this::metadataChanged;
     private File currentSongFile;
     private int width;
     private int height;
@@ -103,7 +104,6 @@ public class VisualizationThread implements Runnable, UIReloadable {
         textOverlayEnabled = AppConfig.getInstance().isVisualizerOverlayEnabled();
         effectiveVisualizer = null;
         visualizerRotation = new ArrayList<>();
-        ReloadUIAction.getInstance().registerReloadable(this);
         width = 1920; // completely arbitrary default
         height = 1080; // caller will override this with actual values
     }
@@ -220,11 +220,6 @@ public class VisualizationThread implements Runnable, UIReloadable {
         imagePanel = panel;
     }
 
-    @Override
-    public void reloadUI() {
-        // TODO did I mean to do something in here? I can't remember why I implemented this interface here
-    }
-
     /**
      * Reports whether this thread is currently running (animating) or not. You can use
      * stop() to stop and kill the thread.
@@ -256,6 +251,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
      */
     @Override
     public void run() {
+        AudioMetadata.addChangeListener(onMetadataChange);
         running = true;
 
         // Get a handle on the buffer strategy (created by VisualizationWindow):
@@ -441,6 +437,7 @@ public class VisualizationThread implements Runnable, UIReloadable {
 
         effectiveVisualizer.stop();
         effectiveVisualizer = null;
+        AudioMetadata.removeChangeListener(onMetadataChange);
     }
 
     /**
@@ -473,5 +470,27 @@ public class VisualizationThread implements Runnable, UIReloadable {
         }
         catch (InterruptedException ignored) {
         }
+    }
+
+    /**
+     * If an AudioMetadata instance changes while we're running, we need to check if it's
+     * the one we're currently displaying, and update our displayed metadata if so.
+     */
+    private void metadataChanged(AudioMetadata metadata) {
+        if (trackInfo != null && trackInfo.sourceFile != null) {
+            // If this is our track, update our track info metadata:
+            if (isSameFile(trackInfo, metadata.getSourceFile())) {
+                trackInfo.setTitle(metadata.getTitle());
+                trackInfo.setArtist(metadata.getAuthor());
+                trackInfo.setAlbum(metadata.getAlbum());
+            }
+        }
+    }
+
+    private static boolean isSameFile(VisualizationTrackInfo trackInfo, File file) {
+        if (trackInfo == null || trackInfo.getSourceFile() == null || file == null) {
+            return false;
+        }
+        return trackInfo.getSourceFile().equals(file);
     }
 }

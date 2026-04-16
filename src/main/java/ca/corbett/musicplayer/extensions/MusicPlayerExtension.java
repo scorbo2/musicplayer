@@ -2,13 +2,14 @@ package ca.corbett.musicplayer.extensions;
 
 import ca.corbett.extensions.AppExtension;
 import ca.corbett.musicplayer.Actions;
+import ca.corbett.musicplayer.audio.AudioMetadata;
 import ca.corbett.musicplayer.ui.AppTheme;
 import ca.corbett.musicplayer.ui.AudioPanelIdleAnimation;
+import ca.corbett.musicplayer.ui.LyricsEditDialog;
 import ca.corbett.musicplayer.ui.TrackInfoDialog;
 import ca.corbett.musicplayer.ui.VisualizationManager;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -132,26 +133,25 @@ public abstract class MusicPlayerExtension extends AppExtension {
     }
 
     /**
-     * Invoked when the application receives a keyboard shortcut. The extension
-     * can choose to do something with it or not. Processing the keyboard event
-     * does not stop when an extension acts on a shortcut, so in theory multiple
-     * extensions could respond to the same keyboard shortcut.
-     *
-     * @param keyEvent the KeyEvent that triggered this message.
-     * @return true if this extension handled the shortcut (default false).
-     */
-    public boolean handleKeyEvent(KeyEvent keyEvent) {
-        return false;
-    }
-
-    /**
      * Returns a TrackInfoDialog (or some derived instance) for the given
      * File, if this extension is capable of displaying detailed track
      * information for an audio file.
      *
+     * @param metadata The metadata for the track to be displayed.
      * @return a TrackInfoDialog instance, or null if this extension doesn't supply one.
      */
-    public TrackInfoDialog getTrackInfoDialog(File trackFile) {
+    public TrackInfoDialog getTrackInfoDialog(AudioMetadata metadata) {
+        return null;
+    }
+
+    /**
+     * Returns a LyricsEditDialog (or some derived instance) for the given
+     * AudioMetadata, if this extension is capable of displaying a lyrics editor.
+     *
+     * @param metadata The metadata for the track to be edited.
+     * @return a LyricsEditDialog instance, or null if this extension doesn't supply one.
+     */
+    public LyricsEditDialog getLyricsEditDialog(AudioMetadata metadata) {
         return null;
     }
 }

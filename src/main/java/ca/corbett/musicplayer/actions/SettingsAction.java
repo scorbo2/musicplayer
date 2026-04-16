@@ -1,12 +1,17 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.extras.EnhancedAction;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.ui.MainWindow;
 
-import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 
-public class SettingsAction extends AbstractAction {
+public class SettingsAction extends EnhancedAction {
+
+    public SettingsAction() {
+        super("Settings");
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (AppConfig.getInstance().showPropertiesDialog(MainWindow.getInstance())) {

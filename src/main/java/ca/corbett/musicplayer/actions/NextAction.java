@@ -1,11 +1,15 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.extras.EnhancedAction;
 import ca.corbett.musicplayer.ui.AudioPanel;
 
-import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 
-public class NextAction extends AbstractAction {
+public class NextAction extends EnhancedAction {
+
+    public NextAction() {
+        super("Next track");
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {

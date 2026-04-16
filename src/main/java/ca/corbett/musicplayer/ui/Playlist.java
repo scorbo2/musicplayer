@@ -1,7 +1,6 @@
 package ca.corbett.musicplayer.ui;
 
 import ca.corbett.extras.MessageUtil;
-import ca.corbett.extras.progress.MultiProgressDialog;
 import ca.corbett.musicplayer.Actions;
 import ca.corbett.musicplayer.AppConfig;
 import ca.corbett.musicplayer.actions.PlaylistSortAction;
@@ -110,6 +109,7 @@ public class Playlist extends JPanel implements UIReloadable {
 
         initComponents();
         ReloadUIAction.getInstance().registerReloadable(this);
+        AudioMetadata.addChangeListener(this::metadataChanged);
     }
 
     public static Playlist getInstance() {
@@ -285,6 +285,19 @@ public class Playlist extends JPanel implements UIReloadable {
         if (fileList.getSelectedIndex() != -1) {
             AudioMetadata meta = fileList.getSelectedValue();
             return (meta != null) ? meta.getSourceFile() : null;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the AudioMetadata object associated with the currently selected track, if there
+     * is a track selected, otherwise null.
+     *
+     * @return An AudioMetadata object, or null.
+     */
+    public AudioMetadata getSelectedTrackMetadata() {
+        if (fileList.getSelectedIndex() != -1) {
+            return fileList.getSelectedValue();
         }
         return null;
     }
@@ -496,7 +509,7 @@ public class Playlist extends JPanel implements UIReloadable {
         // Select and play:
         fileList.setSelectedIndex(index);
         AudioPanel.getInstance().setAudioData(null); // force an unload of whatever was loaded
-        AudioPanel.getInstance().play(); // will force a load of the selected track
+        loadSelected();
     }
 
     /**
@@ -559,11 +572,13 @@ public class Playlist extends JPanel implements UIReloadable {
     /**
      * Loads audio data for whatever is currently selected in the playlist.
      * If the playlist is empty or nothing is selected, nothing happens.
-     * The load will be done in a worker thread with a progress dialog,
-     * so this method returns immediately while the data is still being
-     * loaded. Upon completion, the resulting AudioData will be loaded
-     * into the AudioPanel by the worker thread. If something goes wrong,
-     * an error is logged and displayed to the user and nothing is loaded.
+     * The load is submitted to AudioLoadCoordinator, which serializes
+     * requests in the background and only allows the latest request to
+     * affect the UI. This method returns immediately while the data is
+     * still being loaded. Upon completion, the resulting AudioData will
+     * be loaded into the AudioPanel automatically, unless the request
+     * has since gone stale. If something goes wrong, an error is logged
+     * and displayed to the user and nothing is loaded.
      */
     public void loadSelected() {
         AudioMetadata selectedMeta = fileList.getSelectedValue();
@@ -573,9 +588,7 @@ public class Playlist extends JPanel implements UIReloadable {
             return;
         }
 
-        MultiProgressDialog progress = new MultiProgressDialog(MainWindow.getInstance(), "Loading audio data...");
-        progress.setInitialShowDelayMS(AppConfig.getInstance().getLoadProgressBarShowDelayMS());
-        progress.runWorker(new AudioLoadThread(selected), true);
+        AudioLoadCoordinator.getInstance().requestLoad(selected);
     }
 
     protected void initComponents() {
@@ -694,6 +707,16 @@ public class Playlist extends JPanel implements UIReloadable {
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private void metadataChanged(AudioMetadata metadata) {
+        // This is a bit of a hack to trigger a repaint of the playlist when metadata changes.
+        // We have to do this because the metadata objects are mutable and can change after
+        // they've been added to the playlist, and the playlist needs to update itself when
+        // that happens. The AudioMetadata class will broadcast a change event whenever its
+        // data changes, so we can listen for those events and trigger a repaint of the
+        // playlist when they occur.
+        fileList.repaint();
     }
 
     /**
@@ -852,8 +875,7 @@ public class Playlist extends JPanel implements UIReloadable {
             // If it's a double click and something is selected, force a load and play:
             // (this is a bit wonky if you double-click whatever's currently playing, but okay):
             if (e.getClickCount() == 2 && Playlist.getInstance().fileList.getSelectedIndex() != -1) {
-                AudioPanel.getInstance().setAudioData(null);
-                AudioPanel.getInstance().play();
+                Playlist.getInstance().selectAndPlay(Playlist.getInstance().fileList.getSelectedIndex());
             }
         }
     }

@@ -1,10 +1,10 @@
 package ca.corbett.musicplayer.actions;
 
+import ca.corbett.extras.EnhancedAction;
 import ca.corbett.extras.about.AboutDialog;
 import ca.corbett.musicplayer.Version;
 import ca.corbett.musicplayer.ui.MainWindow;
 
-import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 
 /**
@@ -13,7 +13,12 @@ import java.awt.event.ActionEvent;
  * @author scorbo2
  * @since 2025-03-23
  */
-public class AboutAction extends AbstractAction {
+public class AboutAction extends EnhancedAction {
+
+    public AboutAction() {
+        super("About");
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         new AboutDialog(MainWindow.getInstance(), Version.getAboutInfo()).setVisible(true);

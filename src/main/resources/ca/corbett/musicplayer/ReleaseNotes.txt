@@ -2,6 +2,17 @@ MusicPlayer Release Notes
 https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
+Version 4.0 [2026-04-14] - New audio load pipeline
+  #99 Wire up a FallbackExceptionHandler
+  #98 Wire up a KeyStrokeManager (replaces old KeyboardManager)
+  #92 Lyrics editor
+  #91 Add basic ID3 editing support
+  #90 Use new StringFormatter utility method in swing-extras
+  #88 Add playlist deletion keyboard shortcuts
+  #87 AboutDialog was not showing application update information
+  #64 Remove old code workaround for this issue (no longer needed)
+  #53 Rewrite audio load pipeline for better performance
+
 Version 3.2 [2025-12-31] - Maintenance release
   #84 SingleInstanceManager has moved to swing-extras 2.6
   #82 Bring javadocs up to date.

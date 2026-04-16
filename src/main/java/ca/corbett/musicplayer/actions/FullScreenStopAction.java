@@ -5,14 +5,14 @@ import ca.corbett.musicplayer.ui.VisualizationWindow;
 
 import java.awt.event.ActionEvent;
 
-public class FullScreenAction extends EnhancedAction {
+public class FullScreenStopAction extends EnhancedAction {
 
-    public FullScreenAction() {
-        super("Full screen");
+    public FullScreenStopAction() {
+        super("Exit full screen");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        VisualizationWindow.getInstance().goFullScreen();
+        VisualizationWindow.getInstance().stopFullScreen();
     }
 }

@@ -13,13 +13,12 @@ import ca.corbett.extras.properties.DirectoryProperty;
 import ca.corbett.extras.properties.EnumProperty;
 import ca.corbett.extras.properties.FontProperty;
 import ca.corbett.extras.properties.IntegerProperty;
-import ca.corbett.extras.properties.LabelProperty;
+import ca.corbett.extras.properties.KeyStrokeProperty;
 import ca.corbett.extras.properties.PropertiesManager;
 import ca.corbett.extras.properties.ShortTextProperty;
-import ca.corbett.extras.properties.SliderProperty;
+import ca.corbett.extras.properties.dialog.PropertiesDialog;
 import ca.corbett.forms.fields.CheckBoxField;
 import ca.corbett.forms.fields.ComboField;
-import ca.corbett.forms.fields.ShortTextField;
 import ca.corbett.musicplayer.actions.ReloadUIAction;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtension;
 import ca.corbett.musicplayer.extensions.MusicPlayerExtensionManager;
@@ -31,8 +30,8 @@ import ca.corbett.musicplayer.ui.VisualizationThread;
 import ca.corbett.musicplayer.ui.VisualizationWindow;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +116,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     private ColorProperty visualizerOverlayProgressBackground;
     private ColorProperty visualizerOverlayProgressForeground;
     private ComboProperty<String> visualizerOldHardwareDelay;
-    private SliderProperty loadProgressBarShowDelayMS;
 
     /**
      * This is only used for setting default waveform prefs.
@@ -130,6 +128,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     protected AppConfig() {
         super(Version.FULL_NAME, PROPS_FILE, MusicPlayerExtensionManager.getInstance());
+
+        // Debatable, but I prefer the "classic" style props dialog for this application
+        // over the newer "action panel" style introduced in swing-extras 2.8:
+        setDialogType(DialogType.Classic);
     }
 
     /**
@@ -404,10 +406,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return visualizerScreensaverPrevention.getValue();
     }
 
-    public int getLoadProgressBarShowDelayMS() {
-        return loadProgressBarShowDelayMS.getValue();
-    }
-
     /**
      * Older or less capable graphics hardware needs 100-200 milliseconds to effect a
      * display mode switch (switching to fullscreen mode) - that means we sometimes
@@ -424,6 +422,16 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         return getOldHardwareDelayFromStringOption(visualizerOldHardwareDelay.getSelectedItem());
     }
 
+    /**
+     * Returns the subset of all our configuration properties that are KeyStrokeProperties.
+     */
+    public List<KeyStrokeProperty> getKeyStrokeProperties() {
+        List<KeyStrokeProperty> list = new ArrayList<>();
+        list.addAll(MusicPlayerExtensionManager.getInstance().getKeyStrokeProperties());
+        return list;
+    }
+
+
     @Override
     protected List<AbstractProperty> createInternalProperties() {
         buttonSize = new EnumProperty<>("UI.General.buttonSize", "Control size:", ButtonSize.LARGE);
@@ -438,11 +446,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                                                    "Only allow a single instance of MusicPlayer",
                                                    true);
 
-        LabelProperty label = new LabelProperty("UI.General.progressBarDelayMSLabel",
-                                                "Optional delay before showing the audio load progress bar:");
-        loadProgressBarShowDelayMS = new SliderProperty("UI.General.progressBarDelay", "", 0, 5000, 1000);
-        loadProgressBarShowDelayMS.setShouldExpand(false);
-        loadProgressBarShowDelayMS.setLabels(List.of("no delay", "1s", "2s", "3s", "4s", "5s"), false);
 
         // Make sure we respond to change events properly, to enable or disable the override fields:
         overrideAppThemeWaveform.addFormFieldChangeListener(event -> {
@@ -480,9 +483,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                                                      "Playlist format:",
                                                      DEFAULT_FORMAT_STRING,
                                                      20);
-        playlistFormatString.addFormFieldGenerationListener(
-            (property, formField)
-                -> ((ShortTextField)formField).getTextField().setColumns(20)); // THIS SHOULD NOT BE NECESSARY!
         playlistFormatString.setHelpText(getPlaylistFormatCheatsheet());
 
         playlistCustomSortString = new ShortTextProperty("UI.Playlist.customFormatString", "customFormat", "");
@@ -583,8 +583,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
                        controlAlignment,
                        idleAnimation,
                        enableSingleInstance,
-                       label,
-                       loadProgressBarShowDelayMS,
                        overrideAppThemeWaveform,
                        waveformBgColor,
                        waveformFillColor,
@@ -625,18 +623,17 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     }
 
     /**
-     * Overridden here so we can add override the default size of the properties dialog,
+     * Overridden here so we can customize the size of the properties dialog,
      * and also so that we can set the initial state of certain fields based upon
      * the values of our properties.
      *
-     * @param owner The owning Frame (so we can make the dialog modal to that Frame).
-     * @return true if the user OK'd the dialog with changes.
+     * @param dialog the generated PropertiesDialog, before it is shown to the user.
      */
     @Override
-    public boolean showPropertiesDialog(Frame owner) {
+    protected void propertiesDialogCreated(PropertiesDialog dialog) {
         // We need a slightly larger dialog than the default value:
-        propertiesDialogMinimumWidth = propertiesDialogInitialWidth = 660;
-        propertiesDialogMinimumHeight = propertiesDialogInitialHeight = 480;
+        dialog.setSize(new Dimension(660, 480));
+        dialog.setMinimumSize(new Dimension(660, 480));
 
         // Set initial state of waveform fields based on the value of overrideAppThemeWaveform:
         boolean isWaveformOverride = overrideAppThemeWaveform.getSelectedIndex() == 1;
@@ -653,8 +650,6 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         visualizerOverlayBorderColor.setInitiallyEditable(isOverlayOverride);
         visualizerOverlayProgressBackground.setInitiallyEditable(isOverlayOverride);
         visualizerOverlayProgressForeground.setInitiallyEditable(isOverlayOverride);
-
-        return super.showPropertiesDialog(owner);
     }
 
     /**
