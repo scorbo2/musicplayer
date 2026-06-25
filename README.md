@@ -37,7 +37,7 @@ with nice visualizations for my own personal use.
 You can download an installer tarball for Linux here:
 - [http://www.corbett.ca/apps/MusicPlayer-4.1.tar.gz](http://www.corbett.ca/apps/MusicPlayer-4.1.tar.gz)
 - Size: 23MB
-- SHA-256: `TODO`
+- SHA-256: `8627fa588d67c5b3283bbe7f7aa506e6580316c64760953d8a73e9390906f045`
 
 Alternatively, if you have Java 25 and Maven, you can clone the repo and build the project locally:
 
