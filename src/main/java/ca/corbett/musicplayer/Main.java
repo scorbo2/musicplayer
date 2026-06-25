@@ -77,7 +77,12 @@ public class Main {
                    new Object[]{Version.INSTALL_DIR, Version.SETTINGS_DIR, Version.EXTENSIONS_DIR});
         checkJavaRuntime();
         LookAndFeelManager.installExtraLafs();
-        AppConfig.getInstance().loadWithoutUIReload();
+
+        // Instantiating AppConfig will also implicitly instantiate our ExtensionManager and
+        // load all application extensions. This is followed by a load of all our properties,
+        // both application properties and extension properties.
+        // All we need to do is call getInstance() here.
+        AppConfig.getInstance();
 
         SwingUtilities.invokeLater(() -> {
             LookAndFeelManager.switchLaf(FlatLightLaf.class.getName());
