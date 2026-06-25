@@ -183,9 +183,13 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
      */
     @Deprecated(since = "4.1")
     public void loadWithoutUIReload() {
-        eventsEnabled.set(false);
-        load();
-        eventsEnabled.set(true);
+        final boolean prevValue = eventsEnabled.getAndSet(false);
+        try {
+            load();
+        }
+        finally {
+            eventsEnabled.set(prevValue);
+        }
     }
 
     public static AppConfig getInstance() {
