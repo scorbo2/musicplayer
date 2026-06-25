@@ -3,6 +3,7 @@ https://github.com/scorbo2/musicplayer
 Author: Steve Corbett
 
 Version 4.1 [2026-06-24] - Maintenance release
+  #112 - Upgrade to swing-extras 3.0 / Java 25
   #110 - Sort out AppConfig startup process
 
 Version 4.0 [2026-04-14] - New audio load pipeline
