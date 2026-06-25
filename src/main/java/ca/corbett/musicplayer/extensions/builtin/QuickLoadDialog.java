@@ -25,6 +25,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -39,9 +40,9 @@ import java.util.List;
 public class QuickLoadDialog extends JDialog {
 
     private static QuickLoadDialog instance;
-    private JFileChooser fileChooser;
-    private QuickLoadListModel playlistListModel;
-    private JList playlistList;
+    private final JFileChooser fileChooser;
+    private final QuickLoadListModel playlistListModel;
+    private JList<File> playlistList;
 
     public QuickLoadDialog() {
         super(MainWindow.getInstance(), true);
@@ -96,7 +97,7 @@ public class QuickLoadDialog extends JDialog {
                         "Can't read playlist", JOptionPane.ERROR_MESSAGE);
             }
             List<File> list = FileSystemUtil.findFiles(QuickLoadExtension.getQuickDir(), false, "mplist");
-            list.sort((one, two) -> one.getName().toLowerCase().compareTo(two.getName().toLowerCase()));
+            list.sort(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
             for (File file : list) {
                 playlistListModel.add(file);
             }
@@ -116,7 +117,7 @@ public class QuickLoadDialog extends JDialog {
     private JPanel buildPlaylistSelectionPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-        playlistList = new JList(playlistListModel);
+        playlistList = new JList<>(playlistListModel);
 
         // Add the key listener once:
         playlistList.addKeyListener(new KeyAdapter() {
@@ -145,25 +146,7 @@ public class QuickLoadDialog extends JDialog {
 
         });
 
-        playlistList.setCellRenderer(new ListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JLabel label = new JLabel();
-                label.setText(((File) value).getName().replace(".mplist", ""));
-                if (isSelected) {
-                    label.setBackground(list.getSelectionBackground());
-                    label.setForeground(list.getSelectionForeground());
-                } else {
-                    label.setBackground(list.getBackground());
-                    label.setForeground(list.getForeground());
-                }
-                label.setEnabled(list.isEnabled());
-                label.setFont(list.getFont().deriveFont(27f));
-                label.setOpaque(true);
-                return label;
-            }
-
-        });
+        playlistList.setCellRenderer(new PlaylistCellRenderer());
         playlistList.setFont(playlistList.getFont().deriveFont(18f));
         JScrollPane scrollPane = new JScrollPane(playlistList);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -189,15 +172,38 @@ public class QuickLoadDialog extends JDialog {
         panel.add(okButton);
         panel.add(cancelButton);
 
-        otherButton.addActionListener(e -> {
+        otherButton.addActionListener(_ -> {
             if (fileChooser.showOpenDialog(instance) == JFileChooser.APPROVE_OPTION) {
                 Playlist.getInstance().loadPlaylists(List.of(fileChooser.getSelectedFile()));
                 setVisible(false);
             }
         });
-        okButton.addActionListener(e -> openSelectedPlaylist());
-        cancelButton.addActionListener(e -> setVisible(false));
+        okButton.addActionListener(_ -> openSelectedPlaylist());
+        cancelButton.addActionListener(_ -> setVisible(false));
 
         return panel;
+    }
+
+    private static class PlaylistCellRenderer implements ListCellRenderer<File> {
+
+        @Override
+        public Component getListCellRendererComponent(JList<? extends File> list, File value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel label = new JLabel();
+            String safeName = value == null ? "(null)" : value.getName();
+            label.setText(safeName.replace(".mplist", ""));
+            if (isSelected) {
+                label.setBackground(list.getSelectionBackground());
+                label.setForeground(list.getSelectionForeground());
+            }
+            else {
+                label.setBackground(list.getBackground());
+                label.setForeground(list.getForeground());
+            }
+            label.setEnabled(list.isEnabled());
+            label.setFont(list.getFont().deriveFont(27f));
+            label.setOpaque(true);
+            return label;
+        }
+
     }
 }
