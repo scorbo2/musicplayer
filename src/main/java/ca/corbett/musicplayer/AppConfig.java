@@ -35,6 +35,7 @@ import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import static ca.corbett.musicplayer.ui.ControlPanel.ButtonSize;
@@ -74,6 +75,7 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
 
     private static AppConfig instance;
     public static final File PROPS_FILE;
+    private static final AtomicBoolean eventsEnabled = new AtomicBoolean(false);
 
     private ComboProperty<String> idleAnimation;
     private EnumProperty<ButtonSize> buttonSize;
@@ -132,6 +134,10 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
         // Debatable, but I prefer the "classic" style props dialog for this application
         // over the newer "action panel" style introduced in swing-extras 2.8:
         setDialogType(DialogType.Classic);
+
+        // Now that our initial load is complete, we can enable events, so that future
+        // load() calls will trigger a UI reload automatically.
+        eventsEnabled.set(true);
     }
 
     /**
@@ -162,14 +168,28 @@ public class AppConfig extends AppProperties<MusicPlayerExtension> {
     @Override
     public void load() {
         super.load();
-        ReloadUIAction.getInstance().actionPerformed(null);
+        if (eventsEnabled.get()) {
+            ReloadUIAction.getInstance().actionPerformed(null);
+        }
     }
 
     /**
-     * Basically only invoked once on app startup to kick things off.
+     * No longer used by application code, but can't be removed because it's public
+     * and might be used by some application extension. The next time we do a major
+     * version bump, we can revisit this, because all extensions will have to
+     * be rebuilt anyway.
+     *
+     * @deprecated This method may be removed in the next major release (5.0). Use load() instead.
      */
+    @Deprecated(since = "4.1")
     public void loadWithoutUIReload() {
-        super.load();
+        final boolean prevValue = eventsEnabled.getAndSet(false);
+        try {
+            load();
+        }
+        finally {
+            eventsEnabled.set(prevValue);
+        }
     }
 
     public static AppConfig getInstance() {

@@ -8,7 +8,7 @@ FORMAT="tarball"
 
 # Application name/version will also be used for the jar file name.
 APPLICATION="MusicPlayer"
-VERSION="4.0"
+VERSION="4.1"
 
 # For proper categorization of our application icon in linux menus:
 CATEGORY="AudioVideo"
@@ -17,7 +17,10 @@ PROJECT_URL="https://github.com/scorbo2/musicplayer"
 OUTPUT_DIR=target
 
 # Extra memory settings like Xmx and Xms can be specified here:
-JAVAMEM=
+JAVA_MEM=
+
+# Suppress the unnamed module warning for Java 24+:
+EXTRA_JAVA_ARGS="--enable-native-access=ALL-UNNAMED"
 
 # The application jar file:
 JAR="target/musicplayer-${VERSION}.jar"

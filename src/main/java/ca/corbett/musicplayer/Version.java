@@ -9,7 +9,7 @@ public final class Version {
     private static final AboutInfo aboutInfo;
 
     public static String NAME = "MusicPlayer";
-    public static String VERSION = "4.0";
+    public static String VERSION = "4.1";
     public static String FULL_NAME = NAME + " " + VERSION;
     public static String COPYRIGHT = "Copyright © 2017-2026 Steve Corbett";
     public static String PROJECT_URL = "https://github.com/scorbo2/musicplayer";

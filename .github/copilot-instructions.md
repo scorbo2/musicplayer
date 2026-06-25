@@ -2,7 +2,7 @@
 
 ## Repository Summary
 
-**MusicPlayer** is a Java 17 music player with Swing UI featuring customizable visualizations and extension support via the [swing-extras](https://github.com/scorbo2/swing-extras) library. Built with Maven 3.9+, tested with JUnit 5. Main class: `ca.corbett.musicplayer.Main`.
+**MusicPlayer** is a Java 25 music player with Swing UI featuring customizable visualizations and extension support via the [swing-extras](https://github.com/scorbo2/swing-extras) library. Built with Maven 3.9+, tested with JUnit 5. Main class: `ca.corbett.musicplayer.Main`.
 
 ## Critical Build Requirements & Known Issues
 
@@ -35,7 +35,7 @@ Set environment variables `GITHUB_ACTOR` (your GitHub username) and `GITHUB_TOKE
 
 ## Build & Test Instructions
 
-**Prerequisites:** Java 17+, Maven 3.9+, GitHub authentication (required - see above)
+**Prerequisites:** Java 25+, Maven 3.9+, GitHub authentication (required - see above)
 
 **Commands (run in order):**
 1. `mvn clean` - Clean project
@@ -76,7 +76,7 @@ src/main/java/ca/corbett/musicplayer/
 
 **No CI/CD configured.** Manual validation: `mvn clean package` succeeds, tests pass, follow .editorconfig style.
 
-**Key Dependencies:** swing-extras (2.6.0), mp3spi (1.9.14), sqlite-jdbc (3.49.1.0), jackson (2.18.3), junit-jupiter (5.12.1)
+**Key Dependencies:** swing-extras (3.0.0), mp3spi (1.9.14), sqlite-jdbc (3.49.1.0), jackson (2.18.3), junit-jupiter (5.12.1)
 
 ## Development Tasks
 
@@ -102,6 +102,6 @@ src/main/java/ca/corbett/musicplayer/
 3. **GUI application** - Requires display, not headless-compatible
 4. **Extension loading** - JARs from EXTENSIONS_DIR (~/.MusicPlayer/extensions/)
 5. **System properties:** java.util.logging.config.file, INSTALL_DIR, SETTINGS_DIR, EXTENSIONS_DIR
-6. **Java 17 required** - Ensure compatibility
+6. **Java 25 required** - Ensure compatibility
 7. **Javadoc linting relaxed** - Missing docs allowed (-Xdoclint:-missing)
 8. **Trust these instructions** - Only search if incomplete/incorrect

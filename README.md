@@ -35,18 +35,18 @@ with nice visualizations for my own personal use.
 ## How do I get it?
 
 You can download an installer tarball for Linux here:
-- [http://www.corbett.ca/apps/MusicPlayer-4.0.tar.gz](http://www.corbett.ca/apps/MusicPlayer-4.0.tar.gz)
+- [http://www.corbett.ca/apps/MusicPlayer-4.1.tar.gz](http://www.corbett.ca/apps/MusicPlayer-4.1.tar.gz)
 - Size: 23MB
-- SHA-256: `b7e0d884788150db9301e828dc2c13dd508b045e3227b59dc977fc76584be22d`
+- SHA-256: `8627fa588d67c5b3283bbe7f7aa506e6580316c64760953d8a73e9390906f045`
 
-Alternatively, you can clone the repo and build the project locally:
+Alternatively, if you have Java 25 and Maven, you can clone the repo and build the project locally:
 
 ```shell
 git clone https://github.com/scorbo2/musicplayer.git
 cd musicplayer
-mvn package
+mvn package # Requires Java 25 or higher!
 cd target
-java -jar musicplayer-4.0.jar # Launch the application manually
+java -jar musicplayer-4.1.jar # Launch the application manually
 ```
 
 If you have my [make-installer](https://github.com/scorbo2/install-scripts/) scripts installed and you are building
